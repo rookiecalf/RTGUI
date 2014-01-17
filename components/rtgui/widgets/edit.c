@@ -690,8 +690,10 @@ static void rtgui_edit_onmouse(struct rtgui_edit *edit, struct rtgui_event_mouse
 
                 line = rtgui_edit_get_line_by_index(edit, edit->upleft.y + edit->visual.y);
                 if (line == RT_NULL)
-                    return;
-
+				{
+				edit->visual.x = 0;
+                edit->visual.y = 0;
+				}else{
                 if (edit->visual.x > line->len)
                     edit->visual.x = line->len;
                 if (edit->upleft.x > 0)
@@ -702,6 +704,7 @@ static void rtgui_edit_onmouse(struct rtgui_edit *edit, struct rtgui_event_mouse
                         edit->visual.x -= edit->upleft.x;
                     rtgui_edit_ondraw(edit);
                 }
+				}
                 if (identify_double_byte(edit, line, EDIT_IDENT_DIR_LEFT, &tmp_pos))
                     edit->visual.x -= (2 - tmp_pos);
                 if (edit->flag & RTGUI_EDIT_CARET)
@@ -882,8 +885,14 @@ static rt_bool_t rtgui_edit_onkey(struct rtgui_object *object, rtgui_event_t *ev
     }
 
     line = rtgui_edit_get_line_by_index(edit, edit->upleft.y + edit->visual.y);
-    if (line == RT_NULL)
-        return RT_FALSE;
+          if (line == RT_NULL)
+      {
+		  if(edit->max_rows==0)
+		  {
+			  rtgui_edit_append_line(edit,"");
+			  line=edit->first_line;
+		  }
+	   }
 
     /* rt_kprintf("key=%04X ",ekbd->key); */
     if (ekbd->key == RTGUIK_RCTRL || ekbd->key == RTGUIK_LCTRL)
