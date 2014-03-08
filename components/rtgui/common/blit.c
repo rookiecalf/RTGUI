@@ -476,6 +476,7 @@ static const rtgui_blit_line_func _blit_table_inv[5][5] =
     {RT_NULL, rtgui_blit_line_1_4, rtgui_blit_line_2_4, rtgui_blit_line_3_4, rtgui_blit_line_direct },
 };
 
+/* get blit function for BGR565 */
 rtgui_blit_line_func rtgui_blit_line_get_inv(int dst_bpp, int src_bpp)
 {
     RT_ASSERT(dst_bpp > 0 && dst_bpp < 5);
