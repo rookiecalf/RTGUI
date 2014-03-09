@@ -623,7 +623,7 @@ static void rtgui_image_bmp_blit(struct rtgui_image *image, struct rtgui_dc *dc,
                 while (readIndex < bmp->pitch)
                 {
                     /* Put progress indicator */
-                    rt_kprintf("\r%lu%%", y * 100UL / h);
+                    // rt_kprintf("\r%lu%%", y * 100UL / h);
 
                     /* Read data to buffer */
                     readLength = (BMP_WORKING_BUFFER_SIZE > ((rt_uint16_t)bmp->pitch - readIndex)) ? \
@@ -710,7 +710,7 @@ static void rtgui_image_bmp_blit(struct rtgui_image *image, struct rtgui_dc *dc,
                             hw_bytePerPixel = 1;
                         }
 
-                        if (hw_driver->pixel_format == RTGRAPHIC_PIXEL_FORMAT_RGB565)
+                        if (hw_driver->pixel_format == RTGRAPHIC_PIXEL_FORMAT_BGR565)
                         {
                             blit_line = rtgui_blit_line_get_inv(hw_bytePerPixel, bytePerPixel);
                         }
@@ -805,7 +805,7 @@ static void rtgui_image_bmp_blit(struct rtgui_image *image, struct rtgui_dc *dc,
                         hw_bytePerPixel = 1;
                     }
 
-                    if (hw_driver->pixel_format == RTGRAPHIC_PIXEL_FORMAT_RGB565)
+                    if (hw_driver->pixel_format == RTGRAPHIC_PIXEL_FORMAT_BGR565)
                     {
                         blit_line = rtgui_blit_line_get_inv(hw_bytePerPixel, bytePerPixel);
                     }
