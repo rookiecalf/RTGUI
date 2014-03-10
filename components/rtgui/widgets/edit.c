@@ -20,7 +20,6 @@
 
 #define RTGUI_EDIT_CARET_TIMEOUT (RT_TICK_PER_SECOND/2)
 
-extern int isprint(unsigned char ch); /* Quote from shell.c */
 static void rtgui_edit_get_caret_rect(struct rtgui_edit *edit, rtgui_rect_t *rect, rtgui_point_t visual);
 static void rtgui_edit_init_caret(struct rtgui_edit *edit, rtgui_point_t visual);
 static void rtgui_edit_draw_caret(struct rtgui_edit *edit);
