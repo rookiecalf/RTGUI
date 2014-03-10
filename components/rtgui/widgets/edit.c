@@ -314,22 +314,42 @@ void rtgui_edit_dump(struct rtgui_edit *edit)
     _edit_dump_lines(edit);
 }
 
-static int _line_in_wchar_middle(struct edit_line *line, int pos)
+/* Return how many bytes remains according to GB18030 encoding.
+ *
+ *          1st byte    2nd byte    3rd byte    4th byte
+ *  1byte: 0x00~0x7F
+ * 2bytes: 0x81~0xFE   0x40~0xFE
+ * 4bytes: 0x81~0xFE   0x30~0x39   0x81~0xFE   0x30~0x39
+ */
+static int _line_remain_wchar_width(struct edit_line *line, int pos)
 {
-    int i, sum;
+    int idx;
 
     RT_ASSERT(line);
     RT_ASSERT(pos <= line->len);
 
-    sum = 0;
-    for (i = 0; i < pos; i++)
+    idx = 0;
+    while (idx < pos)
     {
-        if (line->text[i] & 0x80)
+        unsigned char c = line->text[idx];
+        if (c < 0x7F)
         {
-            sum++;
+            idx++;
+            continue;
         }
+        /* A wide char. A simplified test against the code. */
+        c = line->text[idx + 1];
+        if (c >= 0x40)
+        {
+            idx += 2;
+            continue;
+        }
+        idx += 4;
     }
-    return sum % 2;
+    /* Don't slip out if the last char is bigger than 0x80. */
+    if (idx > line->len)
+        idx = line->len;
+    return idx - pos;
 }
 
 static int _line_cursor_pos_at(struct edit_line *line, int pos)
@@ -338,18 +358,37 @@ static int _line_cursor_pos_at(struct edit_line *line, int pos)
      * current wide char. */
     if (pos >= line->len)
         return line->len;
-    return pos + _line_in_wchar_middle(line, pos);
+    return pos + _line_remain_wchar_width(line, pos);
 }
 
 static int _edit_char_width(struct rtgui_edit *edit,
                             struct edit_line *line,
                             int offset)
 {
+    unsigned char *pc;
+
     RT_ASSERT(edit->upleft.x + edit->visual.x + offset < line->len);
-    if (line->text[edit->upleft.x + edit->visual.x + offset] & 0x80)
-        return 2;
-    else
+
+    pc = &line->text[edit->upleft.x + edit->visual.x + offset];
+    if (pc - line->text <= 1)
         return 1;
+
+    if (*pc & 0x80)
+    {
+        if (pc - line->text <= 2 || ((0x40 <= pc[1]) && (pc[1] <= 0xFE)))
+            return 2;
+        if (pc - line->text <= 4 || ((0x30 <= pc[1]) && (pc[1] <= 0x39)))
+            return 4;
+        /* Unknown encoding. Return a safe value. */
+        return 2;
+    }
+    /* GBK */
+    if ((0x40 <= *pc) && (*pc <= 0xFE) && (pc[-1] & 0x80))
+        return 2;
+    /* GB18030 */
+    if ((0x30 <= *pc) && (*pc <= 0x39) && (pc[-1] & 0x80))
+        return 4;
+    return 1;
 }
 
 /* Should be called before update/ondraw. See the comment on _edit_show_caret.
@@ -929,10 +968,9 @@ static void rtgui_edit_onmouse(struct rtgui_edit *edit, struct rtgui_event_mouse
                 }
                 else
                 {
-                    if (_line_in_wchar_middle(line, edit->upleft.x + x))
-                        edit->visual.x = x + 1;
-                    else
-                        edit->visual.x = x;
+                    int i = _line_remain_wchar_width(line,
+                                                     edit->upleft.x + x);
+                    edit->visual.x = x + i;
                 }
             }
 
@@ -1109,7 +1147,6 @@ static rt_bool_t rtgui_edit_onkey(struct rtgui_object *object, rtgui_event_t *ev
         }
     }
 
-    /* rt_kprintf("key=%04X ",ekbd->key); */
     if (ekbd->key == RTGUIK_RCTRL || ekbd->key == RTGUIK_LCTRL)
     {
         /* use CTRL key */
@@ -1523,6 +1560,7 @@ static rt_bool_t rtgui_edit_onkey(struct rtgui_object *object, rtgui_event_t *ev
         {
             int char_len = _edit_char_width(edit, line, 0);
 
+            rt_kprintf("ch: %d\n", char_len);
             if (edit->visual.x + char_len < edit->col_per_page)
             {
                 edit->visual.x += char_len;
@@ -1774,10 +1812,11 @@ static void rtgui_edit_update(struct rtgui_edit *edit)
     rtgui_widget_get_rect(RTGUI_WIDGET(edit), &rect);
     rtgui_rect_inflate(&rect, -(edit->margin + RTGUI_WIDGET_BORDER(edit)));
 
+
     for (i = edit->update.start.y; i <= edit->update.end.y; i++)
     {
         char *src;
-        int src_offset;
+        int src_offset, char_len;
         rtgui_rect_t r;
         struct edit_line *line = rtgui_edit_get_line_by_index(edit, edit->upleft.y + i);
 
@@ -1820,10 +1859,11 @@ static void rtgui_edit_update(struct rtgui_edit *edit)
             src = line->text + src_offset;
 
         /* Fixup the wchar. */
-        if (_line_in_wchar_middle(line, src - line->text))
+        char_len = _line_remain_wchar_width(line, src - line->text);
+        if (char_len != 0)
         {
             r.x1 -= edit->font_width;
-            src -= 1;
+            src -= char_len;
             draw_border = 1;
         }
 
@@ -1892,10 +1932,11 @@ void rtgui_edit_ondraw(struct rtgui_edit *edit)
             {
                 int orig_x1 = rect.x1;
                 char *str = line->text + edit->upleft.x;
+                int char_len = _line_remain_wchar_width(line, edit->upleft.x);
 
-                if (_line_in_wchar_middle(line, edit->upleft.x))
+                if (char_len != 0)
                 {
-                    str--;
+                    str -= char_len;
                     rect.x1 = -edit->font_width + RTGUI_WIDGET_BORDER(edit);
                 }
                 rtgui_dc_draw_text(dc, str, &rect);
@@ -2050,7 +2091,6 @@ rt_bool_t rtgui_edit_readin_file(struct rtgui_edit *edit, const char *filename)
     do {
         if ((read_bytes = rtgui_filerw_read(filerw, &ch, 1, 1)) > 0)
         {
-            /* rt_kprintf("ch=%02X ",ch); DEBUG */
             if (num >= size - 1)
                 text = (char *)rt_realloc(text, rtgui_edit_alloc_len(size, num));
             if (ch == 0x09) //Tab
