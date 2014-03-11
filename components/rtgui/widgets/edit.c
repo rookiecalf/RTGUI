@@ -369,15 +369,17 @@ static int _edit_char_width(struct rtgui_edit *edit,
 
     RT_ASSERT(edit->upleft.x + edit->visual.x + offset < line->len);
 
-    pc = &line->text[edit->upleft.x + edit->visual.x + offset];
-    if (pc - line->text <= 1)
+    pc = (unsigned char*)&line->text[edit->upleft.x + edit->visual.x + offset];
+    if (pc - (unsigned char*)line->text <= 1)
         return 1;
 
     if (*pc & 0x80)
     {
-        if (pc - line->text <= 2 || ((0x40 <= pc[1]) && (pc[1] <= 0xFE)))
+        if (pc - (unsigned char*)line->text <= 2 ||
+            ((0x40 <= pc[1]) && (pc[1] <= 0xFE)))
             return 2;
-        if (pc - line->text <= 4 || ((0x30 <= pc[1]) && (pc[1] <= 0x39)))
+        if (pc - (unsigned char*)line->text <= 4 ||
+            ((0x30 <= pc[1]) && (pc[1] <= 0x39)))
             return 4;
         /* Unknown encoding. Return a safe value. */
         return 2;
@@ -1992,7 +1994,9 @@ void rtgui_edit_ondraw(struct rtgui_edit *edit)
 
 rt_bool_t rtgui_edit_event_handler(struct rtgui_object *object, rtgui_event_t *event)
 {
+#ifndef RTGUI_USING_SMALL_SIZE
     rtgui_widget_t *widget = RTGUI_WIDGET(object);
+#endif
     struct rtgui_edit *edit = RTGUI_EDIT(object);
 
     switch (event->type)
