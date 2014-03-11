@@ -18,6 +18,7 @@
 #include <rtgui/rtgui_object.h>
 #include <rtgui/rtgui_app.h>
 #include <rtgui/driver.h>
+#include <rtgui/touch.h>
 
 #include "mouse.h"
 #include "topwin.h"
@@ -192,6 +193,39 @@ void rtgui_server_handle_kbd(struct rtgui_event_kbd *event)
     }
 }
 
+void rtgui_server_handle_touch(struct rtgui_event_touch *event)
+{
+	if (rtgui_touch_do_calibration(event) == RT_TRUE)
+	{
+		struct rtgui_event_mouse emouse;
+
+		/* convert it as a mouse event to rtgui */
+		if (event->up_down == RTGUI_TOUCH_MOTION)
+		{
+			RTGUI_EVENT_MOUSE_MOTION_INIT(&emouse);
+			emouse.x = event->x;
+			emouse.y = event->y;
+			emouse.button = 0;
+
+			rtgui_server_handle_mouse_motion(&emouse);
+		}
+		else
+		{
+			RTGUI_EVENT_MOUSE_BUTTON_INIT(&emouse);
+			emouse.x = event->x;
+			emouse.y = event->y;
+			emouse.button = RTGUI_MOUSE_BUTTON_LEFT;
+			if (event->up_down == RTGUI_TOUCH_UP)
+				emouse.button |= RTGUI_MOUSE_BUTTON_UP;
+			else
+				emouse.button |= RTGUI_MOUSE_BUTTON_DOWN;
+
+			rtgui_server_handle_mouse_btn(&emouse);
+		}
+	}
+}
+
+
 #ifdef _WIN32_NATIVE
 #include <windows.h>
 #endif
@@ -229,6 +263,11 @@ static rt_bool_t rtgui_server_event_handler(struct rtgui_object *object,
         /* handle mouse button */
         rtgui_server_handle_mouse_btn((struct rtgui_event_mouse *)event);
         break;
+
+	case RTGUI_EVENT_TOUCH:
+		/* handle touch event */
+		rtgui_server_handle_touch((struct rtgui_event_touch *)event);
+		break;
 
     case RTGUI_EVENT_KBD:
         /* handle keyboard event */

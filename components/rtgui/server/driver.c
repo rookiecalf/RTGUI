@@ -20,7 +20,7 @@ extern const struct rtgui_graphic_driver_ops *rtgui_pixel_device_get_ops(int pix
 extern const struct rtgui_graphic_driver_ops *rtgui_framebuffer_get_ops(int pixel_format);
 
 /* get default driver */
-struct rtgui_graphic_driver *rtgui_graphic_driver_get_default()
+struct rtgui_graphic_driver *rtgui_graphic_driver_get_default(void)
 {
     return &_driver;
 }
@@ -29,7 +29,9 @@ RTM_EXPORT(rtgui_graphic_driver_get_default);
 void rtgui_graphic_driver_get_rect(const struct rtgui_graphic_driver *driver, rtgui_rect_t *rect)
 {
     RT_ASSERT(rect != RT_NULL);
-    RT_ASSERT(driver != RT_NULL);
+
+	/* use defautl driver */
+	if (driver == RT_NULL) driver = &_driver;
 
     rect->x1 = rect->y1 = 0;
     rect->x2 = driver->width;
@@ -103,6 +105,8 @@ RTM_EXPORT(rtgui_graphic_driver_screen_update);
 /* get video frame buffer */
 rt_uint8_t *rtgui_graphic_driver_get_framebuffer(const struct rtgui_graphic_driver *driver)
 {
+	if (driver == RT_NULL) driver = &_driver;
+
     return (rt_uint8_t *)driver->framebuffer;
 }
 RTM_EXPORT(rtgui_graphic_driver_get_framebuffer);

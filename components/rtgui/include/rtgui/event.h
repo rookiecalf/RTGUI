@@ -61,6 +61,7 @@ enum _rtgui_event_type
     RTGUI_EVENT_MOUSE_MOTION,          /* mouse motion          */
     RTGUI_EVENT_MOUSE_BUTTON,          /* mouse button info     */
     RTGUI_EVENT_KBD,                   /* keyboard info         */
+    RTGUI_EVENT_TOUCH,                 /* touch event to server */
 
     /* widget event */
     RTGUI_EVENT_FOCUSED,               /* widget focused        */
@@ -311,6 +312,23 @@ struct rtgui_event_kbd
 #define RTGUI_EVENT_MOUSE_MOTION_INIT(e)    RTGUI_EVENT_INIT(&((e)->parent), RTGUI_EVENT_MOUSE_MOTION)
 #define RTGUI_EVENT_MOUSE_BUTTON_INIT(e)    RTGUI_EVENT_INIT(&((e)->parent), RTGUI_EVENT_MOUSE_BUTTON)
 #define RTGUI_EVENT_KBD_INIT(e)             RTGUI_EVENT_INIT(&((e)->parent), RTGUI_EVENT_KBD)
+
+/**
+ * RTGUI Touch Event 
+ * NOTE: There is not touch event to user applications, it's handled by server.
+ */
+struct rtgui_event_touch
+{
+	struct rtgui_event parent;
+
+	rt_uint16_t x, y;
+	rt_uint16_t up_down;
+	rt_uint16_t resv;
+};
+#define RTGUI_TOUCH_UP         			0x01
+#define RTGUI_TOUCH_DOWN       			0x02
+#define RTGUI_TOUCH_MOTION				0x03
+#define RTGUI_EVENT_TOUCH_INIT(e)       RTGUI_EVENT_INIT(&((e)->parent), RTGUI_EVENT_TOUCH)
 
 struct rtgui_event_command
 {
