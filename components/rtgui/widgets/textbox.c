@@ -579,7 +579,6 @@ static rt_bool_t rtgui_textbox_onkey(struct rtgui_object *widget, rtgui_event_t 
                  c != &box->text[TB_ABSPOS(box)];
                  c -= 1)
                 *c = *(c - chw);
-            box->text[length + chw - 1] = '\0';
         }
 
         if (chw == 1)
@@ -595,6 +594,7 @@ static rt_bool_t rtgui_textbox_onkey(struct rtgui_object *widget, rtgui_event_t 
         {
             RT_ASSERT(0);
         }
+        box->text[length + chw] = '\0';
 
         if (box->position < box->dis_length)
         {
