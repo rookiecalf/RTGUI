@@ -3,7 +3,7 @@
 #include <rtgui/rtgui_system.h>
 #include <rtgui/rtgui_app.h>
 #include <rtgui/widgets/window.h>
-#include <calibration.h>
+#include <rtgui/calibration.h>
 
 #define CALIBRATION_STEP_LEFTTOP        0
 #define CALIBRATION_STEP_RIGHTTOP       1
