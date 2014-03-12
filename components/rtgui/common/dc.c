@@ -1333,3 +1333,158 @@ void rtgui_dc_fill_ellipse(struct rtgui_dc *dc, rt_int16_t x, rt_int16_t y, rt_i
 }
 RTM_EXPORT(rtgui_dc_fill_ellipse);
 
+/*
+ * set gc of dc
+ */
+void rtgui_dc_set_gc(struct rtgui_dc *dc, rtgui_gc_t *gc)
+{
+	RT_ASSERT(dc != RT_NULL);
+
+	switch (dc->type)
+	{
+	case RTGUI_DC_CLIENT:
+	{
+        rtgui_widget_t *owner;
+		/* get owner */
+		owner = RTGUI_CONTAINER_OF(dc, struct rtgui_widget, dc_type);
+		owner->gc = *gc;
+		break;
+	}
+	case RTGUI_DC_HW:
+	{
+		struct rtgui_dc_hw *dc_hw;
+		
+		dc_hw = (struct rtgui_dc_hw *) dc;
+		RT_ASSERT(dc_hw->owner != RT_NULL);
+		dc_hw->owner->gc = *gc;
+		break;
+	}
+	case RTGUI_DC_BUFFER:
+    {
+		struct rtgui_dc_buffer *dc_buffer;
+
+		dc_buffer = (struct rtgui_dc_buffer*)dc;
+		dc_buffer->gc = *gc;
+		break;
+    }
+	}
+}
+
+/*
+ * get gc of dc
+ */
+rtgui_gc_t *rtgui_dc_get_gc(struct rtgui_dc *dc)
+{
+	rtgui_gc_t *gc = RT_NULL;
+	
+	RT_ASSERT(dc != RT_NULL);
+
+	switch (dc->type)
+	{
+	case RTGUI_DC_CLIENT:
+    {
+        rtgui_widget_t *owner;
+		/* get owner */
+		owner = RTGUI_CONTAINER_OF(dc, struct rtgui_widget, dc_type);
+		gc = &owner->gc;
+		break;
+    }
+	case RTGUI_DC_HW:
+    {
+		struct rtgui_dc_hw *dc_hw;
+		
+		dc_hw = (struct rtgui_dc_hw *) dc;
+		RT_ASSERT(dc_hw->owner != RT_NULL);
+		gc = &dc_hw->owner->gc;
+		break;
+    }
+	case RTGUI_DC_BUFFER:
+    {
+		struct rtgui_dc_buffer *dc_buffer;
+
+		dc_buffer = (struct rtgui_dc_buffer*)dc;
+		gc = &dc_buffer->gc;
+		break;
+    }
+	}
+
+	return gc;
+}
+
+/*
+ * get visible status of dc
+ */
+rt_bool_t rtgui_dc_get_visible(struct rtgui_dc *dc)
+{
+	rt_bool_t result = RT_TRUE;
+	
+	RT_ASSERT(dc != RT_NULL);
+
+	switch (dc->type)
+	{
+	case RTGUI_DC_CLIENT:
+    {
+        rtgui_widget_t *owner;
+		/* get owner */
+		owner = RTGUI_CONTAINER_OF(dc, struct rtgui_widget, dc_type);
+		if (!RTGUI_WIDGET_IS_DC_VISIBLE(owner)) result = RT_FALSE;
+		break;
+    }
+	case RTGUI_DC_HW:
+    {
+		struct rtgui_dc_hw *dc_hw;
+		
+		dc_hw = (struct rtgui_dc_hw *) dc;
+		if (!RTGUI_WIDGET_IS_DC_VISIBLE(dc_hw->owner)) result = RT_FALSE;
+		break;
+    }
+    
+	default:
+		/* use default value */
+		break;
+	}
+
+	return result;
+}
+
+/*
+ * get rect of dc
+ */
+void rtgui_dc_get_rect(struct rtgui_dc *dc, rtgui_rect_t *rect)
+{
+	RT_ASSERT(dc != RT_NULL);
+
+	switch (dc->type)
+	{
+	case RTGUI_DC_CLIENT:
+    {
+		rtgui_widget_t *owner;
+        /* get owner */
+		owner = RTGUI_CONTAINER_OF(dc, struct rtgui_widget, dc_type);
+		rtgui_widget_get_rect(owner, rect);
+		break;
+    }
+    
+	case RTGUI_DC_HW:
+    {
+        rtgui_widget_t *owner;
+		struct rtgui_dc_hw *dc_hw;
+		
+		dc_hw = (struct rtgui_dc_hw *) dc;
+		owner = dc_hw->owner;
+		rtgui_widget_get_rect(owner, rect);
+		break;
+    }
+	case RTGUI_DC_BUFFER:
+    {
+		struct rtgui_dc_buffer *dc_buffer;
+
+		dc_buffer = (struct rtgui_dc_buffer*)dc;
+		rtgui_rect_init(rect, 0, 0, dc_buffer->width, dc_buffer->height);
+		break;
+    }
+	}
+
+	return;
+}
+

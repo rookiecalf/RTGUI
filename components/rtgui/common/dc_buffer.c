@@ -30,12 +30,6 @@ static void rtgui_dc_buffer_blit_line(struct rtgui_dc *self, int x1, int x2, int
 static void rtgui_dc_buffer_blit(struct rtgui_dc *self, struct rtgui_point *dc_point,
                                  struct rtgui_dc *dest, rtgui_rect_t *rect);
 
-static void rtgui_dc_buffer_set_gc(struct rtgui_dc *dc, rtgui_gc_t *gc);
-static rtgui_gc_t *rtgui_dc_buffer_get_gc(struct rtgui_dc *dc);
-
-static rt_bool_t rtgui_dc_buffer_get_visible(struct rtgui_dc *dc);
-static void rtgui_dc_buffer_get_rect(struct rtgui_dc *dc, rtgui_rect_t *rect);
-
 const static struct rtgui_dc_engine dc_buffer_engine =
 {
     rtgui_dc_buffer_draw_point,
@@ -45,12 +39,6 @@ const static struct rtgui_dc_engine dc_buffer_engine =
     rtgui_dc_buffer_fill_rect,
     rtgui_dc_buffer_blit_line,
     rtgui_dc_buffer_blit,
-
-    rtgui_dc_buffer_set_gc,
-    rtgui_dc_buffer_get_gc,
-
-    rtgui_dc_buffer_get_visible,
-    rtgui_dc_buffer_get_rect,
 
     rtgui_dc_buffer_fini,
 };
@@ -285,34 +273,5 @@ static void rtgui_dc_buffer_blit_line(struct rtgui_dc *self, int x1, int x2, int
 
     color_ptr = (rtgui_color_t *)(dc->pixel + y * dc->pitch + x1 * sizeof(rtgui_color_t));
     rt_memcpy(color_ptr, line_data, (x2 - x1) * sizeof(rtgui_color_t));
-}
-
-static void rtgui_dc_buffer_set_gc(struct rtgui_dc *self, rtgui_gc_t *gc)
-{
-    struct rtgui_dc_buffer *dc = (struct rtgui_dc_buffer *)self;
-
-    dc->gc = *gc;
-}
-
-static rtgui_gc_t *rtgui_dc_buffer_get_gc(struct rtgui_dc *self)
-{
-    struct rtgui_dc_buffer *dc = (struct rtgui_dc_buffer *)self;
-
-    return &dc->gc;
-}
-
-static rt_bool_t rtgui_dc_buffer_get_visible(struct rtgui_dc *dc)
-{
-    return RT_TRUE;
-}
-
-static void rtgui_dc_buffer_get_rect(struct rtgui_dc *self, rtgui_rect_t *rect)
-{
-    struct rtgui_dc_buffer *dc = (struct rtgui_dc_buffer *)self;
-
-    rect->x1 = rect->y1 = 0;
-
-    rect->x2 = dc->width;
-    rect->y2 = dc->height;
 }
 

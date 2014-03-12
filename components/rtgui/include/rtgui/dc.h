@@ -42,16 +42,6 @@ struct rtgui_dc_engine
     void (*blit_line)(struct rtgui_dc *dc, int x1, int x2, int y, rt_uint8_t *line_data);
     void (*blit)(struct rtgui_dc *dc, struct rtgui_point *dc_point, struct rtgui_dc *dest, rtgui_rect_t *rect);
 
-    /* set and get graphic context */
-    void (*set_gc)(struct rtgui_dc *dc, struct rtgui_gc *gc);
-    struct rtgui_gc *(*get_gc)(struct rtgui_dc *dc);
-
-    /* get dc visible */
-    rt_bool_t (*get_visible)(struct rtgui_dc *dc);
-
-    /* get dc rect */
-    void (*get_rect)(struct rtgui_dc *dc, rtgui_rect_t *rect);
-
     rt_bool_t (*fini)(struct rtgui_dc *dc);
 };
 
@@ -211,36 +201,14 @@ rt_inline void rtgui_dc_blit(struct rtgui_dc *dc, struct rtgui_point *dc_point, 
     dc->engine->blit(dc, dc_point, dest, rect);
 }
 
-/*
- * set gc of dc
- */
-rt_inline void rtgui_dc_set_gc(struct rtgui_dc *dc, rtgui_gc_t *gc)
-{
-    dc->engine->set_gc(dc, gc);
-}
-
-/*
- * get gc of dc
- */
-rt_inline rtgui_gc_t *rtgui_dc_get_gc(struct rtgui_dc *dc)
-{
-    return dc->engine->get_gc(dc);
-}
-
-/*
- * get visible status of dc
- */
-rt_inline rt_bool_t rtgui_dc_get_visible(struct rtgui_dc *dc)
-{
-    return dc->engine->get_visible(dc);
-}
-
-/*
- * get rect of dc
- */
-rt_inline void rtgui_dc_get_rect(struct rtgui_dc *dc, rtgui_rect_t *rect)
-{
-    dc->engine->get_rect(dc, rect);
-}
+/* set gc of dc */
+void rtgui_dc_set_gc(struct rtgui_dc *dc, rtgui_gc_t *gc);
+/* get gc of dc */
+rtgui_gc_t *rtgui_dc_get_gc(struct rtgui_dc *dc);
+/* get visible status of dc */
+rt_bool_t rtgui_dc_get_visible(struct rtgui_dc *dc);
+/* get rect of dc */
+void rtgui_dc_get_rect(struct rtgui_dc *dc, rtgui_rect_t *rect);
 
 #endif
+

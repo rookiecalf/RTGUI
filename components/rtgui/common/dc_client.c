@@ -34,11 +34,7 @@ static void rtgui_dc_client_draw_vline(struct rtgui_dc *dc, int x, int y1, int y
 static void rtgui_dc_client_fill_rect(struct rtgui_dc *dc, rtgui_rect_t *rect);
 static void rtgui_dc_client_blit_line(struct rtgui_dc *self, int x1, int x2, int y, rt_uint8_t *line_data);
 static void rtgui_dc_client_blit(struct rtgui_dc *dc, struct rtgui_point *dc_point, struct rtgui_dc *dest, rtgui_rect_t *rect);
-static void rtgui_dc_client_set_gc(struct rtgui_dc *dc, rtgui_gc_t *gc);
-static rtgui_gc_t *rtgui_dc_client_get_gc(struct rtgui_dc *dc);
 static rt_bool_t rtgui_dc_client_fini(struct rtgui_dc *dc);
-static rt_bool_t rtgui_dc_client_get_visible(struct rtgui_dc *dc);
-static void rtgui_dc_client_get_rect(struct rtgui_dc *dc, rtgui_rect_t *rect);
 
 #define hw_driver               (rtgui_graphic_driver_get_default())
 #define dc_set_foreground(c)    dc->gc.foreground = c
@@ -80,12 +76,6 @@ const struct rtgui_dc_engine dc_client_engine =
     rtgui_dc_client_fill_rect,
     rtgui_dc_client_blit_line,
     rtgui_dc_client_blit,
-
-    rtgui_dc_client_set_gc,
-    rtgui_dc_client_get_gc,
-
-    rtgui_dc_client_get_visible,
-    rtgui_dc_client_get_rect,
 
     rtgui_dc_client_fini,
 };
@@ -506,52 +496,5 @@ static void rtgui_dc_client_blit(struct rtgui_dc *dc, struct rtgui_point *dc_poi
 {
     /* not blit in hardware dc */
     return ;
-}
-
-static void rtgui_dc_client_set_gc(struct rtgui_dc *self, rtgui_gc_t *gc)
-{
-    rtgui_widget_t *owner;
-
-    if (self == RT_NULL) return;
-
-    /* get owner */
-    owner = RTGUI_CONTAINER_OF(self, struct rtgui_widget, dc_type);
-    owner->gc = *gc;
-}
-
-static rtgui_gc_t *rtgui_dc_client_get_gc(struct rtgui_dc *self)
-{
-    rtgui_widget_t *owner;
-
-    RT_ASSERT(self != RT_NULL);
-
-    /* get owner */
-    owner = RTGUI_CONTAINER_OF(self, struct rtgui_widget, dc_type);
-
-    return &(owner->gc);
-}
-
-static rt_bool_t rtgui_dc_client_get_visible(struct rtgui_dc *self)
-{
-    rtgui_widget_t *owner;
-
-    if (self == RT_NULL) return RT_FALSE;
-
-    /* get owner */
-    owner = RTGUI_CONTAINER_OF(self, struct rtgui_widget, dc_type);
-    if (!RTGUI_WIDGET_IS_DC_VISIBLE(owner)) return RT_FALSE;
-
-    return RT_TRUE;
-}
-
-static void rtgui_dc_client_get_rect(struct rtgui_dc *self, rtgui_rect_t *rect)
-{
-    rtgui_widget_t *owner;
-
-    if (self == RT_NULL) return;
-
-    /* get owner */
-    owner = RTGUI_CONTAINER_OF(self, struct rtgui_widget, dc_type);
-    rtgui_widget_get_rect(owner, rect);
 }
 

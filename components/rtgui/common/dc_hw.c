@@ -31,11 +31,7 @@ static void rtgui_dc_hw_draw_vline(struct rtgui_dc *dc, int x, int y1, int y2);
 static void rtgui_dc_hw_fill_rect(struct rtgui_dc *dc, rtgui_rect_t *rect);
 static void rtgui_dc_hw_blit_line(struct rtgui_dc *self, int x1, int x2, int y, rt_uint8_t *line_data);
 static void rtgui_dc_hw_blit(struct rtgui_dc *dc, struct rtgui_point *dc_point, struct rtgui_dc *dest, rtgui_rect_t *rect);
-static void rtgui_dc_hw_set_gc(struct rtgui_dc *dc, rtgui_gc_t *gc);
-static rtgui_gc_t *rtgui_dc_hw_get_gc(struct rtgui_dc *dc);
 static rt_bool_t rtgui_dc_hw_fini(struct rtgui_dc *dc);
-static rt_bool_t rtgui_dc_hw_get_visible(struct rtgui_dc *dc);
-static void rtgui_dc_hw_get_rect(struct rtgui_dc *dc, rtgui_rect_t *rect);
 
 const struct rtgui_dc_engine dc_hw_engine =
 {
@@ -46,12 +42,6 @@ const struct rtgui_dc_engine dc_hw_engine =
     rtgui_dc_hw_fill_rect,
     rtgui_dc_hw_blit_line,
     rtgui_dc_hw_blit,
-
-    rtgui_dc_hw_set_gc,
-    rtgui_dc_hw_get_gc,
-
-    rtgui_dc_hw_get_visible,
-    rtgui_dc_hw_get_rect,
 
     rtgui_dc_hw_fini,
 };
@@ -404,46 +394,3 @@ static void rtgui_dc_hw_blit(struct rtgui_dc *dc,
     return ;
 }
 
-static void rtgui_dc_hw_set_gc(struct rtgui_dc *self, rtgui_gc_t *gc)
-{
-    struct rtgui_dc_hw *dc;
-
-    RT_ASSERT(self != RT_NULL);
-    dc = (struct rtgui_dc_hw *) self;
-
-    /* set gc */
-    dc->owner->gc = *gc;
-}
-
-static rtgui_gc_t *rtgui_dc_hw_get_gc(struct rtgui_dc *self)
-{
-    struct rtgui_dc_hw *dc;
-
-    RT_ASSERT(self != RT_NULL);
-    dc = (struct rtgui_dc_hw *) self;
-
-    return &(dc->owner->gc);
-}
-
-static rt_bool_t rtgui_dc_hw_get_visible(struct rtgui_dc *self)
-{
-    struct rtgui_dc_hw *dc;
-
-    RT_ASSERT(self != RT_NULL);
-    dc = (struct rtgui_dc_hw *) self;
-
-    if (!RTGUI_WIDGET_IS_DC_VISIBLE(dc->owner)) return RT_FALSE;
-
-    return RT_TRUE;
-}
-
-static void rtgui_dc_hw_get_rect(struct rtgui_dc *self, rtgui_rect_t *rect)
-{
-    struct rtgui_dc_hw *dc;
-
-    RT_ASSERT(self != RT_NULL);
-    dc = (struct rtgui_dc_hw *) self;
-
-    /* get owner */
-    rtgui_widget_get_rect(dc->owner, rect);
-}
