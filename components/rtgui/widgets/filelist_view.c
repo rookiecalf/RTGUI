@@ -524,10 +524,15 @@ void rtgui_filelist_view_update_current(struct rtgui_filelist_view *view, rt_uin
 
     item_rect.x1 += RTGUI_FILELIST_MARGIN + file_image->w + 2;
     rtgui_dc_draw_text(dc, item->name, &item_rect);
-
+    if(view->on_changed!=RT_NULL)
+   {
+    view->on_changed(RTGUI_OBJECT(view),RT_NULL);
+   }
     rtgui_dc_end_drawing(dc);
 }
-
+void rtgui_filelist_view_set_onchanged(rtgui_filelist_view_t *view, rtgui_event_handler_ptr func){
+view->on_changed=func;
+}
 static void rtgui_filelist_view_onenturn(struct rtgui_filelist_view *view)
 {
     if (view->items[view->current_item].type == RTGUI_FITEM_DIR)
@@ -808,7 +813,7 @@ void rtgui_filelist_view_set_directory(rtgui_filelist_view_t *view, const char *
 
         /* reopen directory */
         dir = opendir(directory);
-        fullpath = rtgui_malloc(256);
+        fullpath = (char*)rtgui_malloc(256);
         while (index < view->items_count)
         {
             dirent = readdir(dir);

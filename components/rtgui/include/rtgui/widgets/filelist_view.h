@@ -35,6 +35,8 @@ struct rtgui_filelist_view
     /* the number of item in a page */
     rt_uint16_t page_items;
     rt_uint16_t items_count;
+   /* item event handler */
+    rtgui_event_handler_ptr on_changed;
 
     /* the selected item */
     rt_uint16_t current_item;
@@ -44,6 +46,7 @@ struct rtgui_filelist_view
 };
 typedef struct rtgui_filelist_view rtgui_filelist_view_t;
 
+void rtgui_filelist_view_set_onchanged(rtgui_filelist_view_t *view, rtgui_event_handler_ptr func);
 rtgui_filelist_view_t *rtgui_filelist_view_create(const char *directory,
         const char *pattern,
         const rtgui_rect_t *rect);
