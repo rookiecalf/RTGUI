@@ -514,21 +514,15 @@ static void rtgui_image_bmp_blit(struct rtgui_image *image, struct rtgui_dc *dc,
     bmp = (struct rtgui_image_bmp *)image->data;
     RT_ASSERT(image != RT_NULL || dc != RT_NULL || dst_rect != RT_NULL || bmp != RT_NULL);
 
-    bytePerPixel = bmp->bit_per_pixel / 8;
-    if (!bytePerPixel)
-    {
-        bytePerPixel = 1;
-    }
-    imageWidth = image->w * bytePerPixel;       /* Scaled width in byte */
+    bytePerPixel = (bmp->bit_per_pixel + 7)/ 8;
+
+	imageWidth = image->w * bytePerPixel;       /* Scaled width in byte */
     error = RT_FALSE;
 
     do
     {
         /* this dc is not visible */
-        if (rtgui_dc_get_visible(dc) != RT_TRUE)
-        {
-            break;
-        }
+        if (rtgui_dc_get_visible(dc) != RT_TRUE) break;
 
         /* the minimum rect */
         if (image->w < rtgui_rect_width(*dst_rect))
@@ -777,54 +771,53 @@ static void rtgui_image_bmp_blit(struct rtgui_image *image, struct rtgui_dc *dc,
             rt_uint16_t x, y;
             rt_uint8_t *ptr;
 
-            for (y = 0; y < h; y ++)
-            {
-                ptr = bmp->pixels + (y * imageWidth);
-                if (bmp->bit_per_pixel <= 8)
-                {
-                    rtgui_color_t color;
+			if (bmp->bit_per_pixel <= 8)
+			{
+				rtgui_color_t color;
 
-                    /* Using palette */
-                    for (x = 0; x < w; x ++)
-                    {
-                        color = image->palette->colors[*(ptr++)];
-                        rtgui_dc_draw_color_point(dc,
-                                                  dst_rect->x1 + x,
-                                                  dst_rect->y1 + y,
-                                                  color);
-                    }
-                }
-                else
-                {
-                    rtgui_blit_line_func blit_line;
-                    rt_uint8_t hw_bytePerPixel = hw_driver->bits_per_pixel / 8;
-                    rt_uint8_t temp[4] = {0};
+				ptr = bmp->pixels + (y * imageWidth);
+				/* 1bpp, and using palette */
+				for (y = 0; y < h; y ++)
+				{
+					for (x = 0; x < w; x ++)
+					{
+						color = image->palette->colors[*(ptr++)];
+						rtgui_dc_draw_color_point(dc,
+							dst_rect->x1 + x, dst_rect->y1 + y,
+							color);
+					}
+				}
+			}
+			else
+			{
+				rtgui_blit_line_func blit_line;
+				rt_uint8_t hw_bytePerPixel = (hw_driver->bits_per_pixel + 7) / 8;
+				rt_uint8_t *line_data;
 
-                    if (!hw_bytePerPixel)
-                    {
-                        hw_bytePerPixel = 1;
-                    }
+				if (hw_driver->pixel_format == RTGRAPHIC_PIXEL_FORMAT_BGR565)
+				{
+					blit_line = rtgui_blit_line_get_inv(hw_bytePerPixel, bytePerPixel);
+				}
+				else
+				{
+					blit_line = rtgui_blit_line_get(hw_bytePerPixel, bytePerPixel);
+				}
 
-                    if (hw_driver->pixel_format == RTGRAPHIC_PIXEL_FORMAT_BGR565)
-                    {
-                        blit_line = rtgui_blit_line_get_inv(hw_bytePerPixel, bytePerPixel);
-                    }
-                    else
-                    {
-                        blit_line = rtgui_blit_line_get(hw_bytePerPixel, bytePerPixel);
-                    }
+				line_data = (rt_uint8_t *)rtgui_malloc(w * rtgui_color_get_bpp(hw_driver->pixel_format));
+				if (line_data == RT_NULL) break; /* out of memory */
 
-                    for (x = 0; x < w; x ++)
-                    {
-                        blit_line(temp, ptr, bytePerPixel);
-                        ptr += bytePerPixel;
-                        dc->engine->blit_line(dc,
-                                              dst_rect->x1 + x, dst_rect->x1 + x + 1,
-                                              dst_rect->y1 + y,
-                                              temp);
-                    }
-                }
-            }
+				ptr = bmp->pixels;
+				for (y = 0; y < h; y ++)
+				{
+					blit_line(line_data, ptr, bytePerPixel * w);
+					ptr += imageWidth;
+
+					dc->engine->blit_line(dc, dst_rect->x1, dst_rect->x1 + w,
+						dst_rect->y1 + y, line_data);
+				}
+
+				rtgui_free(line_data);
+			}
         }
     } while (0);
 }

@@ -191,7 +191,7 @@ rt_inline void rtgui_dc_fill_rect(struct rtgui_dc *dc, struct rtgui_rect *rect)
 }
 
 /*
- * blit a dc on hardware dc
+ * blit a dc (x, y) on another dc(rect)
  */
 rt_inline void rtgui_dc_blit(struct rtgui_dc *dc, struct rtgui_point *dc_point, struct rtgui_dc *dest, rtgui_rect_t *rect)
 {

@@ -244,6 +244,7 @@ static void rtgui_dc_buffer_fill_rect(struct rtgui_dc *self, struct rtgui_rect *
 	
     dst = (struct rtgui_dc_buffer *)self;
 
+	_r = *dst_rect;
 	/* parameter checking */
     if (_r.x1 > dst->width)  _r.x1 = dst->width;
     if (_r.x2 > dst->width)  _r.x2 = dst->width;
@@ -276,30 +277,32 @@ static void rtgui_dc_buffer_fill_rect(struct rtgui_dc *self, struct rtgui_rect *
 /* blit a dc to a hardware dc */
 static void rtgui_dc_buffer_blit(struct rtgui_dc *self, struct rtgui_point *dc_point, struct rtgui_dc *dest, rtgui_rect_t *rect)
 {
+	int pitch;
+	rt_uint16_t rect_width, rect_height;
     struct rtgui_dc_buffer *dc = (struct rtgui_dc_buffer *)self;
-	struct rtgui_graphic_driver *hw_driver;
 
     if (dc_point == RT_NULL) dc_point = &rtgui_empty_point;
     if (rtgui_dc_get_visible(dest) == RT_FALSE) return;
 
-	hw_driver = rtgui_graphic_driver_get_default();
+	/* calculate correct width and height */
+	if (rtgui_rect_width(*rect) > (dc->width - dc_point->x))
+		rect_width = dc->width - dc_point->x;
+	else
+		rect_width = rtgui_rect_width(*rect);
+
+	if (rtgui_rect_height(*rect) > (dc->height - dc_point->y))
+		rect_height = dc->height - dc_point->y;
+	else
+		rect_height = rtgui_rect_height(*rect);
+
     if ((dest->type == RTGUI_DC_HW) || (dest->type == RTGUI_DC_CLIENT))
     {
+		int index;
         rt_uint8_t *line_ptr, *pixels;
-        rt_uint16_t rect_width, rect_height, index;
         rtgui_blit_line_func blit_line;
+		struct rtgui_graphic_driver *hw_driver;
 
-        /* calculate correct width and height */
-        if (rtgui_rect_width(*rect) > (dc->width - dc_point->x))
-            rect_width = dc->width - dc_point->x;
-        else
-            rect_width = rtgui_rect_width(*rect);
-
-        if (rtgui_rect_height(*rect) > (dc->height - dc_point->y))
-            rect_height = dc->height - dc_point->y;
-        else
-            rect_height = rtgui_rect_height(*rect);
-
+		hw_driver = rtgui_graphic_driver_get_default();
         /* prepare pixel line */
 		pixels = _dc_get_pixel(dc, dc_point->x, dc_point->y);
 
@@ -307,14 +310,14 @@ static void rtgui_dc_buffer_blit(struct rtgui_dc *self, struct rtgui_point *dc_p
         {
 			if (dest->type == RTGUI_DC_HW && hw_driver->framebuffer != RT_NULL)
 			{
-				int bpp;
 				rt_uint8_t *hw_pixels;
 
-				bpp = rtgui_color_get_bpp(hw_driver->pixel_format);
-				hw_pixels = (rt_uint8_t*)(hw_driver->framebuffer + rect->y1 * hw_driver->pitch + rect->x1 * bpp);
-				for (index = rect->y1; index < rect->y1 + rect_height; index ++)
+				pitch = rtgui_color_get_bpp(hw_driver->pixel_format) * rect_width;
+				hw_pixels = (rt_uint8_t*)(hw_driver->framebuffer + rect->y1 * hw_driver->pitch + 
+					rect->x1 * rtgui_color_get_bpp(hw_driver->pixel_format));
+				for (index = 0; index < rect_height; index ++)
 				{
-					memcpy(hw_pixels, pixels, rect_width * bpp);
+					memcpy(hw_pixels, pixels, pitch);
 					pixels += dc->pitch;
 					hw_pixels += hw_driver->pitch;
 				}
@@ -331,8 +334,6 @@ static void rtgui_dc_buffer_blit(struct rtgui_dc *self, struct rtgui_point *dc_p
         }
         else
         {
-			rt_uint16_t pitch;
-
             /* get blit line function */
             blit_line = rtgui_blit_line_get((hw_driver->bits_per_pixel + 7)/8, rtgui_color_get_bpp(dc->pixel_format));
             /* calculate pitch */
@@ -355,6 +356,29 @@ static void rtgui_dc_buffer_blit(struct rtgui_dc *self, struct rtgui_point *dc_p
             rtgui_free(line_ptr);
         }
     }
+	else if (dest->type == RTGUI_DC_BUFFER)
+	{
+		struct rtgui_dc_buffer *dest_dc = (struct rtgui_dc_buffer*)dest;
+
+		if (dest_dc->pixel_format == dc->pixel_format)
+		{
+			int index;
+			rt_uint8_t *pixels, *dest_pixels;
+			
+			/* get pitch */
+			pitch = rect_width * rtgui_color_get_bpp(dc->pixel_format);
+
+			pixels = _dc_get_pixel(dc, dc_point->x, dc_point->y);
+			dest_pixels = _dc_get_pixel(dest_dc, rect->x1, rect->y1);
+
+			for (index = 0; index < rect_height; index ++)
+			{
+				memcpy(dest_pixels, pixels, pitch);
+				pixels += dc->pitch;
+				dest_pixels += dest_dc->pitch;
+			}
+		}
+	}
 }
 
 static void rtgui_dc_buffer_blit_line(struct rtgui_dc *self, int x1, int x2, int y, rt_uint8_t *line_data)
