@@ -3,6 +3,8 @@
 *.bak
 
 *.pyc
+*.o
+*.obj
 
 .sconsign.dblite
 build/
