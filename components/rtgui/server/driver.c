@@ -13,6 +13,8 @@
  */
 #include <rtthread.h>
 #include <rtgui/driver.h>
+#include <rtgui/region.h>
+#include <rtgui/rtgui_system.h>
 
 struct rtgui_graphic_driver _driver;
 
@@ -30,7 +32,7 @@ void rtgui_graphic_driver_get_rect(const struct rtgui_graphic_driver *driver, rt
 {
     RT_ASSERT(rect != RT_NULL);
 
-	/* use defautl driver */
+	/* use default driver */
 	if (driver == RT_NULL) driver = &_driver;
 
     rect->x1 = rect->y1 = 0;
@@ -52,6 +54,20 @@ rt_err_t rtgui_graphic_set_device(rt_device_t device)
         /* get device information failed */
         return -RT_ERROR;
     }
+
+	/* if the first set graphic device */
+	if (_driver.width == 0 || _driver.height == 0)
+	{
+		rtgui_rect_t rect;
+
+		rtgui_get_mainwin_rect(&rect);
+		if (rect.x2 == 0 || rect.y2 == 0)
+		{
+			rtgui_rect_init(&rect, 0, 0, info.width, info.height);
+			/* re-set main-window */
+			rtgui_set_mainwin_rect(&rect);
+		}
+	}
 
     /* initialize framebuffer driver */
     _driver.device = device;
