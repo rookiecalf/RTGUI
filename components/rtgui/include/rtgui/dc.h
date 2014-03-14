@@ -19,10 +19,8 @@
 #include <rtgui/driver.h>
 #include <rtgui/widgets/widget.h>
 
-#define RTGUI_BLENDMODE_NONE    0x00
-#define RTGUI_BLENDMODE_BLEND   0x01
-#define RTGUI_BLENDMODE_ADD     0x02
-#define RTGUI_BLENDMODE_MOD     0x03
+#define RTGUI_DC(dc)		((struct rtgui_dc*)(dc))
+#define RTGUI_BUFFER_DC(dc)	((struct rtgui_dc_buffer*)(dc))
 
 enum rtgui_dc_type
 {
@@ -76,10 +74,8 @@ struct rtgui_dc_buffer
 
 	/* width and height */
 	rt_uint16_t width, height;
+	/* pitch */
 	rt_uint16_t pitch;
-
-	/* blit info */
-	rtgui_region_t clip;
 
 	/* pixel data */
 	rt_uint8_t *pixel;
@@ -92,6 +88,7 @@ struct rtgui_dc_buffer
 
 /* create a buffer dc */
 struct rtgui_dc *rtgui_dc_buffer_create(int width, int height);
+struct rtgui_dc *rtgui_dc_buffer_create_pixformat(rt_uint8_t pixel_format, int w, int h);
 rt_uint8_t *rtgui_dc_buffer_get_pixel(struct rtgui_dc *dc);
 
 /* begin and end a drawing */

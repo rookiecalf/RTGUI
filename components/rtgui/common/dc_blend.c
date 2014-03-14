@@ -57,7 +57,11 @@ rt_inline rt_uint8_t _dc_get_pixel_format(struct rtgui_dc* dc)
 	if (dc->type == RTGUI_DC_HW || dc->type == RTGUI_DC_CLIENT)
 		pixel_format = hw_driver->pixel_format;
 	else if (dc->type == RTGUI_DC_BUFFER)
-		pixel_format = RTGRAPHIC_PIXEL_FORMAT_ARGB888;
+	{
+		struct rtgui_dc_buffer *buffer = (struct rtgui_dc_buffer*)dc;
+		
+		pixel_format = buffer->pixel_format;
+	}
 
 	return pixel_format;
 }
@@ -69,7 +73,11 @@ rt_inline rt_uint8_t _dc_get_bits_per_pixel(struct rtgui_dc* dc)
 	if (dc->type == RTGUI_DC_HW || dc->type == RTGUI_DC_CLIENT)
 		bits_per_pixel = hw_driver->bits_per_pixel;
 	else if (dc->type == RTGUI_DC_BUFFER)
-		bits_per_pixel = 32;
+	{
+		struct rtgui_dc_buffer *buffer = (struct rtgui_dc_buffer*)dc;
+		
+		bits_per_pixel = rtgui_color_get_bits(buffer->pixel_format);
+	}
 
 	return bits_per_pixel;
 }
@@ -98,15 +106,18 @@ rt_inline rt_uint8_t* _dc_get_pixel(struct rtgui_dc* dc, int x, int y)
 	if ((dc->type == RTGUI_DC_HW) || (dc->type == RTGUI_DC_CLIENT))
 	{
 		pixel = (rt_uint8_t*)(hw_driver->framebuffer);
-		pixel = pixel + y * hw_driver->pitch + x * (hw_driver->bits_per_pixel/8);
+		RT_ASSERT(pixel != RT_NULL);
+
+		pixel = pixel + y * hw_driver->pitch + x * ((hw_driver->bits_per_pixel + 7)/8);
 	}
 	else if (dc->type == RTGUI_DC_BUFFER)
 	{
 		struct rtgui_dc_buffer *dc_buffer;
 
 		dc_buffer = (struct rtgui_dc_buffer*)dc;
-		pixel = dc_buffer->pixel;
-		pixel = pixel + y * dc_buffer->pitch + x * 4;
+
+		pixel = dc_buffer->pixel + y * dc_buffer->pitch + 
+			x * rtgui_color_get_bpp(dc_buffer->pixel_format);
 	}
 
 	return pixel;

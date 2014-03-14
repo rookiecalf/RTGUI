@@ -380,7 +380,7 @@ static void rtgui_event_dump(struct rtgui_app* app, rtgui_event_t *event)
     }
 
     if (event->sender != RT_NULL)
-        sender = event->sender->name;
+        sender = (char*)event->sender->name;
 
     if (event->type >= RTGUI_EVENT_COMMAND)
     {

@@ -275,7 +275,6 @@ do { \
 #define HLINE(type, op, draw_end) \
 { \
     int length; \
-    int pitch = (_dc_get_pitch(dst)); \
     type *pixel; \
     if (x1 <= x2) { \
         pixel = (type *)_dc_get_pixel(dst, x1, y1); \

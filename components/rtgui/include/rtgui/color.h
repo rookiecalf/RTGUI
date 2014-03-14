@@ -135,5 +135,10 @@ rt_inline rtgui_color_t rtgui_color_from_888(rt_uint32_t pixel)
     return color;
 }
 
+/* get the bits of specified pixle format */
+rt_uint8_t rtgui_color_get_bits(rt_uint8_t pixel_format);
+/* get the bytes of specified pixle format */
+rt_uint8_t rtgui_color_get_bpp(rt_uint8_t pixel_format);
+
 #endif
 
