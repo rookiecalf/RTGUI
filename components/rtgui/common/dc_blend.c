@@ -108,7 +108,7 @@ rt_inline rt_uint8_t* _dc_get_pixel(struct rtgui_dc* dc, int x, int y)
 		pixel = (rt_uint8_t*)(hw_driver->framebuffer);
 		RT_ASSERT(pixel != RT_NULL);
 
-		pixel = pixel + y * hw_driver->pitch + x * ((hw_driver->bits_per_pixel + 7)/8);
+		pixel = pixel + y * hw_driver->pitch + x * (_UI_BITBYTES(hw_driver->bits_per_pixel));
 	}
 	else if (dc->type == RTGUI_DC_BUFFER)
 	{

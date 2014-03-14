@@ -140,7 +140,7 @@ void rtgui_mouse_init(void)
 #endif
 
     /* init cursor */
-    _rtgui_cursor->bpp = gd->bits_per_pixel / 8;
+    _rtgui_cursor->bpp = _UI_BITBYTES(gd->bits_per_pixel);
     _rtgui_cursor->screen_pitch = _rtgui_cursor->bpp * gd->width;
 
 #ifdef RTGUI_USING_MOUSE_CURSOR

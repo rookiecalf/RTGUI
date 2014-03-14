@@ -52,7 +52,7 @@ rt_uint8_t rtgui_color_get_bpp(rt_uint8_t pixel_format)
 	
 	if (pixel_format <= RTGRAPHIC_PIXEL_FORMAT_ARGB888)
 	{
-		bpp = (pixel_bits_table[pixel_format] + 7)/8;
+		bpp = _UI_BITBYTES(pixel_bits_table[pixel_format]);
 	}
 
 	return bpp;

@@ -75,7 +75,7 @@ rt_err_t rtgui_graphic_set_device(rt_device_t device)
     _driver.bits_per_pixel = info.bits_per_pixel;
     _driver.width = info.width;
     _driver.height = info.height;
-    _driver.pitch = _driver.width * _driver.bits_per_pixel / 8;
+    _driver.pitch = _driver.width * _UI_BITBYTES(_driver.bits_per_pixel);
     _driver.framebuffer = info.framebuffer;
 
 	/* get graphic extension operations */

@@ -678,12 +678,12 @@ static UINT tjpgd_out_func(JDEC *jdec, void *bitmap, JRECT *rect)
         w = w - rect->left + 1;
         h = rect->bottom < jpeg->dst_h ? rect->bottom : jpeg->dst_h;
         h = h - rect->top + 1;
-        if (jpeg->byte_per_pixel == hw_driver->bits_per_pixel/8)
+        if (jpeg->byte_per_pixel == _UI_BITBYTES(hw_driver->bits_per_pixel))
         {
 			if (hw_driver->pixel_format == RTGRAPHIC_PIXEL_FORMAT_BGR565)
-	            blit_line = rtgui_blit_line_get_inv(hw_driver->bits_per_pixel / 8, jpeg->byte_per_pixel);
+	            blit_line = rtgui_blit_line_get_inv(_UI_BITBYTES(hw_driver->bits_per_pixel), jpeg->byte_per_pixel);
 			else
-				blit_line = rtgui_blit_line_get(hw_driver->bits_per_pixel / 8, jpeg->byte_per_pixel);
+				blit_line = rtgui_blit_line_get(_UI_BITBYTES(hw_driver->bits_per_pixel), jpeg->byte_per_pixel);
         }
 
         if (blit_line)
@@ -958,11 +958,11 @@ static void rtgui_image_jpeg_blit(struct rtgui_image *image,
 
 			if (hw_driver->pixel_format == RTGRAPHIC_PIXEL_FORMAT_BGR565)
 			{
-				blit_line = rtgui_blit_line_get_inv(hw_driver->bits_per_pixel / 8, jpeg->byte_per_pixel);
+				blit_line = rtgui_blit_line_get_inv(_UI_BITBYTES(hw_driver->bits_per_pixel), jpeg->byte_per_pixel);
 			}
 			else 
 			{
-				blit_line = rtgui_blit_line_get(hw_driver->bits_per_pixel / 8, jpeg->byte_per_pixel);
+				blit_line = rtgui_blit_line_get(_UI_BITBYTES(hw_driver->bits_per_pixel), jpeg->byte_per_pixel);
 			}
 
             if (blit_line)

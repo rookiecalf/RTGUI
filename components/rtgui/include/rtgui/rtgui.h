@@ -28,13 +28,17 @@
 #include <rtgui/rtgui_config.h>
 
 #define RTGUI_VERSION          0L        /**< major version number */
-#define RTGUI_SUBVERSION       7L        /**< minor version number */
-#define RTGUI_REVISION         0L        /**< revise version number */
+#define RTGUI_SUBVERSION       8L        /**< minor version number */
+#define RTGUI_REVISION         1L        /**< revise version number */
 #define RTGUI_CODENAME         "Newton"  /**< code name */
 
 #define RT_INT16_MAX        32767
 #define RT_INT16_MIN        (-RT_INT16_MAX-1)
 #define RTGUI_NOT_FOUND     (-1)
+
+#define _UI_MIN(x, y)			(((x)<(y))?(x):(y))
+#define _UI_MAX(x, y)			(((x)>(y))?(x):(y))
+#define _UI_BITBYTES(bits)		((bits + 7)/8)
 
 struct rtgui_event;
 

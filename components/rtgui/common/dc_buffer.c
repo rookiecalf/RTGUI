@@ -284,16 +284,9 @@ static void rtgui_dc_buffer_blit(struct rtgui_dc *self, struct rtgui_point *dc_p
     if (dc_point == RT_NULL) dc_point = &rtgui_empty_point;
     if (rtgui_dc_get_visible(dest) == RT_FALSE) return;
 
-	/* calculate correct width and height */
-	if (rtgui_rect_width(*rect) > (dc->width - dc_point->x))
-		rect_width = dc->width - dc_point->x;
-	else
-		rect_width = rtgui_rect_width(*rect);
-
-	if (rtgui_rect_height(*rect) > (dc->height - dc_point->y))
-		rect_height = dc->height - dc_point->y;
-	else
-		rect_height = rtgui_rect_height(*rect);
+	/* get the minimal width and height */
+	rect_width  = _UI_MIN(rtgui_rect_width(*rect), dc->width - dc_point->x);
+	rect_height = _UI_MIN(rtgui_rect_height(*rect), dc->height - dc_point->y);
 
     if ((dest->type == RTGUI_DC_HW) || (dest->type == RTGUI_DC_CLIENT))
     {
@@ -335,11 +328,11 @@ static void rtgui_dc_buffer_blit(struct rtgui_dc *self, struct rtgui_point *dc_p
         else
         {
             /* get blit line function */
-            blit_line = rtgui_blit_line_get((hw_driver->bits_per_pixel + 7)/8, rtgui_color_get_bpp(dc->pixel_format));
+            blit_line = rtgui_blit_line_get(_UI_BITBYTES(hw_driver->bits_per_pixel), rtgui_color_get_bpp(dc->pixel_format));
             /* calculate pitch */
             pitch = rect_width * rtgui_color_get_bpp(hw_driver->pixel_format);
             /* create line buffer */
-            line_ptr = (rt_uint8_t *) rtgui_malloc(rect_width * hw_driver->bits_per_pixel / 8);
+            line_ptr = (rt_uint8_t *) rtgui_malloc(rect_width * _UI_BITBYTES(hw_driver->bits_per_pixel));
 
             /* draw each line */
             for (index = rect->y1; index < rect->y1 + rect_height; index ++)

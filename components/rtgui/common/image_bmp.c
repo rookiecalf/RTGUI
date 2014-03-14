@@ -514,7 +514,7 @@ static void rtgui_image_bmp_blit(struct rtgui_image *image, struct rtgui_dc *dc,
     bmp = (struct rtgui_image_bmp *)image->data;
     RT_ASSERT(image != RT_NULL || dc != RT_NULL || dst_rect != RT_NULL || bmp != RT_NULL);
 
-    bytePerPixel = (bmp->bit_per_pixel + 7)/ 8;
+    bytePerPixel = _UI_BITBYTES(bmp->bit_per_pixel);
 
 	imageWidth = image->w * bytePerPixel;       /* Scaled width in byte */
     error = RT_FALSE;
@@ -525,22 +525,8 @@ static void rtgui_image_bmp_blit(struct rtgui_image *image, struct rtgui_dc *dc,
         if (rtgui_dc_get_visible(dc) != RT_TRUE) break;
 
         /* the minimum rect */
-        if (image->w < rtgui_rect_width(*dst_rect))
-        {
-            w = image->w;
-        }
-        else
-        {
-            w = rtgui_rect_width(*dst_rect);
-        }
-        if (image->h < rtgui_rect_height(*dst_rect))
-        {
-            h = image->h;
-        }
-        else
-        {
-            h = rtgui_rect_height(*dst_rect);
-        }
+		w = _UI_MIN(image->w, rtgui_rect_width(*dst_rect));
+		h = _UI_MIN(image->h, rtgui_rect_height(*dst_rect));
 
         if (!bmp->is_loaded)
         {
@@ -616,9 +602,6 @@ static void rtgui_image_bmp_blit(struct rtgui_image *image, struct rtgui_dc *dc,
                 /* Process a line */
                 while (readIndex < bmp->pitch)
                 {
-                    /* Put progress indicator */
-                    // rt_kprintf("\r%lu%%", y * 100UL / h);
-
                     /* Read data to buffer */
                     readLength = (BMP_WORKING_BUFFER_SIZE > ((rt_uint16_t)bmp->pitch - readIndex)) ? \
                                  ((rt_uint16_t)bmp->pitch - readIndex) : BMP_WORKING_BUFFER_SIZE;
@@ -696,7 +679,7 @@ static void rtgui_image_bmp_blit(struct rtgui_image *image, struct rtgui_dc *dc,
                     else
                     {
                         rtgui_blit_line_func blit_line;
-                        rt_uint8_t hw_bytePerPixel = hw_driver->bits_per_pixel / 8;
+                        rt_uint8_t hw_bytePerPixel = _UI_BITBYTES(hw_driver->bits_per_pixel);
                         rt_uint8_t temp[4] = {0};
 
                         if (!hw_bytePerPixel)
@@ -791,7 +774,7 @@ static void rtgui_image_bmp_blit(struct rtgui_image *image, struct rtgui_dc *dc,
 			else
 			{
 				rtgui_blit_line_func blit_line;
-				rt_uint8_t hw_bytePerPixel = (hw_driver->bits_per_pixel + 7) / 8;
+				rt_uint8_t hw_bytePerPixel = _UI_BITBYTES(hw_driver->bits_per_pixel);
 				rt_uint8_t *line_data;
 
 				if (hw_driver->pixel_format == RTGRAPHIC_PIXEL_FORMAT_BGR565)
@@ -827,7 +810,7 @@ static void rtgui_image_bmp_blit(struct rtgui_image *image, struct rtgui_dc *dc,
  */
 void rtgui_image_bmp_header_cfg(struct rtgui_image_bmp_header *bhr, rt_int32_t w, rt_int32_t h, rt_uint16_t bits_per_pixel)
 {
-    int image_size = w * h * bits_per_pixel / 8;
+    int image_size = w * h * _UI_BITBYTES(bits_per_pixel);
     int header_size = sizeof(struct rtgui_image_bmp_header);
 
     bhr->bfType = 0x4d42; /* BM */
