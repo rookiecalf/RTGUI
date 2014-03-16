@@ -198,6 +198,22 @@ static void _rtgui_notebook_draw_bar(struct rtgui_notebook *notebook,
     }
 }
 
+static void _rtgui_notebook_ontab(struct rtgui_notebook *notebook, struct rtgui_event *event)
+{
+	int index;
+
+	for (index = 0; index < notebook->count; index ++)
+	{
+		struct rtgui_widget *widget;
+
+		widget = notebook->childs[index].widget;
+		
+		if (RTGUI_OBJECT(widget)->event_handler &&
+			RTGUI_OBJECT(widget)->event_handler(RTGUI_OBJECT(widget), event) == RT_TRUE)
+			break;
+	}
+}
+
 static void _rtgui_notebook_ondraw(struct rtgui_notebook *notebook)
 {
     struct rtgui_dc *dc;
@@ -590,6 +606,10 @@ rt_bool_t rtgui_notebook_event_handler(struct rtgui_object *object, struct rtgui
 
     switch (event->type)
     {
+	case RTGUI_EVENT_COMMAND:
+		/* broadcast on each tab */
+		_rtgui_notebook_ontab(notebook, event);
+		break;
     case RTGUI_EVENT_PAINT:
         _rtgui_notebook_ondraw(notebook);
         break;

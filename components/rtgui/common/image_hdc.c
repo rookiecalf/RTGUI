@@ -165,10 +165,8 @@ static void rtgui_image_hdc_blit(struct rtgui_image *image, struct rtgui_dc *dc,
     RT_ASSERT(hdc != RT_NULL);
 
     /* the minimum rect */
-    if (image->w < rtgui_rect_width(*dst_rect)) w = image->w;
-    else w = rtgui_rect_width(*dst_rect);
-    if (image->h < rtgui_rect_height(*dst_rect)) h = image->h;
-    else h = rtgui_rect_height(*dst_rect);
+	w = _UI_MIN(image->w, rtgui_rect_width(*dst_rect));
+	h = _UI_MIN(image->h, rtgui_rect_height(*dst_rect));
 
     if (hdc->pixels != RT_NULL)
     {
@@ -220,11 +218,8 @@ static void rtgui_image_hdcmm_blit(struct rtgui_image *image, struct rtgui_dc *d
     RT_ASSERT(hdc != RT_NULL);
 
     /* the minimum rect */
-    if (image->w < rtgui_rect_width(*dst_rect)) w = image->w;
-    else w = rtgui_rect_width(*dst_rect);
-    if (image->h < rtgui_rect_height(*dst_rect)) h = image->h;
-    else h = rtgui_rect_height(*dst_rect);
-
+	w = _UI_MIN(image->w, rtgui_rect_width(*dst_rect));
+	h = _UI_MIN(image->h, rtgui_rect_height(*dst_rect));
 
     /* get pixel pointer */
     ptr = hdc->pixels;
@@ -241,3 +236,4 @@ void rtgui_image_hdc_init()
     /* register hdc on image system */
     rtgui_image_register_engine(&rtgui_image_hdc_engine);
 }
+

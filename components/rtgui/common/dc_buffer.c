@@ -156,7 +156,7 @@ static void rtgui_dc_buffer_draw_color_point(struct rtgui_dc *self, int x, int y
 	switch (dc->pixel_format)
 	{
 	case RTGRAPHIC_PIXEL_FORMAT_RGB565:
-		DRAW_SETPIXEL_RGB555;
+		RGB565_FROM_RGB(*pixel, r, g, b);
 		break;
 	case RTGRAPHIC_PIXEL_FORMAT_BGR565:
 		DRAW_SETPIXEL_BGR565;

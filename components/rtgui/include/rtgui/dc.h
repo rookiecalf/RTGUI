@@ -81,10 +81,10 @@ struct rtgui_dc_buffer
 	rt_uint8_t *pixel;
 };
 
-#define RTGUI_DC_FC(dc)         (rtgui_dc_get_gc(dc)->foreground)
-#define RTGUI_DC_BC(dc)         (rtgui_dc_get_gc(dc)->background)
-#define RTGUI_DC_FONT(dc)       (rtgui_dc_get_gc(dc)->font)
-#define RTGUI_DC_TEXTALIGN(dc)  (rtgui_dc_get_gc(dc)->textalign)
+#define RTGUI_DC_FC(dc)         (rtgui_dc_get_gc(RTGUI_DC(dc))->foreground)
+#define RTGUI_DC_BC(dc)         (rtgui_dc_get_gc(RTGUI_DC(dc))->background)
+#define RTGUI_DC_FONT(dc)       (rtgui_dc_get_gc(RTGUI_DC(dc))->font)
+#define RTGUI_DC_TEXTALIGN(dc)  (rtgui_dc_get_gc(RTGUI_DC(dc))->textalign)
 
 /* create a buffer dc */
 struct rtgui_dc *rtgui_dc_buffer_create(int width, int height);

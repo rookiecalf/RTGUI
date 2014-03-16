@@ -261,20 +261,19 @@ static void rtgui_image_png_blit(struct rtgui_image *image, struct rtgui_dc *dc,
 
     png = (struct rtgui_image_png *) image->data;
 
-    if (image->w < rtgui_rect_width(*rect)) w = image->w;
-    else w = rtgui_rect_width(*rect);
-    if (image->h < rtgui_rect_height(*rect)) h = image->h;
-    else h = rtgui_rect_height(*rect);
+	w = _UI_MIN(image->w, rtgui_rect_width(*rect));
+	h = _UI_MIN(image->h, rtgui_rect_height(*rect));
 
     fg_maxsample = (1 << png->info_ptr->bit_depth) - 1;
 
     if (png->pixels != RT_NULL)
     {
         ptr = (rtgui_color_t *)png->pixels;
-        bgcolor = rtgui_color_from_565(RTGUI_DC_BC(dc));
+        bgcolor = RTGUI_DC_BC(dc);
         bc[0] = RTGUI_RGB_R(bgcolor);
         bc[1] = RTGUI_RGB_G(bgcolor);
         bc[2] = RTGUI_RGB_B(bgcolor);
+
         /* draw each point within dc */
         for (y = 0; y < h; y ++)
         {
@@ -331,6 +330,19 @@ static void rtgui_image_png_blit(struct rtgui_image *image, struct rtgui_dc *dc,
 
         switch (png->info_ptr->color_type)
         {
+		case PNG_COLOR_TYPE_RGB:
+			for (y = 0; y < h; y++)
+			{
+				png_read_row(png->png_ptr, row, png_bytep_NULL);
+				for (x = 0; x < w; x++)
+				{
+					data = &(row[x * 3]);
+					rtgui_dc_draw_color_point(dc, x + rect->x1, y + rect->y1,
+											  RTGUI_RGB(data[0], data[1], data[2]));
+				}
+			}
+			break;
+			
         case PNG_COLOR_TYPE_RGBA:
             for (y = 0; y < h; y++)
             {
