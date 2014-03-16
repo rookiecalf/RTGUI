@@ -107,10 +107,9 @@ static rt_bool_t rtgui_dc_buffer_fini(struct rtgui_dc *dc)
 
 static void rtgui_dc_buffer_draw_point(struct rtgui_dc *self, int x, int y)
 {
-    rt_uint8_t *pixel;
     struct rtgui_dc_buffer *dst;
     unsigned r, g, b, a;
-		
+
     dst = (struct rtgui_dc_buffer *)self;
 
     /* does not draw point out of dc */
@@ -121,51 +120,51 @@ static void rtgui_dc_buffer_draw_point(struct rtgui_dc *self, int x, int y)
 	b = RTGUI_RGB_B(dst->gc.foreground);
 	a = RTGUI_RGB_A(dst->gc.foreground);
 
-	pixel = _dc_get_pixel(dst, x, y);
 	switch (dst->pixel_format)
 	{
 	case RTGRAPHIC_PIXEL_FORMAT_RGB565:
-		DRAW_SETPIXEL_RGB555;
+		DRAW_SETPIXELXY_RGB565(x, y);
 		break;
 	case RTGRAPHIC_PIXEL_FORMAT_BGR565:
-		DRAW_SETPIXEL_BGR565;
+		DRAW_SETPIXELXY_BGR565(x, y);
 		break;
 	case RTGRAPHIC_PIXEL_FORMAT_RGB888:
-		DRAW_SETPIXEL_RGB888;
+		DRAW_SETPIXELXY_RGB888(x, y);
 		break;
 	case RTGRAPHIC_PIXEL_FORMAT_ARGB888:
-		*(rtgui_color_t*)pixel = dst->gc.foreground;
+		DRAW_SETPIXELXY_ARGB8888(x, y);
 		break;
 	}
 }
 
 static void rtgui_dc_buffer_draw_color_point(struct rtgui_dc *self, int x, int y, rtgui_color_t color)
 {
-    rt_uint8_t *pixel;
-    struct rtgui_dc_buffer *dc;
-    unsigned r, g, b, a;
+	struct rtgui_dc_buffer *dst;
+	unsigned r, g, b, a;
 
-    dc = (struct rtgui_dc_buffer *)self;
+	dst = (struct rtgui_dc_buffer *)self;
+
+	/* does not draw point out of dc */
+	if ((x > dst->width) || (y > dst->height)) return ;
 
 	r = RTGUI_RGB_R(color);
 	g = RTGUI_RGB_G(color);
 	b = RTGUI_RGB_B(color);
 	a = RTGUI_RGB_A(color);
 
-	pixel = _dc_get_pixel(dc,x,y);
-	switch (dc->pixel_format)
+	switch (dst->pixel_format)
 	{
 	case RTGRAPHIC_PIXEL_FORMAT_RGB565:
-		RGB565_FROM_RGB(*pixel, r, g, b);
+		DRAW_SETPIXELXY_RGB565(x, y);
 		break;
 	case RTGRAPHIC_PIXEL_FORMAT_BGR565:
-		DRAW_SETPIXEL_BGR565;
+		DRAW_SETPIXELXY_BGR565(x, y);
 		break;
 	case RTGRAPHIC_PIXEL_FORMAT_RGB888:
-		DRAW_SETPIXEL_RGB888;
+		DRAW_SETPIXELXY_RGB888(x, y);
 		break;
 	case RTGRAPHIC_PIXEL_FORMAT_ARGB888:
-		*(rtgui_color_t*)pixel = color;
+		DRAW_SETPIXELXY_ARGB8888(x, y);
 		break;
 	}
 }
