@@ -720,6 +720,7 @@ static rt_bool_t rtgui_image_jpeg_check(struct rtgui_filerw *file)
     rt_bool_t is_JPG;
     JDEC tjpgd;
     void *pool;
+	JRESULT result;
 
     if (!file)
     {
@@ -741,11 +742,16 @@ static rt_bool_t rtgui_image_jpeg_check(struct rtgui_filerw *file)
             break;
         }
 
-        if (jd_prepare(&tjpgd, tjpgd_in_func, pool,
-                       TJPGD_WORKING_BUFFER_SIZE, (void *)&file) == JDR_OK)
+		result = jd_prepare(&tjpgd, tjpgd_in_func, pool,
+			TJPGD_WORKING_BUFFER_SIZE, (void *)&file);
+        if (result == JDR_OK)
         {
             is_JPG = RT_TRUE;
         }
+		else
+		{
+			rt_kprintf("check jpeg mark failed: %d\n", result);
+		}
 
 #ifdef RTGUI_DEBUG_TJPGD
         rt_kprintf("TJPGD: check OK\n");

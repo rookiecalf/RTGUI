@@ -132,6 +132,7 @@ static struct rtgui_image_palette *rtgui_image_bmp_load_palette(
         return RT_NULL;
     }
 
+	palette->ncolors = colorsUsed;
     if (alpha)
     {
         rt_uint8_t temp[4];
@@ -308,11 +309,7 @@ static rt_bool_t rtgui_image_bmp_load(struct rtgui_image *image, struct rtgui_fi
             rt_uint8_t bytePerPixel;
             rt_int8_t scale1, scale2;
 
-            bytePerPixel = bmp->bit_per_pixel / 8;
-            if (!bytePerPixel)
-            {
-                bytePerPixel = 1;
-            }
+            bytePerPixel = _UI_BITBYTES(bmp->bit_per_pixel);
             imageWidth = image->w * bytePerPixel;       /* Scaled width in byte */
             bmp->pixels = rtgui_malloc(image->h * imageWidth);
             if (bmp->pixels == RT_NULL)
@@ -365,9 +362,6 @@ static rt_bool_t rtgui_image_bmp_load(struct rtgui_image *image, struct rtgui_fi
                 /* Process a line */
                 while (readIndex < bmp->pitch)
                 {
-                    /* Put progress indicator */
-                    rt_kprintf("\r%lu%%", y * 100UL / image->h);
-
                     /* Read data to buffer */
                     readLength = (BMP_WORKING_BUFFER_SIZE > ((rt_uint16_t)bmp->pitch - readIndex)) ? \
                                  ((rt_uint16_t)bmp->pitch - readIndex) : BMP_WORKING_BUFFER_SIZE;
