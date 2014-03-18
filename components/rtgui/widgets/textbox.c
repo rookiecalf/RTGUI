@@ -21,6 +21,8 @@
 
 #include <ctype.h>
 
+#include "text_encoding.h"
+
 #define TB_ABSPOS(tb)   ((tb)->first_pos + (tb)->position)
 
 static void rtgui_textbox_draw_caret(rtgui_textbox_t *box, rt_uint16_t position);
@@ -269,31 +271,19 @@ static rt_bool_t rtgui_textbox_onkey(struct rtgui_object *widget, rtgui_event_t 
 	length = rt_strlen((char*)box->text);
 	if (ekbd->key == RTGUIK_DELETE)
 	{
-		/* delete latter character */
-		if (TB_ABSPOS(box) == length - 1)
-		{
-			box->text[TB_ABSPOS(box)] = '\0';
-		}
-		else if (TB_ABSPOS(box) == length - 2 &&
-                 box->text[TB_ABSPOS(box)] > 0x80)
+        int chw;
+        unsigned char *c;
+
+        if (TB_ABSPOS(box) == length)
         {
-			box->text[TB_ABSPOS(box)] = '\0';
+            goto _exit;
         }
-        else
-		{
-            int chw;
-			unsigned char *c;
+        chw = _string_char_width(box->text, length, TB_ABSPOS(box)).char_width;
 
-            if (box->text[TB_ABSPOS(box)] > 0x80)
-                chw = 2;
-            else
-                chw = 1;
-
-			/* remove character */
-			for (c = &box->text[TB_ABSPOS(box)]; c[chw] != '\0'; c++)
-				*c = c[chw];
-			*c = '\0';
-		}
+        /* remove character */
+        for (c = &box->text[TB_ABSPOS(box)]; c[chw] != '\0'; c++)
+            *c = c[chw];
+        *c = '\0';
 	}
 	else if (ekbd->key == RTGUIK_BACKSPACE)
 	{
@@ -306,25 +296,14 @@ static rt_bool_t rtgui_textbox_onkey(struct rtgui_object *widget, rtgui_event_t 
             if(box->first_pos > box->dis_length)
             {
                 int head_fix;
-                int chw;
+                int chw = _string_char_width(box->text, length, TB_ABSPOS(box) - 1).char_width;
 
-                if (box->text[TB_ABSPOS(box) - 1] < 0x80)
-                {
-                    /* also copy the \0 */
-                    rt_memmove(box->text + TB_ABSPOS(box) - 1,
-                               box->text + TB_ABSPOS(box),
-                                  length - TB_ABSPOS(box) + 1);
-                    chw = 1;
-                }
-                else
-                {
-                    rt_memmove(box->text + TB_ABSPOS(box) - 2,
-                               box->text + TB_ABSPOS(box),
-                                  length - TB_ABSPOS(box) + 1);
-                    chw = 2;
-                }
+                rt_memmove(box->text + TB_ABSPOS(box) - chw,
+                           box->text + TB_ABSPOS(box),
+                           length - TB_ABSPOS(box) + 1);
 
                 head_fix = 0;
+                /* FIXME: */
                 if (box->text[box->first_pos - box->dis_length - chw] > 0x80)
                 {
                     int i;
@@ -369,30 +348,12 @@ static rt_bool_t rtgui_textbox_onkey(struct rtgui_object *widget, rtgui_event_t 
                 box->first_pos = 0;
             }
 		}
-		else if (TB_ABSPOS(box) == length)
-		{
-            if (TB_ABSPOS(box) > 1 &&
-                box->text[TB_ABSPOS(box) - 1] > 0x80)
-            {
-                box->text[TB_ABSPOS(box) - 2] = '\0';
-                box->position -= 2;
-            }
-            else
-            {
-                box->text[TB_ABSPOS(box) - 1] = '\0';
-                box->position -= 1;
-            }
-		}
-		else if (box->position != 0)
+		else
 		{
             unsigned char *c;
             int chw;
 
-            if (box->position > 1 &&
-                box->text[TB_ABSPOS(box) - 1] > 0x80)
-                chw = 2;
-            else
-                chw = 1;
+            chw = _string_char_width(box->text, length, TB_ABSPOS(box) - 1).char_width;
 
             /* remove character */
             for (c = &box->text[TB_ABSPOS(box) - chw]; c[chw] != '\0'; c++)

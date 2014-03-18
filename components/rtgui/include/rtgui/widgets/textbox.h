@@ -57,7 +57,8 @@ struct rtgui_textbox
 	rt_uint16_t line, line_begin, position;
     /** maximum chars a line could hold excluding the NULL byte */
     rt_uint16_t line_length;
-	rt_uint16_t dis_length; /*may be display length.*/
+    /* The length of string that could be displayed in the textbox at one time. */
+	rt_uint16_t dis_length;
 	rt_uint16_t first_pos;
 	char mask_char;
     /** a NULL terminated string that the textbox is holding */
