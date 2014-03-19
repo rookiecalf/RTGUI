@@ -278,7 +278,7 @@ static rt_bool_t rtgui_textbox_onkey(struct rtgui_object *widget, rtgui_event_t 
         {
             goto _exit;
         }
-        chw = _string_char_width(box->text, length, TB_ABSPOS(box)).char_width;
+        chw = _string_char_width((char*)box->text, length, TB_ABSPOS(box)).char_width;
 
         /* remove character */
         for (c = &box->text[TB_ABSPOS(box)]; c[chw] != '\0'; c++)
@@ -296,7 +296,7 @@ static rt_bool_t rtgui_textbox_onkey(struct rtgui_object *widget, rtgui_event_t 
             if(box->first_pos > box->dis_length)
             {
                 int head_fix;
-                int chw = _string_char_width(box->text, length, TB_ABSPOS(box) - 1).char_width;
+                int chw = _string_char_width((char*)box->text, length, TB_ABSPOS(box) - 1).char_width;
 
                 rt_memmove(box->text + TB_ABSPOS(box) - chw,
                            box->text + TB_ABSPOS(box),
@@ -353,7 +353,7 @@ static rt_bool_t rtgui_textbox_onkey(struct rtgui_object *widget, rtgui_event_t 
             unsigned char *c;
             int chw;
 
-            chw = _string_char_width(box->text, length, TB_ABSPOS(box) - 1).char_width;
+            chw = _string_char_width((char*)box->text, length, TB_ABSPOS(box) - 1).char_width;
 
             /* remove character */
             for (c = &box->text[TB_ABSPOS(box) - chw]; c[chw] != '\0'; c++)
