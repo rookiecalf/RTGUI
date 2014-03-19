@@ -651,9 +651,16 @@ static void _rtgui_topwin_clear_modal_tree(struct rtgui_topwin *topwin)
     while (!IS_ROOT_WIN(topwin))
     {
         rt_list_foreach(node, &topwin->parent->child_list, next)
-        get_topwin_from_list(node)->flag &= ~WINTITLE_MODALED;
+        {
+            get_topwin_from_list(node)->flag &= ~WINTITLE_MODALED;
+            if (get_topwin_from_list(node)->flag & WINTITLE_MODALING)
+            {
+                goto _out;
+            }
+        }
         topwin = topwin->parent;
     }
+_out:
     /* clear the modal flag of the root window */
     topwin->flag &= ~WINTITLE_MODALED;
 }
@@ -697,8 +704,8 @@ rt_err_t rtgui_topwin_hide(struct rtgui_event_win *event)
 
     if (topwin->flag & WINTITLE_MODALING)
     {
-        _rtgui_topwin_clear_modal_tree(topwin);
         topwin->flag &= ~WINTITLE_MODALING;
+        _rtgui_topwin_clear_modal_tree(topwin);
     }
 
     if (old_focus_topwin == topwin)
@@ -1229,7 +1236,11 @@ RTM_EXPORT(rtgui_get_self_object);
 
 static void _rtgui_topwin_dump(struct rtgui_topwin *topwin)
 {
-    rt_kprintf("0x%p:%s,0x%x", topwin, topwin->wid->title, topwin->flag);
+    rt_kprintf("0x%p:%s,0x%x,%c%c",
+               topwin, topwin->wid->title, topwin->flag,
+               topwin->flag & WINTITLE_SHOWN ? 'S' : 'H',
+               topwin->flag & WINTITLE_MODALED ? 'm' :
+                  topwin->flag & WINTITLE_MODALING ? 'M' : ' ');
 }
 
 static void _rtgui_topwin_dump_tree(struct rtgui_topwin *topwin)
