@@ -635,17 +635,11 @@ void rtgui_edit_set_text(struct rtgui_edit *edit, const char *text)
     begin = text;
     for (ptr = begin; *ptr != '\0'; ptr++)
     {
-        if (*ptr == 0x0A)
+        if (*ptr == '\n')
         {
-            /* unix style */
+            /* rtgui_edit_append_line will deal with the \r if there is any. */
             rtgui_edit_append_line(edit, begin);
             begin = ptr + 1;
-        }
-        else if (*ptr == 0x0D && *(ptr + 1) == 0x0A)
-        {
-            /* windows style */
-            rtgui_edit_append_line(edit, begin);
-            begin = ptr + 2;
         }
     }
     /* Append the last line. */
