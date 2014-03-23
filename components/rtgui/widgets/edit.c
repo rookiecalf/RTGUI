@@ -325,7 +325,7 @@ static int _line_cursor_pos_at(struct edit_line *line, int offset)
     if (offset >= line->len)
         return line->len;
 
-    pos = _string_char_width(line->text, line->len, offset);
+    pos = _string_char_width(line->text, line->len + 1, offset);
     if (pos.char_width == pos.remain)
         /* We are at the beginning of the char. No need to adjust. */
         return offset;
@@ -344,7 +344,7 @@ static int _edit_char_width(struct rtgui_edit *edit,
 
     RT_ASSERT(abs_pos < line->len);
 
-    return _string_char_width(line->text, line->len, abs_pos).char_width;
+    return _string_char_width(line->text, line->len + 1, abs_pos).char_width;
 }
 
 /* Should be called before update/ondraw. See the comment on _edit_show_caret.
@@ -923,7 +923,7 @@ static void rtgui_edit_onmouse(struct rtgui_edit *edit, struct rtgui_event_mouse
                     /* Clicked on the chars. Adjust the pos on need. */
                     struct rtgui_char_position pos;
 
-                    pos = _string_char_width(line->text, line->len,
+                    pos = _string_char_width(line->text, line->len + 1,
                                              edit->upleft.x + x);
 
                     edit->visual.x = x + pos.char_width - pos.remain;
@@ -1815,7 +1815,7 @@ static void rtgui_edit_update(struct rtgui_edit *edit)
             src = line->text + src_offset;
 
         /* Fixup the wchar. */
-        pos = _string_char_width(line->text, line->len,
+        pos = _string_char_width(line->text, line->len + 1,
                                  src - line->text);
         if (pos.char_width != pos.remain)
         {
@@ -1891,7 +1891,7 @@ void rtgui_edit_ondraw(struct rtgui_edit *edit)
                 char *str = line->text + edit->upleft.x;
                 struct rtgui_char_position pos;
 
-                pos = _string_char_width(line->text, line->len,
+                pos = _string_char_width(line->text, line->len + 1,
                                          edit->upleft.x);
                 if (pos.char_width != pos.remain)
                 {
