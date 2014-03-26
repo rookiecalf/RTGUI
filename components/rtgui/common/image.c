@@ -154,11 +154,6 @@ struct rtgui_image *rtgui_image_create_from_file(const char *type, const char *f
 
         /* set image engine */
         image->engine = engine;
-		if (load == RT_TRUE)
-		{
-			/* load all of data, close the file */
-			rtgui_filerw_close(filerw);
-		}
     }
     else
     {
@@ -208,11 +203,6 @@ struct rtgui_image *rtgui_image_create(const char *filename, rt_bool_t load)
 
         /* set image engine */
         image->engine = engine;
-		if (load == RT_TRUE)
-		{
-			/* load all of data, close the file */
-			rtgui_filerw_close(filerw);
-		}
     }
     else
     {

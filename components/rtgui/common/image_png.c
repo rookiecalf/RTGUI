@@ -211,6 +211,8 @@ static rt_bool_t rtgui_image_png_load(struct rtgui_image *image, struct rtgui_fi
         }
 
         rtgui_image_png_process(png->png_ptr, png->info_ptr, png);
+		/* close file handler */
+		rtgui_filerw_close(png->filerw);
 		png->filerw = RT_NULL;
     }
     else
