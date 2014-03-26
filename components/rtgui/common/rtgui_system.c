@@ -354,14 +354,14 @@ const char *event_string[] =
     "MOUSE_MOTION",         /* mouse motion */
     "MOUSE_BUTTON",         /* mouse button info    */
     "KBD",                  /* keyboard info        */
+    "TOUCH",                /* touch info           */
 
-    /* user command event */
-    "COMMAND",              /* user command         */
-
-    /* request's status event */
-    "STATUS",               /* request result       */
+    "FOCUSED",              /* widget got focuse    */
     "SCROLLED",             /* scroll bar scrolled  */
     "RESIZE",               /* widget resize        */
+    "SELECTED",             /* widget selected      */
+    "UNSELECTED",           /* widget unselected    */
+    "MV_MODEL",             /* modal chaned in MV   */
 };
 
 #define DBG_MSG(x)  rt_kprintf x
@@ -384,7 +384,7 @@ static void rtgui_event_dump(struct rtgui_app* app, rtgui_event_t *event)
 
     if (event->type >= RTGUI_EVENT_COMMAND)
     {
-        rt_kprintf("%s -- USER EVENT --> %s \n", sender, app->name);
+        rt_kprintf("%s -- USER COMMAND EVENT --> %s \n", sender, app->name);
         return ;
     }
     else
