@@ -19,7 +19,7 @@
 
 #define RTGUI_ARGB(a, r, g, b)  \
         ((rtgui_color_t)(((rt_uint8_t)(r)|\
-        (((unsigned)(rt_uint8_t)(g))<<8))|\
+        (((unsigned long)(rt_uint8_t)(g))<<8))|\
         (((unsigned long)(rt_uint8_t)(b))<<16)|\
         (((unsigned long)(rt_uint8_t)(a))<<24)))
 #define RTGUI_RGB(r, g, b)  RTGUI_ARGB(255, (r), (g), (b))
@@ -42,8 +42,9 @@ extern const rtgui_color_t dark_grey;
 extern const rtgui_color_t light_grey;
 
 /*
- * RTGUI default color format
- * BBBB BBBB GGGG GGGG RRRR RRRR
+ * RTGUI default color format: ABGR
+ * AAAA AAAA BBBB BBBB GGGG GGGG RRRR RRRR
+ * 31                                    0
  */
 
 /* convert rtgui color to mono */

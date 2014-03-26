@@ -152,10 +152,62 @@
     a = rtgui_blit_expand_byte[6][(Pixel>>30)];                         \
 }
 
+/* 4-times unrolled loop */
+#define DUFFS_LOOP4(pixel_copy_increment, width)                        \
+{ int n = (width+3)/4;                                                  \
+    switch (width & 3) {                                                \
+    case 0: do {    pixel_copy_increment;                               \
+    case 3:     pixel_copy_increment;                                   \
+    case 2:     pixel_copy_increment;                                   \
+    case 1:     pixel_copy_increment;                                   \
+        } while (--n > 0);                                              \
+    }                                                                   \
+}
+
+/* 8-times unrolled loop */
+#define DUFFS_LOOP8(pixel_copy_increment, width)                        \
+{ int n = (width+7)/8;                                                  \
+    switch (width & 7) {                                                \
+    case 0: do {    pixel_copy_increment;                               \
+    case 7:     pixel_copy_increment;                                   \
+    case 6:     pixel_copy_increment;                                   \
+    case 5:     pixel_copy_increment;                                   \
+    case 4:     pixel_copy_increment;                                   \
+    case 3:     pixel_copy_increment;                                   \
+    case 2:     pixel_copy_increment;                                   \
+    case 1:     pixel_copy_increment;                                   \
+        } while ( --n > 0 );                                            \
+    }                                                                   \
+}
+
+/* Use the 8-times version of the loop by default */
+#define DUFFS_LOOP(pixel_copy_increment, width)                         \
+    DUFFS_LOOP8(pixel_copy_increment, width)
+
+struct rtgui_blit_info
+{
+    rt_uint8_t *src;
+    int src_w, src_h;
+    int src_pitch;
+    int src_skip;
+
+    rt_uint8_t *dst;
+    int dst_w, dst_h;
+    int dst_pitch;
+    int dst_skip;
+
+    rt_uint8_t src_fmt;
+    rt_uint8_t dst_fmt;
+    rt_uint8_t r, g, b, a;
+};
+
 extern const rt_uint8_t* rtgui_blit_expand_byte[9];
 
 typedef void (*rtgui_blit_line_func)(rt_uint8_t *dst, rt_uint8_t *src, int line);
 rtgui_blit_line_func rtgui_blit_line_get(int dst_bpp, int src_bpp);
 rtgui_blit_line_func rtgui_blit_line_get_inv(int dst_bpp, int src_bpp);
 
+void rtgui_blit(struct rtgui_blit_info * info);
+
 #endif
+
