@@ -36,7 +36,7 @@ static void _rtgui_listctrl_constructor(struct rtgui_listctrl *ctrl)
 }
 
 DEFINE_CLASS_TYPE(listctrl, "listctrl",
-                  RTGUI_WIDGET_TYPE,
+                  RTGUI_PARENT_TYPE(widget),
                   _rtgui_listctrl_constructor,
                   RT_NULL,
                   sizeof(struct rtgui_listctrl));

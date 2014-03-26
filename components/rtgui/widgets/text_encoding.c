@@ -1,5 +1,5 @@
 #include <rtthread.h>
-#include <stdint.h>
+// #include <stdint.h>
 #include "text_encoding.h"
 
 /* GB18030 encoding:
@@ -10,7 +10,7 @@
  */
 struct rtgui_char_position _string_char_width(char *str, size_t len, size_t offset)
 {
-    struct rtgui_char_position pos;
+    struct rtgui_char_position pos = {0, 0};
     unsigned char *pc;
 
     RT_ASSERT(offset < len);

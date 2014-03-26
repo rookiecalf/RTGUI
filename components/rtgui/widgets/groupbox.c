@@ -30,7 +30,7 @@ static void _rtgui_groupbox_constructor(rtgui_groupbox_t *box)
 }
 
 DEFINE_CLASS_TYPE(groupbox, "groupbox",
-                  RTGUI_PANEL_TYPE,
+                  RTGUI_PARENT_TYPE(panel),
                   _rtgui_groupbox_constructor,
                   RT_NULL,
                   sizeof(struct rtgui_groupbox));

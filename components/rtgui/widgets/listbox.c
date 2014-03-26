@@ -35,7 +35,7 @@ static void _rtgui_listbox_constructor(struct rtgui_listbox *box)
 }
 
 DEFINE_CLASS_TYPE(listbox, "listbox",
-                  RTGUI_WIDGET_TYPE,
+                  RTGUI_PARENT_TYPE(widget),
                   _rtgui_listbox_constructor,
                   RT_NULL,
                   sizeof(struct rtgui_listbox));

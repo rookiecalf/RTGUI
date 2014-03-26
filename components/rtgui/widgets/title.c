@@ -30,7 +30,7 @@ static void _rtgui_wintitle_deconstructor(rtgui_wintitle_t *wintitle)
 }
 
 DEFINE_CLASS_TYPE(wintitle, "wintitle",
-                  RTGUI_WIDGET_TYPE,
+                  RTGUI_PARENT_TYPE(widget),
                   _rtgui_wintitle_constructor,
                   _rtgui_wintitle_deconstructor,
                   sizeof(struct rtgui_wintitle));

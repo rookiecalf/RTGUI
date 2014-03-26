@@ -33,8 +33,6 @@ struct rtgui_image_engine rtgui_image_png_engine =
     rtgui_image_png_load,
     rtgui_image_png_unload,
     rtgui_image_png_blit,
-    RT_NULL,
-    RT_NULL
 };
 
 static void rtgui_image_png_read_data(png_structp png_ptr, png_bytep data, png_size_t length)
@@ -213,6 +211,7 @@ static rt_bool_t rtgui_image_png_load(struct rtgui_image *image, struct rtgui_fi
         }
 
         rtgui_image_png_process(png->png_ptr, png->info_ptr, png);
+		png->filerw = RT_NULL;
     }
     else
     {
@@ -245,7 +244,6 @@ static void rtgui_image_png_unload(struct rtgui_image *image)
 
 static void rtgui_image_png_blit(struct rtgui_image *image, struct rtgui_dc *dc, struct rtgui_rect *rect)
 {
-    struct rtgui_graphic_driver *hwdev = rtgui_graphic_get_device();
     rt_uint16_t x, y, w, h;
     rtgui_color_t *ptr;
     struct rtgui_image_png *png;
@@ -255,6 +253,7 @@ static void rtgui_image_png_blit(struct rtgui_image *image, struct rtgui_dc *dc,
     rtgui_color_t color;
     rtgui_color_t c, bgcolor;
     int fc[3], bc[3];
+    struct rtgui_graphic_driver *hwdev = rtgui_graphic_get_device();
 
     RT_ASSERT(image != RT_NULL && dc != RT_NULL && rect != RT_NULL);
     RT_ASSERT(image->data != RT_NULL);
@@ -389,3 +388,4 @@ void rtgui_image_png_init()
     rtgui_image_register_engine(&rtgui_image_png_engine);
 }
 #endif
+

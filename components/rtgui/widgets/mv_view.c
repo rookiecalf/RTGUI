@@ -41,7 +41,7 @@ static void _rtgui_mv_view_destructor(struct rtgui_mv_view *view)
 }
 
 DEFINE_CLASS_TYPE(mv_view, "mv_view",
-                  RTGUI_WIDGET_TYPE,
+                  RTGUI_PARENT_TYPE(widget),
                   _rtgui_mv_view_constructor,
                   _rtgui_mv_view_destructor,
                   sizeof(struct rtgui_mv_view));

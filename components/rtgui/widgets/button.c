@@ -54,7 +54,7 @@ static void _rtgui_button_destructor(rtgui_button_t *button)
 }
 
 DEFINE_CLASS_TYPE(button, "button",
-                  RTGUI_LABEL_TYPE,
+                  RTGUI_PARENT_TYPE(label),
                   _rtgui_button_constructor,
                   _rtgui_button_destructor,
                   sizeof(struct rtgui_button));

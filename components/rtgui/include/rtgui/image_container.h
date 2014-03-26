@@ -22,6 +22,8 @@ rtgui_image_item_t *rtgui_image_container_get(const char *filename);
 rtgui_image_item_t *rtgui_image_container_get_from_mem(const rt_uint8_t *mem, const char *type, rt_uint32_t len);
 
 void rtgui_image_container_put(rtgui_image_item_t *item);
+void rtgui_image_container_put_image(struct rtgui_image *image);
+
 #endif
 
 #endif

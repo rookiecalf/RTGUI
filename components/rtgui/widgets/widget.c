@@ -101,13 +101,13 @@ static void _rtgui_widget_destructor(rtgui_widget_t *widget)
 }
 
 DEFINE_CLASS_TYPE(widget, "widget",
-                  RTGUI_OBJECT_TYPE,
+                  RTGUI_PARENT_TYPE(object),
                   _rtgui_widget_constructor,
                   _rtgui_widget_destructor,
                   sizeof(struct rtgui_widget));
 RTM_EXPORT(_rtgui_widget);
 
-rtgui_widget_t *rtgui_widget_create(rtgui_type_t *widget_type)
+rtgui_widget_t *rtgui_widget_create(const rtgui_type_t *widget_type)
 {
     struct rtgui_widget *widget;
 

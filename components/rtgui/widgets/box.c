@@ -26,7 +26,7 @@ static void _rtgui_box_constructor(rtgui_box_t *box)
 }
 
 DEFINE_CLASS_TYPE(box, "box",
-                  RTGUI_OBJECT_TYPE,
+                  RTGUI_PARENT_TYPE(object),
                   _rtgui_box_constructor,
                   RT_NULL,
                   sizeof(struct rtgui_box));

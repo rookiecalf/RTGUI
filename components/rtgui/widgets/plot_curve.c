@@ -32,7 +32,7 @@ static void _rtgui_plot_curve_destructor(struct rtgui_plot_curve *curve)
 }
 
 DEFINE_CLASS_TYPE(plot_curve, "plot_curve",
-                  RTGUI_MV_MODEL_TYPE,
+                  RTGUI_PARENT_TYPE(mv_model),
                   _rtgui_plot_curve_constructor,
                   _rtgui_plot_curve_destructor,
                   sizeof(struct rtgui_plot_curve));

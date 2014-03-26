@@ -44,7 +44,7 @@ static void _rtgui_iconbox_destructor(rtgui_iconbox_t *iconbox)
 }
 
 DEFINE_CLASS_TYPE(iconbox, "iconbox",
-                  RTGUI_WIDGET_TYPE,
+                  RTGUI_PARENT_TYPE(widget),
                   _rtgui_iconbox_constructor,
                   _rtgui_iconbox_destructor,
                   sizeof(struct rtgui_iconbox));

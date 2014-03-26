@@ -154,6 +154,11 @@ struct rtgui_image *rtgui_image_create_from_file(const char *type, const char *f
 
         /* set image engine */
         image->engine = engine;
+		if (load == RT_TRUE)
+		{
+			/* load all of data, close the file */
+			rtgui_filerw_close(filerw);
+		}
     }
     else
     {
@@ -203,6 +208,11 @@ struct rtgui_image *rtgui_image_create(const char *filename, rt_bool_t load)
 
         /* set image engine */
         image->engine = engine;
+		if (load == RT_TRUE)
+		{
+			/* load all of data, close the file */
+			rtgui_filerw_close(filerw);
+		}
     }
     else
     {
@@ -324,23 +334,3 @@ void rtgui_image_get_rect(struct rtgui_image *image, struct rtgui_rect *rect)
     rect->y2 = image->h;
 }
 RTM_EXPORT(rtgui_image_get_rect);
-
-rtgui_image_t *rtgui_image_zoom(rtgui_image_t *image, float scalew, float scaleh, rt_uint32_t mode)
-{
-    if (image != RT_NULL && image->engine != RT_NULL)
-    {
-        return image->engine->image_zoom(image, scalew, scaleh, mode);
-    }
-    return RT_NULL;
-}
-RTM_EXPORT(rtgui_image_zoom);
-
-rtgui_image_t *rtgui_image_rotate(rtgui_image_t *image, float angle)
-{
-    if (image != RT_NULL && image->engine != RT_NULL)
-    {
-        return image->engine->image_rotate(image, angle);
-    }
-    return RT_NULL;
-}
-RTM_EXPORT(rtgui_image_rotate);

@@ -61,7 +61,7 @@ rt_bool_t rtgui_combobox_pdwin_ondeactive(struct rtgui_object *object, struct rt
 }
 
 DEFINE_CLASS_TYPE(combobox, "combobox",
-                  RTGUI_WIDGET_TYPE,
+                  RTGUI_PARENT_TYPE(widget),
                   _rtgui_combobox_constructor,
                   _rtgui_combobox_destructor,
                   sizeof(struct rtgui_combobox));

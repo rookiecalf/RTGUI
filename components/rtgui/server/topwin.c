@@ -410,7 +410,7 @@ static void _rtgui_topwin_move_whole_tree2top(struct rtgui_topwin *topwin)
     {
         /* botton layer window, before the fisrt bottom window or hidden window. */
         struct rt_list_node *node;
-        struct rtgui_topwin *ntopwin;
+        struct rtgui_topwin *ntopwin = RT_NULL;
 
         rt_list_foreach(node, &_rtgui_topwin_list, next)
         {
@@ -429,7 +429,7 @@ static void _rtgui_topwin_move_whole_tree2top(struct rtgui_topwin *topwin)
     else
     {
         /* normal layer window, before the fisrt shown normal layer window. */
-        struct rtgui_topwin *ntopwin;
+        struct rtgui_topwin *ntopwin = RT_NULL;
         struct rt_list_node *node;
 
         rt_list_foreach(node, &_rtgui_topwin_list, next)

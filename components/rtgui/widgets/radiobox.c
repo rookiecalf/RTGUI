@@ -23,7 +23,7 @@ static void _rtgui_radiobox_constructor(rtgui_radiobox_t *radiobox)
 }
 
 DEFINE_CLASS_TYPE(radiobox, "radiobox",
-                  RTGUI_WIDGET_TYPE,
+                  RTGUI_PARENT_TYPE(widget),
                   _rtgui_radiobox_constructor,
                   RT_NULL,
                   sizeof(struct rtgui_radiobox));

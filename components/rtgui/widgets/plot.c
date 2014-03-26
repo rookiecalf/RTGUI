@@ -31,7 +31,7 @@ static void _rtgui_plot_destructor(struct rtgui_plot *plot)
 }
 
 DEFINE_CLASS_TYPE(plot, "plot",
-                  RTGUI_MV_VIEW_TYPE,
+                  RTGUI_PARENT_TYPE(mv_view),
                   _rtgui_plot_constructor,
                   _rtgui_plot_destructor,
                   sizeof(struct rtgui_plot));

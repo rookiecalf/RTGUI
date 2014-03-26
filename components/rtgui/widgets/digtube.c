@@ -34,7 +34,7 @@ static void _rtgui_digtube_destructor(struct rtgui_digtube *digtube)
 }
 
 DEFINE_CLASS_TYPE(digtube, "digtube",
-				  RTGUI_WIDGET_TYPE,
+				  RTGUI_PARENT_TYPE(widget),
 				  _rtgui_digtube_constructor,
 				  _rtgui_digtube_destructor,
 				  sizeof(struct rtgui_digtube));
@@ -45,7 +45,7 @@ rt_bool_t rtgui_digtube_event_handler(struct rtgui_object *object, struct rtgui_
     struct rtgui_dc *dc;
     rtgui_rect_t rect;
     rtgui_rect_t text_rect;
-	rtgui_color_t color;
+	rtgui_color_t color = 0;
 	char * disbuf;
 	char tempbuf[8];
 	int i;

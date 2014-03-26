@@ -388,7 +388,7 @@ static void _rtgui_filelist_view_destructor(struct rtgui_filelist_view *view)
 }
 
 DEFINE_CLASS_TYPE(filelist, "filelist",
-                  RTGUI_CONTAINER_TYPE,
+                  RTGUI_PARENT_TYPE(container),
                   _rtgui_filelist_view_constructor,
                   _rtgui_filelist_view_destructor,
                   sizeof(struct rtgui_filelist_view));

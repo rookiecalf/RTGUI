@@ -1,3 +1,4 @@
+#include <rtgui/rtgui_system.h>
 #include <rtgui/image_container.h>
 
 #ifdef RTGUI_IMAGE_CONTAINER
@@ -29,7 +30,7 @@ unsigned int direct_hash(const void *v);
 typedef struct _gui_hash_node rtgui_hash_node_t;
 struct _gui_hash_node
 {
-    void *key;
+    const void *key;
     void *value;
     rtgui_hash_node_t *next;
 };
@@ -61,27 +62,6 @@ static const unsigned int primes[] =
     2777,
     4177,
     6247,
-    /*
-        9371,
-        14057,
-        21089,
-        31627,
-        47431,
-        71143,
-        106721,
-        160073,
-        240101,
-        360163,
-        540217,
-        810343,
-        1215497,
-        1823231,
-        2734867,
-        4102283,
-        6153409,
-        9230113,
-        13845163,
-    */
 };
 
 static const unsigned int nprimes = sizeof(primes) / sizeof(primes[0]);
@@ -206,13 +186,15 @@ rt_bool_t hash_table_remove(rtgui_hash_table_t *hash_table, const void  *key)
     node = hash_table_find_node(hash_table, key);
     if (*node)
     {
+		rt_enter_critical();
         dest = *node;
         (*node) = dest->next;
         hash_node_destroy(dest);
         hash_table->nnodes--;
 
         hash_table_needresize(hash_table);
-
+		rt_exit_critical();
+		
         return RT_TRUE;
     }
 
@@ -280,7 +262,7 @@ static void hash_table_resize(rtgui_hash_table_t *hash_table)
     hash_table->size = new_size;
 }
 
-static rtgui_hash_node_t *hash_node_create(void *key, void *value)
+static rtgui_hash_node_t *hash_node_create(const void *key, void *value)
 {
     rtgui_hash_node_t *hash_node;
 
@@ -333,7 +315,9 @@ unsigned int string_hash_func(const void *self)
     for (p = self; *p != '\0'; p += 1)
     {
         h = (h << 4) + *p;
-        if ((g = h & 0xf0000000))
+        g = h;
+        
+        if (g & 0xf0000000)
         {
             h = h ^ (g >> 24);
             h = h ^ g;
@@ -377,13 +361,15 @@ rtgui_image_item_t *rtgui_image_container_get(const char *filename)
         if (item == RT_NULL) return RT_NULL;
 
         /* create a image object */
+		rt_kprintf("loading image:%s to container...", filename);
         item->image = rtgui_image_create(filename, load_image);
         if (item->image == RT_NULL)
         {
+			rt_kprintf("failed!\n");
             rtgui_free(item);
             return RT_NULL; /* create image failed */
         }
-
+		rt_kprintf("done!\n");
         item->refcount = 1;
         item->filename = rt_strdup(filename);
         hash_table_insert(image_hash_table, item->filename, item);
@@ -442,6 +428,31 @@ void rtgui_image_container_put(rtgui_image_item_t *item)
         rtgui_image_destroy(item->image);
         rtgui_free(item);
     }
+}
+
+void rtgui_image_container_put_image(struct rtgui_image *image)
+{
+    int i;
+    rtgui_hash_node_t *node;
+	rtgui_hash_table_t *hash_table = image_hash_table;
+	struct rtgui_image_item *item = RT_NULL;
+	
+    RT_ASSERT(hash_table != RT_NULL);
+
+    for (i = 0; i < hash_table->size; i++)
+    {
+        for (node = hash_table->nodes[i]; node; node = node->next)
+        {
+			item = (struct rtgui_image_item*)node->value;
+			if (item->image == image) 
+			{
+				rtgui_image_container_put(item);
+				return;
+			}
+        }
+    }
+
+	return;
 }
 
 #endif

@@ -243,7 +243,7 @@ static void _rtgui_textview_destructor(rtgui_textview_t *textview)
 }
 
 DEFINE_CLASS_TYPE(textview, "textview",
-                  RTGUI_WIDGET_TYPE,
+                  RTGUI_PARENT_TYPE(widget),
                   _rtgui_textview_constructor,
                   _rtgui_textview_destructor,
                   sizeof(struct rtgui_textview));

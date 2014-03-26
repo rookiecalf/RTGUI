@@ -38,7 +38,7 @@ static void _rtgui_list_view_constructor(struct rtgui_list_view *view)
 }
 
 DEFINE_CLASS_TYPE(listview, "listview",
-                  RTGUI_CONTAINER_TYPE,
+                  RTGUI_PARENT_TYPE(container),
                   _rtgui_list_view_constructor,
                   RT_NULL,
                   sizeof(struct rtgui_list_view));
@@ -652,4 +652,30 @@ void rtgui_list_view_destroy(rtgui_list_view_t *view)
     rtgui_widget_destroy(RTGUI_WIDGET(view));
 }
 RTM_EXPORT(rtgui_list_view_destroy);
+
+void rtgui_list_view_set_items(rtgui_list_view_t *view, const struct rtgui_list_item *items, rt_uint16_t count)
+{
+	struct rtgui_rect rect;
+	
+	RT_ASSERT(view != RT_NULL);
+
+	/* get rect info */
+	rtgui_widget_get_rect(RTGUI_WIDGET(view), &rect);
+
+	/* reset items */
+	view->items = items;
+	view->items_count = count;
+	view->current_item = -1;
+	
+	if (view->flag == RTGUI_LIST_VIEW_LIST)
+	{
+		view->page_items = rtgui_rect_height(rect) / (2 + rtgui_theme_get_selected_height());
+	}
+	else if ((view->flag == RTGUI_LIST_VIEW_ICON) && (count > 0))
+	{
+		rtgui_list_view_calc(view);
+	}
+
+}
+RTM_EXPORT(rtgui_list_view_set_items);
 

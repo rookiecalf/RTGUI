@@ -26,7 +26,7 @@ static void _rtgui_panel_constructor(rtgui_panel_t *panel)
 }
 
 DEFINE_CLASS_TYPE(panel, "panel",
-                  RTGUI_CONTAINER_TYPE,
+                  RTGUI_PARENT_TYPE(container),
                   _rtgui_panel_constructor,
                   RT_NULL,
                   sizeof(struct rtgui_panel));

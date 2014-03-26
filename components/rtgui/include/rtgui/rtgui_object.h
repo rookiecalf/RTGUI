@@ -46,7 +46,7 @@ struct rtgui_type
     char *name;
 
     /* parent type link */
-    struct rtgui_type *parent;
+    const struct rtgui_type *parent;
 
     /* constructor and destructor */
     rtgui_constructor_t constructor;
@@ -56,13 +56,12 @@ struct rtgui_type
     int size;
 };
 typedef struct rtgui_type rtgui_type_t;
-#define RTGUI_TYPE(type)            (struct rtgui_type*)&(_rtgui_##type)
+#define RTGUI_TYPE(type)            (_rtgui_##type##_get_type())
+#define RTGUI_PARENT_TYPE(type)		(const struct rtgui_type*)(&_rtgui_##type)
 
-#ifdef RTT_IN_MODULE
-	#define DECLARE_CLASS_TYPE(type)    _declspec(dllimport) const struct rtgui_type _rtgui_##type
-#else
-	#define DECLARE_CLASS_TYPE(type)    extern const struct rtgui_type _rtgui_##type
-#endif
+#define DECLARE_CLASS_TYPE(type)    \
+	const rtgui_type_t *_rtgui_##type##_get_type(void); \
+	extern const struct rtgui_type _rtgui_##type
 
 #define DEFINE_CLASS_TYPE(type, name, parent, constructor, destructor, size) \
 	const struct rtgui_type _rtgui_##type = { \
@@ -70,7 +69,9 @@ typedef struct rtgui_type rtgui_type_t;
 	parent, \
 	RTGUI_CONSTRUCTOR(constructor), \
 	RTGUI_DESTRUCTOR(destructor), \
-	size }
+	size }; \
+	const rtgui_type_t *_rtgui_##type##_get_type(void) { return &_rtgui_##type; } \
+	RTM_EXPORT(_rtgui_##type##_get_type)
 
 void          rtgui_type_object_construct(const rtgui_type_t *type, rtgui_object_t *object);
 void          rtgui_type_destructors_call(const rtgui_type_t *type, rtgui_object_t *object);
@@ -118,7 +119,7 @@ struct rtgui_object
     rt_uint32_t id;
 };
 
-rtgui_object_t *rtgui_object_create(rtgui_type_t *object_type);
+rtgui_object_t *rtgui_object_create(const rtgui_type_t *object_type);
 void rtgui_object_destroy(rtgui_object_t *object);
 
 /* set the event handler of object */
@@ -147,8 +148,8 @@ rt_inline rt_bool_t rtgui_object_handle(struct rtgui_object *object, struct rtgu
     return RT_FALSE;
 }
 
-rtgui_object_t *rtgui_object_check_cast(rtgui_object_t *object, rtgui_type_t *type, const char *func, int line);
-rtgui_type_t   *rtk_object_object_type_get(rtgui_object_t *object);
+rtgui_object_t *rtgui_object_check_cast(rtgui_object_t *object, const rtgui_type_t *type, const char *func, int line);
+const rtgui_type_t *rtgui_object_object_type_get(rtgui_object_t *object);
 
 void rtgui_object_set_id(struct rtgui_object *obj, rt_uint32_t id);
 rt_uint32_t rtgui_object_get_id(struct rtgui_object *obj);

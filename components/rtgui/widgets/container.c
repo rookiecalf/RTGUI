@@ -40,7 +40,7 @@ static void _rtgui_container_destructor(rtgui_container_t *container)
 }
 
 DEFINE_CLASS_TYPE(container, "container",
-                  RTGUI_WIDGET_TYPE,
+                  RTGUI_PARENT_TYPE(widget),
                   _rtgui_container_constructor,
                   _rtgui_container_destructor,
                   sizeof(struct rtgui_container));

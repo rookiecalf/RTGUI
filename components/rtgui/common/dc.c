@@ -1369,6 +1369,7 @@ void rtgui_dc_set_gc(struct rtgui_dc *dc, rtgui_gc_t *gc)
     }
 	}
 }
+RTM_EXPORT(rtgui_dc_set_gc);
 
 /*
  * get gc of dc
@@ -1410,6 +1411,7 @@ rtgui_gc_t *rtgui_dc_get_gc(struct rtgui_dc *dc)
 
 	return gc;
 }
+RTM_EXPORT(rtgui_dc_get_gc);
 
 /*
  * get visible status of dc
@@ -1446,6 +1448,7 @@ rt_bool_t rtgui_dc_get_visible(struct rtgui_dc *dc)
 
 	return result;
 }
+RTM_EXPORT(rtgui_dc_get_visible);
 
 /*
  * get rect of dc
@@ -1487,4 +1490,4 @@ void rtgui_dc_get_rect(struct rtgui_dc *dc, rtgui_rect_t *rect)
 
 	return;
 }
-
+RTM_EXPORT(rtgui_dc_get_rect);

@@ -35,7 +35,7 @@ static void _rtgui_label_destructor(rtgui_label_t *label)
 }
 
 DEFINE_CLASS_TYPE(label, "label",
-                  RTGUI_WIDGET_TYPE,
+                  RTGUI_PARENT_TYPE(widget),
                   _rtgui_label_constructor,
                   _rtgui_label_destructor,
                   sizeof(struct rtgui_label));

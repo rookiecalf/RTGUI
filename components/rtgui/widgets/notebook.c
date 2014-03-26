@@ -53,7 +53,7 @@ static void _rtgui_notebook_destructor(struct rtgui_notebook *notebook)
 }
 
 DEFINE_CLASS_TYPE(notebook, "notebook",
-                  RTGUI_WIDGET_TYPE,
+                  RTGUI_PARENT_TYPE(widget),
                   _rtgui_notebook_constructor,
                   _rtgui_notebook_destructor,
                   sizeof(struct rtgui_notebook));

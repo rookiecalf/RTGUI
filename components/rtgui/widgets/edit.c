@@ -97,7 +97,7 @@ void _rtgui_edit_deconstructor(struct rtgui_edit *edit)
 }
 
 DEFINE_CLASS_TYPE(edit, "edit",
-                  RTGUI_WIDGET_TYPE,
+                  RTGUI_PARENT_TYPE(widget),
                   _rtgui_edit_constructor,
                   _rtgui_edit_deconstructor,
                   sizeof(struct rtgui_edit));
@@ -1994,7 +1994,7 @@ rt_bool_t rtgui_edit_event_handler(struct rtgui_object *object, rtgui_event_t *e
 
 rtgui_point_t rtgui_edit_get_current_point(struct rtgui_edit *edit)
 {
-    rtgui_point_t p;
+    rtgui_point_t p = {0, 0};
 
     RT_ASSERT(edit != RT_NULL);
 

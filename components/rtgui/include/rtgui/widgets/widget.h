@@ -135,7 +135,7 @@ struct rtgui_widget
 };
 typedef struct rtgui_widget rtgui_widget_t;
 
-rtgui_widget_t *rtgui_widget_create(rtgui_type_t *widget_type);
+rtgui_widget_t *rtgui_widget_create(const rtgui_type_t *widget_type);
 void rtgui_widget_destroy(rtgui_widget_t *widget);
 
 rt_bool_t rtgui_widget_event_handler(struct rtgui_object *object, rtgui_event_t *event);

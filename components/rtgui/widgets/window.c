@@ -116,7 +116,7 @@ static rt_bool_t _rtgui_win_create_in_server(struct rtgui_win *win)
 }
 
 DEFINE_CLASS_TYPE(win, "win",
-                  RTGUI_CONTAINER_TYPE,
+                  RTGUI_PARENT_TYPE(container),
                   _rtgui_win_constructor,
                   _rtgui_win_destructor,
                   sizeof(struct rtgui_win));

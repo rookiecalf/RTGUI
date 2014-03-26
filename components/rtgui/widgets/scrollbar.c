@@ -71,7 +71,7 @@ rt_uint32_t get_scrollbar_pos(rtgui_scrollbar_t* bar)
 }
 
 DEFINE_CLASS_TYPE(scrollbar, "scrollbar",
-				  RTGUI_WIDGET_TYPE,
+				  RTGUI_PARENT_TYPE(widget),
 				  _rtgui_scrollbar_constructor,
 				  _rtgui_scrollbar_destructor,
 				  sizeof(struct rtgui_scrollbar));

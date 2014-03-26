@@ -37,8 +37,6 @@ struct rtgui_image_engine
     void (*image_unload)(struct rtgui_image *image);
 
     void (*image_blit)(struct rtgui_image *image, struct rtgui_dc *dc, struct rtgui_rect *rect);
-    struct rtgui_image *(*image_zoom)(struct rtgui_image *image, float scalew, float scaleh, rt_uint32_t mode);
-    struct rtgui_image *(*image_rotate)(struct rtgui_image *image, float angle);
 };
 
 struct rtgui_image_palette
@@ -84,8 +82,6 @@ void rtgui_image_register_engine(struct rtgui_image_engine *engine);
 /* blit an image on DC */
 void rtgui_image_blit(struct rtgui_image *image, struct rtgui_dc *dc, struct rtgui_rect *rect);
 struct rtgui_image_palette *rtgui_image_palette_create(rt_uint32_t ncolors);
-rtgui_image_t *rtgui_image_zoom(rtgui_image_t *image, float scalew, float scaleh, rt_uint32_t mode);
-rtgui_image_t *rtgui_image_rotate(rtgui_image_t *image, float angle);
 
 #endif
 

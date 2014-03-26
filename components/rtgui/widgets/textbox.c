@@ -91,7 +91,7 @@ static void _rtgui_textbox_deconstructor(rtgui_textbox_t *textbox)
 }
 
 DEFINE_CLASS_TYPE(textbox, "textbox",
-				  RTGUI_WIDGET_TYPE,
+				  RTGUI_PARENT_TYPE(widget),
 				  _rtgui_textbox_constructor,
 				  _rtgui_textbox_deconstructor,
 				  sizeof(struct rtgui_textbox));

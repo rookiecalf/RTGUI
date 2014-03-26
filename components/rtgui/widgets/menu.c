@@ -151,7 +151,7 @@ static void _rtgui_menu_item_ondraw(struct rtgui_listctrl *list,
 }
 
 DEFINE_CLASS_TYPE(menu, "menu",
-                  RTGUI_WIN_TYPE,
+                  RTGUI_PARENT_TYPE(win),
                   _rtgui_menu_constructor,
                   _rtgui_menu_destructor,
                   sizeof(struct rtgui_menu));

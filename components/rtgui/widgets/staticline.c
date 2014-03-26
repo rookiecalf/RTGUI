@@ -15,7 +15,7 @@ static void _rtgui_staticline_constructor(rtgui_staticline_t *staticline)
 
 
 DEFINE_CLASS_TYPE(staticline, "staticline",
-                  RTGUI_WIDGET_TYPE,
+                  RTGUI_PARENT_TYPE(widget),
                   _rtgui_staticline_constructor,
                   RT_NULL,
                   sizeof(struct rtgui_staticline));

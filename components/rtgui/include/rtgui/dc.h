@@ -20,7 +20,10 @@
 #include <rtgui/widgets/widget.h>
 
 #define RTGUI_DC(dc)		((struct rtgui_dc*)(dc))
-#define RTGUI_BUFFER_DC(dc)	((struct rtgui_dc_buffer*)(dc))
+
+#ifndef M_PI
+#define M_PI    3.14159265358979323846
+#endif
 
 enum rtgui_dc_type
 {
@@ -89,6 +92,7 @@ struct rtgui_dc_buffer
 /* create a buffer dc */
 struct rtgui_dc *rtgui_dc_buffer_create(int width, int height);
 struct rtgui_dc *rtgui_dc_buffer_create_pixformat(rt_uint8_t pixel_format, int w, int h);
+struct rtgui_dc *rtgui_dc_buffer_create_from_dc(struct rtgui_dc* dc);
 rt_uint8_t *rtgui_dc_buffer_get_pixel(struct rtgui_dc *dc);
 
 /* begin and end a drawing */
@@ -206,6 +210,11 @@ rtgui_gc_t *rtgui_dc_get_gc(struct rtgui_dc *dc);
 rt_bool_t rtgui_dc_get_visible(struct rtgui_dc *dc);
 /* get rect of dc */
 void rtgui_dc_get_rect(struct rtgui_dc *dc, rtgui_rect_t *rect);
+
+/* dc rotation and zoom operations */
+struct rtgui_dc *rtgui_dc_shrink(struct rtgui_dc *dc, int factorx, int factory);
+struct rtgui_dc *rtgui_dc_zoom(struct rtgui_dc *dc, double zoomx, double zoomy, int smooth);
+struct rtgui_dc *rtgui_dc_rotozoom(struct rtgui_dc *dc, double angle, double zoomx, double zoomy, int smooth);
 
 #endif
 

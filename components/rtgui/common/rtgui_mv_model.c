@@ -60,7 +60,7 @@ static void _rtgui_mv_model_destructor(struct rtgui_mv_model *model)
 }
 
 DEFINE_CLASS_TYPE(mv_model, "mv_model",
-                  RTGUI_OBJECT_TYPE,
+                  RTGUI_PARENT_TYPE(object),
                   _rtgui_mv_model_constructor,
                   _rtgui_mv_model_destructor,
                   sizeof(struct rtgui_mv_model));

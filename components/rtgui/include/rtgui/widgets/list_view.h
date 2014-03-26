@@ -69,6 +69,7 @@ typedef struct rtgui_list_view rtgui_list_view_t;
 rtgui_list_view_t *rtgui_list_view_create(const struct rtgui_list_item *items, rt_uint16_t count,
         rtgui_rect_t *rect, rt_uint16_t flag);
 void rtgui_list_view_destroy(rtgui_list_view_t *view);
+void rtgui_list_view_set_items(rtgui_list_view_t *self, const struct rtgui_list_item *items, rt_uint16_t count);
 
 rt_bool_t rtgui_list_view_event_handler(struct rtgui_object *widget, struct rtgui_event *event);
 

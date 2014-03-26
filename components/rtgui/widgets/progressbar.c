@@ -20,7 +20,7 @@ static void _rtgui_progressbar_constructor(rtgui_progressbar_t *bar)
 }
 
 DEFINE_CLASS_TYPE(progressbar, "progressbar",
-                  RTGUI_WIDGET_TYPE,
+                  RTGUI_PARENT_TYPE(widget),
                   _rtgui_progressbar_constructor,
                   RT_NULL,
                   sizeof(struct rtgui_progressbar));

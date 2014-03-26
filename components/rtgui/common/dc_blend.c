@@ -481,7 +481,7 @@ void rtgui_dc_draw_aa_lines(struct rtgui_dc * dst, const struct rtgui_point * po
     DrawLineFunc func;
 	int bpp;
 	rtgui_color_t color;
-	rtgui_widget_t *owner;
+	rtgui_widget_t *owner = RT_NULL;
 
 	RT_ASSERT(dst);
 	/* we do not support pixel DC */
@@ -1291,7 +1291,7 @@ rtgui_dc_blend_lines(struct rtgui_dc * dst, const rtgui_point_t * points, int co
     BlendLineFunc func;
 	rt_uint8_t pixel_format = 0xff;
 	rt_uint8_t r, g, b, a;
-	rtgui_widget_t *owner;
+	rtgui_widget_t *owner = RT_NULL;
 
 	RT_ASSERT(dst != RT_NULL);
 	/* we do not support pixel DC */
@@ -1613,7 +1613,7 @@ rtgui_dc_blend_fill_rects(struct rtgui_dc * dst, const rtgui_rect_t *rects, int 
     rtgui_rect_t rect;
 	BlendFillFunc func = RT_NULL;
 	rt_uint8_t r, g, b, a;
-	rtgui_widget_t *owner;
+	rtgui_widget_t *owner = RT_NULL;
 
 	RT_ASSERT(dst != RT_NULL);
 

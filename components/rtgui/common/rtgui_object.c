@@ -101,7 +101,7 @@ struct rtgui_object_information obj_info = {0, 0, 0};
  * @param object_type the type of object to create
  * @return the created object
  */
-rtgui_object_t *rtgui_object_create(rtgui_type_t *object_type)
+rtgui_object_t *rtgui_object_create(const rtgui_type_t *object_type)
 {
     rtgui_object_t *new_object;
 
@@ -162,7 +162,7 @@ RTM_EXPORT(rtgui_object_destroy);
  * @param type the type to which we cast the object
  * @return Returns the object
  */
-rtgui_object_t *rtgui_object_check_cast(rtgui_object_t *obj, rtgui_type_t *obj_type, const char *func, int line)
+rtgui_object_t *rtgui_object_check_cast(rtgui_object_t *obj, const rtgui_type_t *obj_type, const char *func, int line)
 {
     if (!obj) return RT_NULL;
 

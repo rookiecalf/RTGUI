@@ -44,7 +44,7 @@ static void _rtgui_app_destructor(struct rtgui_app *app)
 }
 
 DEFINE_CLASS_TYPE(application, "application",
-                  RTGUI_OBJECT_TYPE,
+                  RTGUI_PARENT_TYPE(object),
                   _rtgui_app_constructor,
                   _rtgui_app_destructor,
                   sizeof(struct rtgui_app));

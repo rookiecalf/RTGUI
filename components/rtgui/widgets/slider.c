@@ -44,7 +44,7 @@ static void _rtgui_slider_constructor(rtgui_slider_t *slider)
 }
 
 DEFINE_CLASS_TYPE(slider, "slider",
-                  RTGUI_WIDGET_TYPE,
+                  RTGUI_PARENT_TYPE(widget),
                   _rtgui_slider_constructor,
                   RT_NULL,
                   sizeof(struct rtgui_slider));
