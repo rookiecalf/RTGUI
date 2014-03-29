@@ -1491,3 +1491,34 @@ void rtgui_dc_get_rect(struct rtgui_dc *dc, rtgui_rect_t *rect)
 	return;
 }
 RTM_EXPORT(rtgui_dc_get_rect);
+
+rt_uint8_t rtgui_dc_get_pixel_format(struct rtgui_dc *dc)
+{
+	rt_uint8_t pixel_fmt;
+
+	RT_ASSERT(dc != RT_NULL);
+
+	switch (dc->type)
+	{
+	case RTGUI_DC_CLIENT:
+	case RTGUI_DC_HW:
+		{
+			struct rtgui_graphic_driver *hw_driver;
+
+			hw_driver = rtgui_graphic_driver_get_default();
+			pixel_fmt = hw_driver->pixel_format;
+			break;
+		}
+	case RTGUI_DC_BUFFER:
+		{
+			struct rtgui_dc_buffer *dc_buffer;
+
+			dc_buffer = (struct rtgui_dc_buffer*)dc;
+			pixel_fmt = dc_buffer->pixel_format;
+			break;
+		}
+	}
+
+	return pixel_fmt;
+}
+RTM_EXPORT(rtgui_dc_get_pixel_format);

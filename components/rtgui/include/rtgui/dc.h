@@ -210,6 +210,8 @@ rtgui_gc_t *rtgui_dc_get_gc(struct rtgui_dc *dc);
 rt_bool_t rtgui_dc_get_visible(struct rtgui_dc *dc);
 /* get rect of dc */
 void rtgui_dc_get_rect(struct rtgui_dc *dc, rtgui_rect_t *rect);
+/* get pixel format */
+rt_uint8_t rtgui_dc_get_pixel_format(struct rtgui_dc *dc);
 
 /* dc rotation and zoom operations */
 struct rtgui_dc *rtgui_dc_shrink(struct rtgui_dc *dc, int factorx, int factory);

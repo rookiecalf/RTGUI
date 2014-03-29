@@ -135,6 +135,11 @@ static rt_bool_t rtgui_image_png_check(struct rtgui_filerw *file)
     return(is_PNG);
 }
 
+static void _image_png_error_fn(png_structp png_ptr, png_const_charp error_message)
+{
+	rt_kprintf(error_message);
+}
+
 static rt_bool_t rtgui_image_png_load(struct rtgui_image *image, struct rtgui_filerw *file, rt_bool_t load)
 {
     png_uint_32 width;
@@ -151,7 +156,8 @@ static rt_bool_t rtgui_image_png_load(struct rtgui_image *image, struct rtgui_fi
         rtgui_free(png);
         return RT_FALSE;
     }
-
+	png_set_error_fn(png->png_ptr, RT_NULL, _image_png_error_fn, _image_png_error_fn);
+	
     png->info_ptr = png_create_info_struct(png->png_ptr);
     if (png->info_ptr == RT_NULL)
     {
@@ -161,6 +167,7 @@ static rt_bool_t rtgui_image_png_load(struct rtgui_image *image, struct rtgui_fi
     }
 
     png->filerw = file;
+	png->is_loaded = RT_FALSE;
     png_set_read_fn(png->png_ptr, png->filerw, rtgui_image_png_read_data);
 
     png_read_info(png->png_ptr, png->info_ptr);
@@ -211,6 +218,8 @@ static rt_bool_t rtgui_image_png_load(struct rtgui_image *image, struct rtgui_fi
         }
 
         rtgui_image_png_process(png->png_ptr, png->info_ptr, png);
+		png_read_end(png->png_ptr, RT_NULL);
+		png->is_loaded = RT_TRUE;
 		/* close file handler */
 		rtgui_filerw_close(png->filerw);
 		png->filerw = RT_NULL;
@@ -230,8 +239,6 @@ static void rtgui_image_png_unload(struct rtgui_image *image)
     if (image != RT_NULL)
     {
         png = (struct rtgui_image_png *) image->data;
-
-        png_read_end(png->png_ptr, RT_NULL);
 
         /* destroy png struct */
         png_destroy_info_struct(png->png_ptr, &png->info_ptr);
