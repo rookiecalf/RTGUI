@@ -16,6 +16,9 @@ struct rtgui_notebook_tab
 #endif
 
     struct rtgui_widget *widget;
+    /* We need to record the focused widget on each tab. So, when switching
+     * back to the tab, the focus could be restored. */
+    struct rtgui_widget *focused_widget;
     char *title;
 };
 
@@ -207,7 +210,7 @@ static void _rtgui_notebook_ontab(struct rtgui_notebook *notebook, struct rtgui_
 		struct rtgui_widget *widget;
 
 		widget = notebook->childs[index].widget;
-		
+
 		if (RTGUI_OBJECT(widget)->event_handler &&
 			RTGUI_OBJECT(widget)->event_handler(RTGUI_OBJECT(widget), event) == RT_TRUE)
 			break;
@@ -383,6 +386,7 @@ void rtgui_notebook_add(struct rtgui_notebook *notebook, const char *label, stru
 
     notebook->childs[notebook->count - 1].title = rt_strdup(label);
     notebook->childs[notebook->count - 1].widget = child;
+    notebook->childs[notebook->count - 1].focused_widget = child;
 #ifdef RTGUI_USING_NOTEBOOK_IMAGE
     notebook->childs[notebook->count - 1].pressed_image = RT_NULL;
     notebook->childs[notebook->count - 1].unpressed_image = RT_NULL;
@@ -423,6 +427,7 @@ void rtgui_notebook_add_image(struct rtgui_notebook *notebook, const char *label
 
     notebook->childs[notebook->count - 1].title = rt_strdup(label);
     notebook->childs[notebook->count - 1].widget = child;
+    notebook->childs[notebook->count - 1].focused_widget = child;
     notebook->childs[notebook->count - 1].pressed_image = pressed_image;
     notebook->childs[notebook->count - 1].unpressed_image = unpressed_image;
 
@@ -491,6 +496,7 @@ void rtgui_notebook_remove(struct rtgui_notebook *notebook, rt_uint16_t index)
 
             rtgui_widget_hide(tab.widget);
             rtgui_widget_show(notebook->childs[notebook->current].widget);
+            rtgui_widget_focus(notebook->childs[notebook->current].focused_widget);
             rtgui_widget_update(RTGUI_WIDGET(notebook));
             rtgui_widget_set_parent(tab.widget, RT_NULL);
         }
@@ -551,13 +557,19 @@ void rtgui_notebook_set_current_by_index(struct rtgui_notebook *notebook, rt_uin
         if (notebook->current != RTGUI_NOT_FOUND)
             rtgui_widget_hide(notebook->childs[notebook->current].widget);
 
+        /* Record the old focused widget. */
+        notebook->childs[notebook->current].focused_widget =
+            RTGUI_WIDGET(notebook)->toplevel->focused_widget;
+
         notebook->current = index;
         widget = notebook->childs[notebook->current].widget;
-        rtgui_widget_show(widget);
+
         rtgui_widget_update_clip(widget);
+        rtgui_widget_focus(notebook->childs[notebook->current].focused_widget);
+        rtgui_widget_show(widget);
+
         /* the whole notebook need an update */
         rtgui_widget_update(RTGUI_WIDGET(notebook));
-        rtgui_widget_focus(widget);
     }
 }
 
