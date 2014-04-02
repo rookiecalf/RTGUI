@@ -17,7 +17,7 @@ static void _rtgui_checkbox_constructor(rtgui_checkbox_t *box)
 }
 
 DEFINE_CLASS_TYPE(checkbox, "checkbox",
-                  RTGUI_PARENT_TYPE(checkbox),
+                  RTGUI_PARENT_TYPE(label),
                   _rtgui_checkbox_constructor,
                   RT_NULL,
                   sizeof(struct rtgui_checkbox));
