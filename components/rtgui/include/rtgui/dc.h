@@ -108,8 +108,8 @@ void rtgui_dc_fill_rect_forecolor(struct rtgui_dc *dc, struct rtgui_rect *rect);
 void rtgui_dc_draw_round_rect(struct rtgui_dc *dc, struct rtgui_rect *rect, int r);
 void rtgui_dc_fill_round_rect(struct rtgui_dc *dc, struct rtgui_rect *rect, int r);
 void rtgui_dc_draw_annulus(struct rtgui_dc *dc, rt_int16_t x, rt_int16_t y, rt_int16_t r1, rt_int16_t r2, rt_int16_t start, rt_int16_t end);
-void rtgui_dc_draw_sector(struct rtgui_dc *dc, rt_int16_t x, rt_int16_t y, rt_int16_t r, rt_int16_t start, rt_int16_t end);
-void rtgui_dc_fill_sector(struct rtgui_dc *dc, rt_int16_t x, rt_int16_t y, rt_int16_t r, rt_int16_t start, rt_int16_t end);
+void rtgui_dc_draw_pie(struct rtgui_dc *dc, rt_int16_t x, rt_int16_t y, rt_int16_t r, rt_int16_t start, rt_int16_t end);
+void rtgui_dc_fill_pie(struct rtgui_dc *dc, rt_int16_t x, rt_int16_t y, rt_int16_t r, rt_int16_t start, rt_int16_t end);
 
 void rtgui_dc_draw_text(struct rtgui_dc *dc, const char *text, struct rtgui_rect *rect);
 void rtgui_dc_draw_text_stroke(struct rtgui_dc *dc, const char *text, struct rtgui_rect *rect,
@@ -146,6 +146,9 @@ void rtgui_dc_blend_lines(struct rtgui_dc * dst,const rtgui_point_t * points,int
 
 void rtgui_dc_blend_fill_rect(struct rtgui_dc * dst,const rtgui_rect_t * rect,enum RTGUI_BLENDMODE blendMode,rtgui_color_t color);
 void rtgui_dc_blend_fill_rects(struct rtgui_dc * dst,const rtgui_rect_t * rects,int count,enum RTGUI_BLENDMODE blendMode,rtgui_color_t color);
+
+void rtgui_dc_draw_aa_circle(struct rtgui_dc *dc, rt_int16_t x, rt_int16_t y, rt_int16_t r);
+void rtgui_dc_draw_aa_ellipse(struct rtgui_dc *dc, rt_int16_t  x, rt_int16_t y, rt_int16_t rx, rt_int16_t ry);
 
 /*
  * dc inline function

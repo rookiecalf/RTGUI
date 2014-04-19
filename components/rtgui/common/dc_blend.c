@@ -47,6 +47,8 @@
 #include <rtgui/color.h>
 #include <string.h>
 
+#include <math.h>
+
 #define hw_driver               (rtgui_graphic_driver_get_default())
 #define _int_swap(x, y)         do {x ^= y; y ^= x; x ^= y;} while (0)
 
@@ -1716,3 +1718,245 @@ rtgui_dc_blend_fill_rects(struct rtgui_dc * dst, const rtgui_rect_t *rects, int 
     }
 }
 
+/* Windows targets do not have lrint, so provide a local inline version */
+#if defined(_MSC_VER)
+/* Detect 64bit and use intrinsic version */
+#ifdef _M_X64
+#include <emmintrin.h>
+static __inline long 
+lrint(float f) 
+{
+	return _mm_cvtss_si32(_mm_load_ss(&f));
+}
+#elif defined(_M_IX86)
+__inline long int
+lrint (double flt)
+{	
+	int intgr;
+	_asm
+	{
+		fld flt
+		fistp intgr
+	};
+	return intgr;
+}
+#elif defined(_M_ARM)
+#include <armintr.h>
+#pragma warning(push)
+#pragma warning(disable: 4716)
+__declspec(naked) long int
+lrint (double flt)
+{
+	__emit(0xEC410B10); // fmdrr  d0, r0, r1
+	__emit(0xEEBD0B40); // ftosid s0, d0
+	__emit(0xEE100A10); // fmrs   r0, s0
+	__emit(0xE12FFF1E); // bx     lr
+}
+#pragma warning(pop)
+#else
+#error lrint needed for MSVC on non X86/AMD64/ARM targets.
+#endif
+#endif
+
+rt_inline void _draw_pixel_weight(struct rtgui_dc * dc, rt_int16_t x, rt_int16_t y,
+							   rt_uint8_t r, rt_uint8_t g, rt_uint8_t b, rt_uint8_t a, rt_uint32_t weight)
+{
+	/*
+	* Modify Alpha by weight 
+	*/
+	rt_uint32_t ax = a;
+	ax = ((ax * weight) >> 8);
+	if (ax > 255) {
+		a = 255;
+	} else {
+		a = (rt_uint8_t)(ax & 0x000000ff);
+	}
+
+	rtgui_dc_blend_point(dc, x, y, RTGUI_BLENDMODE_BLEND, r, g, b, a);
+}
+
+void rtgui_dc_draw_aa_ellipse(struct rtgui_dc *dc, rt_int16_t  x, rt_int16_t y, rt_int16_t rx, rt_int16_t ry)
+{
+	int i;
+	int a2, b2, ds, dt, dxt, t, s, d;
+	rt_int16_t xp, yp, xs, ys, od, dyt, xx, yy, xc2, yc2;
+	float cp;
+	double sab;
+	rt_uint8_t weight, iweight;
+	rt_uint8_t r, g, b, a;
+
+	/* Sanity check radii */
+	if ((rx < 0) || (ry < 0)) return ;
+
+	/*
+	* Special case for rx=0 - draw a vline 
+	*/
+	if (rx == 0) {
+		rtgui_dc_draw_vline(dc, x, y - ry, y + ry);
+		return;
+	}
+	/*
+	* Special case for ry=0 - draw an hline 
+	*/
+	if (ry == 0) {
+		rtgui_dc_draw_hline(dc, x - rx, x + rx, y);
+		return;
+	}
+
+	/* Variable setup */
+	r = RTGUI_RGB_R(RTGUI_DC_FC(dc));
+	g = RTGUI_RGB_G(RTGUI_DC_FC(dc));
+	b = RTGUI_RGB_B(RTGUI_DC_FC(dc));
+	a = RTGUI_RGB_A(RTGUI_DC_FC(dc));
+
+	a2 = rx * rx;
+	b2 = ry * ry;
+
+	ds = 2 * a2;
+	dt = 2 * b2;
+
+	xc2 = 2 * x;
+	yc2 = 2 * y;
+ 
+	sab = sqrt((double)(a2 + b2));
+	od = (rt_int16_t)lrint(sab*0.01) + 1; /* introduce some overdraw */
+	dxt = (rt_int16_t)lrint((double)a2 / sab) + od;
+
+	t = 0;
+	s = -2 * a2 * ry;
+	d = 0;
+
+	xp = x;
+	yp = y - ry;
+
+	/* Draw */
+
+	/* "End points" */
+	rtgui_dc_blend_point(dc, xp, yp, RTGUI_BLENDMODE_NONE, r, g, b, a);
+	rtgui_dc_blend_point(dc, xc2 - xp, yp, RTGUI_BLENDMODE_NONE, r, g, b, a);
+	rtgui_dc_blend_point(dc, xp, yc2 - yp, RTGUI_BLENDMODE_NONE, r, g, b, a);
+	rtgui_dc_blend_point(dc, xc2 - xp, yc2 - yp, RTGUI_BLENDMODE_NONE, r, g, b, a);
+
+	for (i = 1; i <= dxt; i++) 
+	{
+		xp--;
+		d += t - b2;
+
+		if (d >= 0)
+			ys = yp - 1;
+		else if ((d - s - a2) > 0) 
+		{
+			if ((2 * d - s - a2) >= 0)
+				ys = yp + 1;
+			else {
+				ys = yp;
+				yp++;
+				d -= s + a2;
+				s += ds;
+			}
+		} else {
+			yp++;
+			ys = yp + 1;
+			d -= s + a2;
+			s += ds;
+		}
+
+		t -= dt;
+
+		/* Calculate alpha */
+		if (s != 0) {
+			cp = (float) abs(d) / (float) abs(s);
+			if (cp > 1.0) {
+				cp = 1.0;
+			}
+		} else {
+			cp = 1.0;
+		}
+
+		/* Calculate weights */
+		weight = (rt_uint8_t) (cp * 255);
+		iweight = 255 - weight;
+
+		/* Upper half */
+		xx = xc2 - xp;
+		_draw_pixel_weight(dc, xp, yp, r, g, b, a, iweight);
+		_draw_pixel_weight(dc, xx, yp, r, g, b, a, iweight);
+
+		_draw_pixel_weight(dc, xp, ys, r, g, b, a, weight);
+		_draw_pixel_weight(dc, xx, ys, r, g, b, a, weight);
+
+		/* Lower half */
+		yy = yc2 - yp;
+		_draw_pixel_weight(dc, xp, yy, r, g, b, a, iweight);
+		_draw_pixel_weight(dc, xx, yy, r, g, b, a, iweight);
+
+		yy = yc2 - ys;
+		_draw_pixel_weight(dc, xp, yy, r, g, b, a, weight);
+		_draw_pixel_weight(dc, xx, yy, r, g, b, a, weight);
+	}
+
+	/* Replaces original approximation code dyt = abs(yp - yc); */
+	dyt = (rt_int16_t)lrint((double)b2 / sab ) + od;
+	for (i = 1; i <= dyt; i++) 
+	{
+		yp++;
+		d -= s + a2;
+
+		if (d <= 0)
+			xs = xp + 1;
+		else if ((d + t - b2) < 0)
+		{
+			if ((2 * d + t - b2) <= 0)
+				xs = xp - 1;
+			else {
+				xs = xp;
+				xp--;
+				d += t - b2;
+				t -= dt;
+			}
+		} else {
+			xp--;
+			xs = xp - 1;
+			d += t - b2;
+			t -= dt;
+		}
+
+		s += ds;
+
+		/* Calculate alpha */
+		if (t != 0) {
+			cp = (float) abs(d) / (float) abs(t);
+			if (cp > 1.0) {
+				cp = 1.0;
+			}
+		} else {
+			cp = 1.0;
+		}
+
+		/* Calculate weight */
+		weight = (rt_uint8_t) (cp * 255);
+		iweight = 255 - weight;
+
+		/* Left half */
+		xx = xc2 - xp;
+		yy = yc2 - yp;
+		_draw_pixel_weight(dc, xp, yp, r, g, b, a, iweight);
+		_draw_pixel_weight(dc, xx, yp, r, g, b, a, iweight);
+
+		_draw_pixel_weight(dc, xp, yy, r, g, b, a, iweight);
+		_draw_pixel_weight(dc, xx, yy, r, g, b, a, iweight);
+
+		/* Right half */
+		xx = xc2 - xs;
+		_draw_pixel_weight(dc, xs, yp, r, g, b, a, weight);
+		_draw_pixel_weight(dc, xx, yp, r, g, b, a, weight);
+
+		_draw_pixel_weight(dc, xs, yy, r, g, b, a, weight);
+		_draw_pixel_weight(dc, xx, yy, r, g, b, a, weight);
+	}
+}
+
+void rtgui_dc_draw_aa_circle(struct rtgui_dc *dc, rt_int16_t x, rt_int16_t y, rt_int16_t r)
+{
+	rtgui_dc_draw_aa_ellipse(dc, x, y, r, r);
+}

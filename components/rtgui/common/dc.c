@@ -536,79 +536,7 @@ RTM_EXPORT(rtgui_dc_fill_polygon);
 
 void rtgui_dc_draw_circle(struct rtgui_dc *dc, int x, int y, int r)
 {
-    rt_int16_t cx = 0;
-    rt_int16_t cy = r;
-    rt_int16_t df = 1 - r;
-    rt_int16_t d_e = 3;
-    rt_int16_t d_se = -2 * r + 5;
-    rt_int16_t xpcx, xmcx, xpcy, xmcy;
-    rt_int16_t ypcy, ymcy, ypcx, ymcx;
-
-    /*
-     * sanity check radius
-     */
-    if (r < 0) return ;
-
-    /* special case for r=0 - draw a point  */
-    if (r == 0) rtgui_dc_draw_point(dc, x, y);
-
-    /*
-     * draw circle
-     */
-    do
-    {
-        ypcy = y + cy;
-        ymcy = y - cy;
-        if (cx > 0)
-        {
-            xpcx = x + cx;
-            xmcx = x - cx;
-            rtgui_dc_draw_point(dc, xmcx, ypcy);
-            rtgui_dc_draw_point(dc, xpcx, ypcy);
-            rtgui_dc_draw_point(dc, xmcx, ymcy);
-            rtgui_dc_draw_point(dc, xpcx, ymcy);
-        }
-        else
-        {
-            rtgui_dc_draw_point(dc, x, ymcy);
-            rtgui_dc_draw_point(dc, x, ypcy);
-        }
-        xpcy = x + cy;
-        xmcy = x - cy;
-        if ((cx > 0) && (cx != cy))
-        {
-            ypcx = y + cx;
-            ymcx = y - cx;
-            rtgui_dc_draw_point(dc, xmcy, ypcx);
-            rtgui_dc_draw_point(dc, xpcy, ypcx);
-            rtgui_dc_draw_point(dc, xmcy, ymcx);
-            rtgui_dc_draw_point(dc, xpcy, ymcx);
-        }
-        else if (cx == 0)
-        {
-            rtgui_dc_draw_point(dc, xmcy, y);
-            rtgui_dc_draw_point(dc, xpcy, y);
-        }
-
-        /*
-         * Update
-         */
-        if (df < 0)
-        {
-            df += d_e;
-            d_e += 2;
-            d_se += 2;
-        }
-        else
-        {
-            df += d_se;
-            d_e += 2;
-            d_se += 4;
-            cy--;
-        }
-        cx++;
-    }
-    while (cx <= cy);
+	rtgui_dc_draw_ellipse(dc, x, y, r, r);
 }
 RTM_EXPORT(rtgui_dc_draw_circle);
 
@@ -979,76 +907,6 @@ void rtgui_dc_draw_annulus(struct rtgui_dc *dc, rt_int16_t x, rt_int16_t y, rt_i
 }
 RTM_EXPORT(rtgui_dc_draw_annulus);
 
-void rtgui_dc_draw_sector(struct rtgui_dc *dc, rt_int16_t x, rt_int16_t y, rt_int16_t r, rt_int16_t start, rt_int16_t end)
-{
-    int start_x, start_y;
-    int end_x, end_y;
-
-    /* Sanity check radius */
-    if (r < 0) return ;
-    /* Special case for r=0 - draw a point */
-    if (r == 0)
-    {
-        rtgui_dc_draw_point(dc, x, y);
-        return;
-    }
-
-    while (start < 0) start += 360;
-    while (end < 0) end += 360;
-
-    /* Fixup angles */
-    start = start % 360;
-    end = end % 360;
-
-    rtgui_dc_draw_arc(dc, x, y, r, start, end);
-
-    start_x = x + r * cos(start * M_PI / 180);
-    start_y = y + r * sin(start * M_PI / 180);
-
-    end_x = x + r * cos(end * M_PI / 180);
-    end_y = y + r * sin(end * M_PI / 180);
-
-    rtgui_dc_draw_line(dc, x, y, start_x, start_y);
-    rtgui_dc_draw_line(dc, x, y, end_x, end_y);
-}
-RTM_EXPORT(rtgui_dc_draw_sector);
-
-void rtgui_dc_fill_sector(struct rtgui_dc *dc, rt_int16_t x, rt_int16_t y, rt_int16_t r, rt_int16_t start, rt_int16_t end)
-{
-    int start_x, start_y;
-    int end_x, end_y;
-
-    /* Sanity check radius */
-    if (r < 0) return ;
-    /* Special case for r=0 - draw a point */
-    if (r == 0)
-    {
-        rtgui_dc_draw_point(dc, x, y);
-        return;
-    }
-
-    while (start < 0) start += 360;
-    while (end < 0) end += 360;
-
-    /* Fixup angles */
-    start = start % 360;
-    end = end % 360;
-
-    end_x = x + r * cos(end * M_PI / 180);
-    end_y = y + r * sin(end * M_PI / 180);
-
-    do
-    {
-        start_x = x + r * cos(start * M_PI / 180);
-        start_y = y + r * sin(start * M_PI / 180);
-        start ++;
-
-        rtgui_dc_draw_line(dc, x, y, start_x, start_y);
-    }
-    while (!((start_x == end_x) && (start_y == end_y)));
-}
-RTM_EXPORT(rtgui_dc_fill_sector);
-
 void rtgui_dc_draw_ellipse(struct rtgui_dc *dc, rt_int16_t x, rt_int16_t y, rt_int16_t rx, rt_int16_t ry)
 {
     int ix, iy;
@@ -1332,6 +1190,190 @@ void rtgui_dc_fill_ellipse(struct rtgui_dc *dc, rt_int16_t x, rt_int16_t y, rt_i
     }
 }
 RTM_EXPORT(rtgui_dc_fill_ellipse);
+
+void rtgui_dc_draw_pie(struct rtgui_dc *dc, rt_int16_t x, rt_int16_t y, rt_int16_t rad, rt_int16_t start, rt_int16_t end)
+{
+	double angle, start_angle, end_angle;
+	double deltaAngle;
+	double dr;
+	int numpoints, i;
+	int *vx, *vy;
+
+	/* Sanity check radii */
+	if (rad < 0) return ;
+
+	/*
+	* Fixup angles
+	*/
+	start = start % 360;
+	end = end % 360;
+
+	/*
+	* Special case for rad=0 - draw a point 
+	*/
+	if (rad == 0) {
+		rtgui_dc_draw_point(dc, x, y);
+		return;
+	}
+
+	/*
+	* Variable setup 
+	*/
+	dr = (double) rad;
+	deltaAngle = 3.0 / dr;
+	start_angle = (double) start *(2.0 * M_PI / 360.0);
+	end_angle = (double) end *(2.0 * M_PI / 360.0);
+	if (start > end) {
+		end_angle += (2.0 * M_PI);
+	}
+
+	/* We will always have at least 2 points */
+	numpoints = 2;
+
+	/* Count points (rather than calculating it) */
+	angle = start_angle;
+	while (angle < end_angle) {
+		angle += deltaAngle;
+		numpoints++;
+	}
+
+	/* Allocate combined vertex array */
+	vx = vy = (int *) rtgui_malloc(2 * sizeof(int) * numpoints);
+	if (vx == RT_NULL) return ;
+
+	/* Update point to start of vy */
+	vy += numpoints;
+
+	/* Center */
+	vx[0] = x;
+	vy[0] = y;
+
+	/* First vertex */
+	angle = start_angle;
+	vx[1] = x + (int) (dr * cos(angle));
+	vy[1] = y + (int) (dr * sin(angle));
+
+	if (numpoints<3)
+	{
+		rtgui_dc_draw_line(dc, vx[0], vy[0], vx[1], vy[1]);
+	}
+	else
+	{
+		/* Calculate other vertices */
+		i = 2;
+		angle = start_angle;
+		while (angle < end_angle) {
+			angle += deltaAngle;
+			if (angle>end_angle)
+			{
+				angle = end_angle;
+			}
+			vx[i] = x + (int) (dr * cos(angle));
+			vy[i] = y + (int) (dr * sin(angle));
+			i++;
+		}
+
+		/* Draw */
+		rtgui_dc_draw_polygon(dc, vx, vy, numpoints);
+	}
+
+	/* Free combined vertex array */
+	rtgui_free(vx);
+	return;
+}
+RTM_EXPORT(rtgui_dc_draw_pie);
+
+void rtgui_dc_fill_pie(struct rtgui_dc *dc, rt_int16_t x, rt_int16_t y, rt_int16_t rad, rt_int16_t start, rt_int16_t end)
+{
+	double angle, start_angle, end_angle;
+	double deltaAngle;
+	double dr;
+	int numpoints, i;
+	int *vx, *vy;
+
+	/* Sanity check radii */
+	if (rad < 0) return ;
+
+	/*
+	* Fixup angles
+	*/
+	start = start % 360;
+	end = end % 360;
+
+	/*
+	* Special case for rad=0 - draw a point 
+	*/
+	if (rad == 0) {
+		rtgui_dc_draw_point(dc, x, y);
+		return;
+	}
+
+	/*
+	* Variable setup 
+	*/
+	dr = (double) rad;
+	deltaAngle = 3.0 / dr;
+	start_angle = (double) start *(2.0 * M_PI / 360.0);
+	end_angle = (double) end *(2.0 * M_PI / 360.0);
+	if (start > end) {
+		end_angle += (2.0 * M_PI);
+	}
+
+	/* We will always have at least 2 points */
+	numpoints = 2;
+
+	/* Count points (rather than calculating it) */
+	angle = start_angle;
+	while (angle < end_angle) {
+		angle += deltaAngle;
+		numpoints++;
+	}
+
+	/* Allocate combined vertex array */
+	vx = vy = (int *) rtgui_malloc(2 * sizeof(int) * numpoints);
+	if (vx == RT_NULL) return;
+
+	/* Update point to start of vy */
+	vy += numpoints;
+
+	/* Center */
+	vx[0] = x;
+	vy[0] = y;
+
+	/* First vertex */
+	angle = start_angle;
+	vx[1] = x + (int) (dr * cos(angle));
+	vy[1] = y + (int) (dr * sin(angle));
+
+	if (numpoints<3)
+	{
+		rtgui_dc_draw_line(dc, vx[0], vy[0], vx[1], vy[1]);
+	}
+	else
+	{
+		/* Calculate other vertices */
+		i = 2;
+		angle = start_angle;
+		while (angle < end_angle) {
+			angle += deltaAngle;
+			if (angle>end_angle)
+			{
+				angle = end_angle;
+			}
+			vx[i] = x + (int) (dr * cos(angle));
+			vy[i] = y + (int) (dr * sin(angle));
+			i++;
+		}
+
+		/* Draw */
+		rtgui_dc_fill_polygon(dc, vx, vy, numpoints);
+	}
+
+	/* Free combined vertex array */
+	rtgui_free(vx);
+	return;
+}
+RTM_EXPORT(rtgui_dc_fill_pie);
 
 /*
  * set gc of dc
