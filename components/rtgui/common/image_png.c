@@ -396,5 +396,194 @@ void rtgui_image_png_init()
     /* register png on image system */
     rtgui_image_register_engine(&rtgui_image_png_engine);
 }
-#endif
 
+#elif RTGUI_IMAGE_LODEPNG
+#include "lodepng.h"
+
+static rt_bool_t rtgui_image_png_check(struct rtgui_filerw *file);
+static rt_bool_t rtgui_image_png_load(struct rtgui_image *image, struct rtgui_filerw *file, rt_bool_t load);
+static void rtgui_image_png_unload(struct rtgui_image *image);
+static void rtgui_image_png_blit(struct rtgui_image *image, struct rtgui_dc *dc, struct rtgui_rect *rect);
+
+struct rtgui_image_engine rtgui_image_png_engine =
+{
+    "png",
+    { RT_NULL },
+    rtgui_image_png_check,
+    rtgui_image_png_load,
+    rtgui_image_png_unload,
+    rtgui_image_png_blit,
+};
+
+static rt_bool_t rtgui_image_png_check(struct rtgui_filerw *file)
+{
+    int start;
+    rt_bool_t is_PNG;
+    rt_uint8_t magic[4];
+
+    if (!file) return 0;
+
+    start = rtgui_filerw_tell(file);
+
+    /* move to the begining of file */
+    rtgui_filerw_seek(file, 0, SEEK_SET);
+
+    is_PNG = RT_FALSE;
+    if (rtgui_filerw_read(file, magic, 1, sizeof(magic)) == sizeof(magic))
+    {
+        if (magic[0] == 0x89 &&
+                magic[1] == 'P' &&
+                magic[2] == 'N' &&
+                magic[3] == 'G')
+        {
+            is_PNG = RT_TRUE;
+        }
+    }
+    rtgui_filerw_seek(file, start, SEEK_SET);
+
+    return(is_PNG);
+}
+
+static rt_bool_t rtgui_image_png_load(struct rtgui_image *image, struct rtgui_filerw *file, rt_bool_t load)
+{
+    unsigned int width;
+    unsigned int height;
+    unsigned int error;
+
+    rt_uint8_t* pixel;
+    rt_uint8_t* in;
+    rt_uint32_t in_size;
+
+    RT_ASSERT(image != RT_NULL);
+    RT_ASSERT(file != RT_NULL);
+
+    rtgui_filerw_seek(file, 0, SEEK_END);
+    in_size = rtgui_filerw_tell(file);
+    in = rtgui_malloc(in_size);
+    if (in == RT_NULL) return RT_FALSE; /* out of memory */
+
+    rtgui_filerw_seek(file, 0, SEEK_SET);
+    rtgui_filerw_read(file, in, in_size, 1);
+    /* close file handler */
+    rtgui_filerw_close(file);
+
+    error = lodepng_decode32(&pixel, &width, &height, in, in_size);    
+    if(error) 
+	{
+		rt_kprintf("error %u: %s\n", error, lodepng_error_text(error));
+		rtgui_free(in);
+		return RT_FALSE;
+	}
+
+    rtgui_free(in);
+
+    /* set image information */
+    image->w = width;
+    image->h = height;
+    image->engine = &rtgui_image_lpng_engine;
+    image->data = pixel;
+
+    return RT_TRUE;
+}
+
+static void rtgui_image_png_unload(struct rtgui_image *image)
+{
+    rt_uint8_t *pixels;
+
+    if (image != RT_NULL)
+    {
+        pixels = (rt_uint8_t*) image->data;
+
+        /* release data */
+        rtgui_free(pixels);
+    }
+}
+
+struct _rgba_color 
+{
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
+    unsigned char a;
+};
+
+static void rtgui_image_png_blit(struct rtgui_image *image, struct rtgui_dc *dc, struct rtgui_rect *rect)
+{
+    rt_uint8_t *pixels;
+    rt_uint16_t x, y, w, h;
+    struct _rgba_color *ptr;
+    int fg_maxsample;
+    int ialpha;
+    float alpha;
+    rtgui_color_t color;
+    rtgui_color_t c, bgcolor;
+    int fc[3], bc[3];
+
+    RT_ASSERT(image != RT_NULL && dc != RT_NULL && rect != RT_NULL);
+    RT_ASSERT(image->data != RT_NULL);
+
+    pixels = (rt_uint8_t *) image->data;
+	w = _UI_MIN(image->w, rtgui_rect_width(*rect));
+	h = _UI_MIN(image->h, rtgui_rect_height(*rect));
+
+	fg_maxsample = 255; 
+
+    ptr = (struct _rgba_color *)pixels;
+    bgcolor = RTGUI_DC_BC(dc);
+    bc[0] = RTGUI_RGB_R(bgcolor);
+    bc[1] = RTGUI_RGB_G(bgcolor);
+    bc[2] = RTGUI_RGB_B(bgcolor);
+
+    /* draw each point within dc */
+    for (y = 0; y < h; y ++)
+    {
+        for (x = 0; x < w; x++)
+        {
+            ialpha = ptr->a;
+            if (ialpha == 0)
+            {
+                /*
+                 * Foreground image is transparent hear.
+                 * If the background image is already in the frame
+                 * buffer, there is nothing to do.
+                 */
+            }
+            else if (ialpha == fg_maxsample)
+            {
+                c = RTGUI_RGB(ptr->r, ptr->g, ptr->b);
+                /*
+                 * Copy foreground pixel to frame buffer.
+                 */
+                rtgui_dc_draw_color_point(dc, x + rect->x1, y + rect->y1, c);
+            }
+            else
+            {
+                /* output = alpha * foreground + (1-alpha) * background */
+                /*
+                 * Compositing is necessary.
+                 * Get floating-point alpha and its complement.
+                 * Note: alpha is always linear: gamma does not
+                 * affect it.
+                 */
+                fc[0] = ptr->r;
+                fc[1] = ptr->g;
+                fc[2] = ptr->b;
+
+                alpha = (float) ialpha / fg_maxsample;
+                color = RTGUI_RGB((rt_uint8_t)(fc[0] * alpha + bc[0] * (1 - alpha)),
+                                  (rt_uint8_t)(fc[1] * alpha + bc[1] * (1 - alpha)),
+                                  (rt_uint8_t)(fc[2] * alpha + bc[2] * (1 - alpha)));
+                rtgui_dc_draw_color_point(dc, x + rect->x1, y + rect->y1, color);
+            }
+            /* move to next color buffer */
+            ptr ++;
+        }
+    }
+}
+
+void rtgui_image_png_init()
+{
+    /* register png on image system */
+    rtgui_image_register_engine(&rtgui_image_png_engine);
+}
+#endif

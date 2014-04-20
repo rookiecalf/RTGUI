@@ -35,7 +35,7 @@
 #if (defined(RTGUI_IMAGE_JPEG) || defined(RTGUI_IMAGE_TJPGD))
 #include <rtgui/image_jpeg.h>
 #endif
-#ifdef RTGUI_IMAGE_PNG
+#if defined(RTGUI_IMAGE_PNG) || defined(RTGUI_IMAGE_LODEPNG)
 #include <rtgui/image_png.h>
 #endif
 
@@ -59,7 +59,7 @@ void rtgui_system_image_init(void)
     rtgui_image_jpeg_init();
 #endif
 
-#ifdef RTGUI_IMAGE_PNG
+#if defined(RTGUI_IMAGE_PNG) || defined(RTGUI_IMAGE_LODEPNG)
     rtgui_image_png_init();
 #endif
 
@@ -285,10 +285,17 @@ RTM_EXPORT(rtgui_image_register_engine);
 
 void rtgui_image_blit(struct rtgui_image *image, struct rtgui_dc *dc, struct rtgui_rect *rect)
 {
+	struct rtgui_rect r;
     RT_ASSERT(dc    != RT_NULL);
-    RT_ASSERT(rect  != RT_NULL);
 
     if (rtgui_dc_get_visible(dc) != RT_TRUE) return;
+
+	/* use rect of DC */
+	if (rect == RT_NULL) 
+	{
+		rtgui_dc_get_rect(dc, &r);
+		rect = &r;
+	}
 
     if (image != RT_NULL && image->engine != RT_NULL)
     {
