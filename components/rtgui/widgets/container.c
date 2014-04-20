@@ -356,3 +356,5 @@ struct rtgui_object* rtgui_container_get_object(struct rtgui_container *containe
 
     return RT_NULL;
 }
+RTM_EXPORT(rtgui_container_get_object);
+
