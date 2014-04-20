@@ -100,8 +100,16 @@ struct rtgui_iconbox *rtgui_iconbox_create(struct rtgui_image *image,
     {
         rtgui_rect_t rect = {0, 0, 0, 0}, text_rect;
 
-        rect.x2 = image->w;
-        rect.y2 = image->h;
+		if (image != RT_NULL)
+		{
+	        rect.x2 = image->w;
+	        rect.y2 = image->h;
+		}
+		else 
+		{
+			rect.x2 = 64; 
+			rect.y2 = 64;
+		}
 
         /* get text rect */
         rtgui_font_get_metrics(rtgui_font_default(), text, &text_rect);

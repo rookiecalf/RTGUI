@@ -53,4 +53,15 @@ rt_bool_t rtgui_iconbox_event_handler(struct rtgui_object *object, struct rtgui_
 void rtgui_iconbox_set_text_position(struct rtgui_iconbox *iconbox, int position);
 void rtgui_iconbox_set_selected(struct rtgui_iconbox *iconbox, rt_bool_t selected);
 
+rt_inline void rtgui_iconbox_set_image(struct rtgui_iconbox *iconbox, struct rtgui_image *image)
+{
+	iconbox->image = image;
+}
+
+rt_inline struct rtgui_image *rtgui_iconbox_get_image(struct rtgui_iconbox *iconbox)
+{
+	return iconbox->image;
+}
+
 #endif
+

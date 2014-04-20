@@ -376,25 +376,37 @@ void rtgui_theme_draw_iconbox(rtgui_iconbox_t *iconbox)
     /* get widget rect */
     rtgui_widget_get_rect(RTGUI_WIDGET(iconbox), &rect);
 
-    /* draw icon */
-    rtgui_image_blit(iconbox->image, dc, &rect);
-
-    /* draw text */
-    if (iconbox->text_position == RTGUI_ICONBOX_TEXT_BELOW && iconbox->text != RT_NULL)
-    {
-        rect.y1 = iconbox->image->h + RTGUI_WIDGET_DEFAULT_MARGIN;
-        rtgui_font_get_metrics(rtgui_dc_get_gc(dc)->font, iconbox->text, &text_rect);
-        rtgui_rect_moveto_align(&rect, &text_rect, RTGUI_ALIGN_CENTER);
-        rtgui_dc_draw_text(dc, iconbox->text, &text_rect);
-    }
-    else if (iconbox->text_position == RTGUI_ICONBOX_TEXT_RIGHT && iconbox->text != RT_NULL)
-    {
-        rect.x1 = iconbox->image->w + RTGUI_WIDGET_DEFAULT_MARGIN;
-        rtgui_font_get_metrics(rtgui_dc_get_gc(dc)->font, iconbox->text, &text_rect);
-        rtgui_rect_moveto_align(&rect, &text_rect, RTGUI_ALIGN_CENTER);
-        rtgui_dc_draw_text(dc, iconbox->text, &text_rect);
-    }
-
+	if (iconbox->image != RT_NULL)
+	{
+	    /* draw icon */
+	    rtgui_image_blit(iconbox->image, dc, &rect);
+		
+	    /* draw text */
+	    if (iconbox->text_position == RTGUI_ICONBOX_TEXT_BELOW && iconbox->text != RT_NULL)
+	    {
+	        rect.y1 = iconbox->image->h + RTGUI_WIDGET_DEFAULT_MARGIN;
+	        rtgui_font_get_metrics(rtgui_dc_get_gc(dc)->font, iconbox->text, &text_rect);
+	        rtgui_rect_moveto_align(&rect, &text_rect, RTGUI_ALIGN_CENTER);
+	        rtgui_dc_draw_text(dc, iconbox->text, &text_rect);
+	    }
+	    else if (iconbox->text_position == RTGUI_ICONBOX_TEXT_RIGHT && iconbox->text != RT_NULL)
+	    {
+	        rect.x1 = iconbox->image->w + RTGUI_WIDGET_DEFAULT_MARGIN;
+	        rtgui_font_get_metrics(rtgui_dc_get_gc(dc)->font, iconbox->text, &text_rect);
+	        rtgui_rect_moveto_align(&rect, &text_rect, RTGUI_ALIGN_CENTER);
+	        rtgui_dc_draw_text(dc, iconbox->text, &text_rect);
+	    }
+	}
+	else
+	{
+		if (iconbox->text_position != RTGUI_ICONBOX_NOTEXT)
+		{
+	        rtgui_font_get_metrics(rtgui_dc_get_gc(dc)->font, iconbox->text, &text_rect);
+	        rtgui_rect_moveto_align(&rect, &text_rect, RTGUI_ALIGN_CENTER);
+	        rtgui_dc_draw_text(dc, iconbox->text, &text_rect);
+		}
+	}
+	
     /* end drawing */
     rtgui_dc_end_drawing(dc);
 }

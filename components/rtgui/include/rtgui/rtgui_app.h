@@ -91,6 +91,9 @@ rtgui_idle_func_t rtgui_app_get_onidle(struct rtgui_app *app);
 struct rtgui_app *rtgui_app_self(void);
 
 rt_err_t rtgui_app_set_as_wm(struct rtgui_app *app);
+
 void rtgui_app_set_main_win(struct rtgui_app *app, struct rtgui_win *win);
+struct rtgui_win* rtgui_app_get_main_win(struct rtgui_app *app);
 
 #endif /* end of include guard: __RTGUI_APP_H__ */
+
