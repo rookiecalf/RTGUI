@@ -16,6 +16,13 @@ else:
     SrcRemove(src, 'font_cmp_hz16.c')
     SrcRemove(src, 'font_cmp_hz12.c')
 
+if not GetDepend('RTGUI_IMAGE_BMP'):
+    SrcRemove(src, 'image_bmp.c')
+if not (GetDepend('RTGUI_IMAGE_JPEG') or GetDepend('RTGUI_IMAGE_TJPGD')):
+    SrcRemove(src, 'image_jpg.c')
+if not (GetDepend('RTGUI_IMAGE_PNG') or GetDepend('RTGUI_IMAGE_LODEPNG')):
+    SrcRemove(src, 'image_png.c')
+
 group = DefineGroup('RTGUI', src, depend = ['RT_USING_RTGUI'], CPPPATH = CPPPATH)
 
 Return('group')

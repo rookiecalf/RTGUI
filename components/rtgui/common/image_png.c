@@ -397,8 +397,9 @@ void rtgui_image_png_init()
     rtgui_image_register_engine(&rtgui_image_png_engine);
 }
 
-#elif RTGUI_IMAGE_LODEPNG
+#elif defined(RTGUI_IMAGE_LODEPNG)
 #include "lodepng.h"
+#include <rtgui/image_png.h>
 
 static rt_bool_t rtgui_image_png_check(struct rtgui_filerw *file);
 static rt_bool_t rtgui_image_png_load(struct rtgui_image *image, struct rtgui_filerw *file, rt_bool_t load);
@@ -480,7 +481,7 @@ static rt_bool_t rtgui_image_png_load(struct rtgui_image *image, struct rtgui_fi
     /* set image information */
     image->w = width;
     image->h = height;
-    image->engine = &rtgui_image_lpng_engine;
+    image->engine = &rtgui_image_png_engine;
     image->data = pixel;
 
     return RT_TRUE;
