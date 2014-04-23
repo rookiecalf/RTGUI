@@ -52,22 +52,6 @@
 #define hw_driver               (rtgui_graphic_driver_get_default())
 #define _int_swap(x, y)         do {x ^= y; y ^= x; x ^= y;} while (0)
 
-rt_inline rt_uint8_t _dc_get_pixel_format(struct rtgui_dc* dc)
-{
-	rt_uint8_t pixel_format = 0xff;
-
-	if (dc->type == RTGUI_DC_HW || dc->type == RTGUI_DC_CLIENT)
-		pixel_format = hw_driver->pixel_format;
-	else if (dc->type == RTGUI_DC_BUFFER)
-	{
-		struct rtgui_dc_buffer *buffer = (struct rtgui_dc_buffer*)dc;
-		
-		pixel_format = buffer->pixel_format;
-	}
-
-	return pixel_format;
-}
-
 rt_inline rt_uint8_t _dc_get_bits_per_pixel(struct rtgui_dc* dc)
 {
 	rt_uint8_t bits_per_pixel = 0;
@@ -97,6 +81,13 @@ rt_inline rt_uint16_t _dc_get_pitch(struct rtgui_dc* dc)
 		dc_buffer = (struct rtgui_dc_buffer*)dc;
 		pitch = dc_buffer->pitch;
 	}
+	else if (dc->type == RTGUI_DC_WIN)
+	{
+		struct rtgui_dc_win *dc_win;
+
+		dc_win = (struct rtgui_dc_win*)dc;
+		pitch = dc_win->buffer->pitch;
+	}
 
 	return pitch;
 }
@@ -121,10 +112,18 @@ rt_inline rt_uint8_t* _dc_get_pixel(struct rtgui_dc* dc, int x, int y)
 		pixel = dc_buffer->pixel + y * dc_buffer->pitch + 
 			x * rtgui_color_get_bpp(dc_buffer->pixel_format);
 	}
+	else if (dc->type == RTGUI_DC_WIN)
+	{
+		struct rtgui_dc_win *dc_win;
+
+		dc_win = (struct rtgui_dc_win*)dc;
+
+		pixel = dc_win->buffer->pixel + y * dc_win->buffer->pitch + 
+			x * rtgui_color_get_bpp(dc_win->buffer->pixel_format);
+	}
 
 	return pixel;
 }
-
 
 /* Use the Cohen-Sutherland algorithm for line clipping */
 #define CODE_BOTTOM 1
@@ -319,13 +318,13 @@ _dc_draw_line2(struct rtgui_dc * dst, int x1, int y1, int x2, int y2, rtgui_colo
 		_b = RTGUI_RGB_B(color);
 		_a = RTGUI_RGB_A(color);
 		
-		if (_dc_get_pixel_format(dst) == RTGRAPHIC_PIXEL_FORMAT_RGB565)
+		if (rtgui_dc_get_pixel_format(dst) == RTGRAPHIC_PIXEL_FORMAT_RGB565)
 		{
             AALINE(x1, y1, x2, y2,
                    DRAW_FASTSETPIXELXY2, DRAW_SETPIXELXY_BLEND_RGB565,
                    draw_end);
 		}
-		else if (_dc_get_pixel_format(dst) == RTGRAPHIC_PIXEL_FORMAT_BGR565)
+		else if (rtgui_dc_get_pixel_format(dst) == RTGRAPHIC_PIXEL_FORMAT_BGR565)
 		{
 			AALINE(x1, y1, x2, y2,
 				DRAW_FASTSETPIXELXY2, DRAW_SETPIXELXY_BLEND_BGR565,
@@ -351,13 +350,13 @@ _dc_draw_line4(struct rtgui_dc * dst, int x1, int y1, int x2, int y2, rtgui_colo
 		_b = RTGUI_RGB_B(color);
 		_a = RTGUI_RGB_A(color);
 
-		if (_dc_get_pixel_format(dst) == RTGRAPHIC_PIXEL_FORMAT_RGB888)
+		if (rtgui_dc_get_pixel_format(dst) == RTGRAPHIC_PIXEL_FORMAT_RGB888)
 		{
             AALINE(x1, y1, x2, y2,
 				DRAW_FASTSETPIXELXY4, DRAW_SETPIXELXY_BLEND_RGB888,
 				draw_end);
         }
-		else if (_dc_get_pixel_format(dst) == RTGRAPHIC_PIXEL_FORMAT_ARGB888)
+		else if (rtgui_dc_get_pixel_format(dst) == RTGRAPHIC_PIXEL_FORMAT_ARGB888)
 		{
             AALINE(x1, y1, x2, y2,
 				DRAW_FASTSETPIXELXY4, DRAW_SETPIXELXY_BLEND_ARGB8888,
@@ -711,7 +710,7 @@ rtgui_dc_blend_point(struct rtgui_dc * dst, int x, int y, enum RTGUI_BLENDMODE b
         b = DRAW_MUL(b, a);
     }
 
-    switch (_dc_get_pixel_format(dst)) {
+    switch (rtgui_dc_get_pixel_format(dst)) {
 	case RTGRAPHIC_PIXEL_FORMAT_RGB565:
         _dc_blend_point_rgb565(dst, x, y, blendMode, r, g, b, a);
 		break;
@@ -750,7 +749,7 @@ rtgui_dc_blend_points(struct rtgui_dc * dst, const rtgui_point_t * points, int c
     }
 
     /* FIXME: Does this function pointer slow things down significantly? */
-	switch (_dc_get_pixel_format(dst))
+	switch (rtgui_dc_get_pixel_format(dst))
 	{
 	case RTGRAPHIC_PIXEL_FORMAT_RGB565:
         func = _dc_blend_point_rgb565;
@@ -1201,7 +1200,7 @@ rtgui_dc_blend_line(struct rtgui_dc * dst, int x1, int y1, int x2, int y2,
 	/* we do not support pixel DC */
 	if (_dc_get_pixel(dst, 0, 0) == RT_NULL) return; 
 
-	pixel_format = _dc_get_pixel_format(dst);
+	pixel_format = rtgui_dc_get_pixel_format(dst);
     func = _dc_calc_blend_line_func(pixel_format);	
     if (!func) 
 	{
@@ -1299,7 +1298,7 @@ rtgui_dc_blend_lines(struct rtgui_dc * dst, const rtgui_point_t * points, int co
 	/* we do not support pixel DC */
 	if (_dc_get_pixel(dst, 0, 0) == RT_NULL) return ; 
 
-	pixel_format = _dc_get_pixel_format(dst);
+	pixel_format = rtgui_dc_get_pixel_format(dst);
     func = _dc_calc_blend_line_func(pixel_format);
     if (!func) {
         rt_kprintf("dc_blend_lines(): Unsupported pixel format\n");
@@ -1532,7 +1531,7 @@ rtgui_dc_blend_fill_rect(struct rtgui_dc* dst, const rtgui_rect_t *rect,
         b = DRAW_MUL(b, a);
     }
 
-    switch (_dc_get_pixel_format(dst)) 
+    switch (rtgui_dc_get_pixel_format(dst)) 
 	{
     case RTGRAPHIC_PIXEL_FORMAT_RGB565:
         func = _dc_blend_fill_rect_rgb565;
@@ -1636,7 +1635,7 @@ rtgui_dc_blend_fill_rects(struct rtgui_dc * dst, const rtgui_rect_t *rects, int 
         b = DRAW_MUL(b, a);
     }
 
-    switch (_dc_get_pixel_format(dst)) 
+    switch (rtgui_dc_get_pixel_format(dst)) 
 	{
     case RTGRAPHIC_PIXEL_FORMAT_RGB565:
         func = _dc_blend_fill_rect_rgb565;

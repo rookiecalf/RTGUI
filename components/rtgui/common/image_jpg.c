@@ -865,12 +865,27 @@ static void rtgui_image_jpeg_blit(struct rtgui_image *image,
 					src += imageWidth;
 				}
 			}
-			else if (dc->type == RTGUI_DC_BUFFER) /* if the format is not match, only support DC buffer */
+			else if ((dc->type == RTGUI_DC_BUFFER) || (dc->type == RTGUI_DC_WIN)) /* if the format is not match, only support DC buffer */
 			{
 				struct rtgui_blit_info info;
 				struct rtgui_dc_buffer *buffer;
 
-				buffer = (struct rtgui_dc_buffer*)dc;
+				struct rtgui_rect r;
+
+				if (dc->type == RTGUI_DC_WIN)
+				{
+					struct rtgui_dc_win *win;
+					struct rtgui_widget *owner;
+					
+					win = (struct rtgui_dc_win*)dc;
+					owner = RTGUI_WIDGET(win->owner);
+
+					buffer = (struct rtgui_dc_buffer*)win->buffer;
+					r = *dst_rect; dst_rect = &r;
+					
+					rtgui_widget_rect_to_logic(owner, dst_rect);
+				}
+				else buffer = (struct rtgui_dc_buffer*)dc;
 
 				info.src = jpeg->pixels;
 				info.src_h = rtgui_rect_height(*dst_rect);

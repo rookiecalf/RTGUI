@@ -435,9 +435,22 @@ static void rtgui_dc_buffer_blit(struct rtgui_dc *self, struct rtgui_point *dc_p
 			}
         }
     }
-	else if (dest->type == RTGUI_DC_BUFFER)
+	else if ((dest->type == RTGUI_DC_BUFFER) || (dest->type == RTGUI_DC_WIN))
 	{
-		struct rtgui_dc_buffer *dest_dc = (struct rtgui_dc_buffer*)dest;
+		struct rtgui_dc_buffer *dest_dc;
+
+		if (dest->type == RTGUI_DC_WIN)
+		{
+			struct rtgui_dc_win *dc_win = (struct rtgui_dc_win*)dest;
+			struct rtgui_widget *owner = RTGUI_WIDGET(dc_win->owner);
+
+			dest_dc = dc_win->buffer;
+			rtgui_widget_rect_to_logic(owner, dest_rect);
+		}
+		else
+		{
+			dest_dc = (struct rtgui_dc_buffer*)dest;
+		}
 
 		if (dest_dc->pixel_format == dc->pixel_format)
 		{

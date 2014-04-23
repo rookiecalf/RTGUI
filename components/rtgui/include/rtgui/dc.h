@@ -30,6 +30,7 @@ enum rtgui_dc_type
     RTGUI_DC_HW,
     RTGUI_DC_CLIENT,
     RTGUI_DC_BUFFER,
+    RTGUI_DC_WIN,
 };
 
 struct rtgui_dc_engine
@@ -82,6 +83,14 @@ struct rtgui_dc_buffer
 
 	/* pixel data */
 	rt_uint8_t *pixel;
+};
+
+struct rtgui_dc_win
+{
+	struct rtgui_dc parent;
+
+	struct rtgui_win *owner;
+	struct rtgui_dc_buffer *buffer;
 };
 
 #define RTGUI_DC_FC(dc)         (rtgui_dc_get_gc(RTGUI_DC(dc))->foreground)
