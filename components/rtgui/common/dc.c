@@ -1409,11 +1409,11 @@ void rtgui_dc_set_gc(struct rtgui_dc *dc, rtgui_gc_t *gc)
 			dc_buffer->gc = *gc;
 			break;
 	    }
-	case RTGUI_DC_WIN:
+	case RTGUI_DC_WIDGET:
 		{
-			struct rtgui_dc_win *dc_win;
+			struct rtgui_dc_widget *dc_win;
 
-			dc_win = (struct rtgui_dc_win*)dc;
+			dc_win = (struct rtgui_dc_widget*)dc;
 			dc_win->buffer->gc = *gc;
 			break;
 		}
@@ -1457,11 +1457,11 @@ rtgui_gc_t *rtgui_dc_get_gc(struct rtgui_dc *dc)
 			gc = &dc_buffer->gc;
 			break;
 	    }
-	case RTGUI_DC_WIN:
+	case RTGUI_DC_WIDGET:
 		{
-			struct rtgui_dc_win *dc_win;
+			struct rtgui_dc_widget *dc_win;
 
-			dc_win = (struct rtgui_dc_win*)dc;
+			dc_win = (struct rtgui_dc_widget*)dc;
 			gc = &(dc_win->buffer->gc);
 			break;
 		}
@@ -1543,12 +1543,12 @@ void rtgui_dc_get_rect(struct rtgui_dc *dc, rtgui_rect_t *rect)
 			rtgui_rect_init(rect, 0, 0, dc_buffer->width, dc_buffer->height);
 			break;
 	    }
-	case RTGUI_DC_WIN:
+	case RTGUI_DC_WIDGET:
 		{
-			struct rtgui_dc_win *dc_win;
+			struct rtgui_dc_widget *dc_widget;
 
-			dc_win = (struct rtgui_dc_win*)dc;
-			rtgui_rect_init(rect, 0, 0, dc_win->buffer->width, dc_win->buffer->height);
+			dc_widget = (struct rtgui_dc_widget*)dc;
+			rtgui_widget_get_rect(dc_widget->owner, rect);
 			break;
 		}
 	}
@@ -1582,12 +1582,12 @@ rt_uint8_t rtgui_dc_get_pixel_format(struct rtgui_dc *dc)
 			pixel_fmt = dc_buffer->pixel_format;
 			break;
 		}
-	case RTGUI_DC_WIN:
+	case RTGUI_DC_WIDGET:
 		{
-			struct rtgui_dc_win *dc_win;
+			struct rtgui_dc_widget *dc_widget;
 
-			dc_win = (struct rtgui_dc_win*)dc;
-			pixel_fmt = dc_win->buffer->pixel_format;
+			dc_widget = (struct rtgui_dc_widget*)dc;
+			pixel_fmt = dc_widget->buffer->pixel_format;
 			break;
 		}
 	}
@@ -1595,3 +1595,96 @@ rt_uint8_t rtgui_dc_get_pixel_format(struct rtgui_dc *dc)
 	return pixel_fmt;
 }
 RTM_EXPORT(rtgui_dc_get_pixel_format);
+
+void rtgui_dc_logic_to_device(struct rtgui_dc* dc, struct rtgui_point *point)
+{
+	switch (dc->type)
+	{
+	case RTGUI_DC_CLIENT:
+		{
+			rtgui_widget_t *owner;
+			/* get owner */
+			owner = RTGUI_CONTAINER_OF(dc, struct rtgui_widget, dc_type);
+			point->x += owner->extent.x1;
+			point->y += owner->extent.y1;
+			break;
+		}
+	case RTGUI_DC_HW:
+		{
+			rtgui_widget_t *owner;
+			struct rtgui_dc_hw *dc_hw;
+			
+			dc_hw = (struct rtgui_dc_hw *) dc;
+			owner = dc_hw->owner;
+			point->x += owner->extent.x1;
+			point->y += owner->extent.y1;
+			break;
+		}
+
+	case RTGUI_DC_BUFFER: /* no conversion */
+		break;
+
+	case RTGUI_DC_WIDGET:
+		{
+			struct rtgui_dc_widget *dc_win;
+
+			dc_win = (struct rtgui_dc_widget*)dc;
+
+			RT_ASSERT(dc_win->owner != RT_NULL);
+			RT_ASSERT(dc_win->owner->toplevel != RT_NULL);
+
+			point->x += (dc_win->owner->extent.x1 - RTGUI_WIDGET(dc_win->owner->toplevel)->extent.x1);
+			point->y += (dc_win->owner->extent.y1 - RTGUI_WIDGET(dc_win->owner->toplevel)->extent.y1);
+			break;
+		}
+	}
+}
+RTM_EXPORT(rtgui_dc_logic_to_device);
+
+void rtgui_dc_rect_to_device(struct rtgui_dc* dc, struct rtgui_rect* rect)
+{
+	switch (dc->type)
+	{
+	case RTGUI_DC_CLIENT:
+		{
+			rtgui_widget_t *owner;
+			/* get owner */
+			owner = RTGUI_CONTAINER_OF(dc, struct rtgui_widget, dc_type);
+
+			rtgui_rect_moveto(rect, owner->extent.x1, owner->extent.y1);
+			break;
+		}
+	case RTGUI_DC_HW:
+		{
+			rtgui_widget_t *owner;
+			struct rtgui_dc_hw *dc_hw;
+			
+			dc_hw = (struct rtgui_dc_hw *) dc;
+			owner = dc_hw->owner;
+			rtgui_rect_moveto(rect, owner->extent.x1, owner->extent.y1);
+			break;
+		}
+
+	case RTGUI_DC_BUFFER: /* no conversion */
+		break;
+
+	case RTGUI_DC_WIDGET:
+		{
+			int dx, dy;
+			struct rtgui_dc_widget *dc_win;
+
+			dc_win = (struct rtgui_dc_widget*)dc;
+
+			RT_ASSERT(dc_win->owner != RT_NULL);
+			RT_ASSERT(dc_win->owner->toplevel != RT_NULL);
+
+			dx = (dc_win->owner->extent.x1 - RTGUI_WIDGET(dc_win->owner->toplevel)->extent.x1);
+			dy = (dc_win->owner->extent.y1 - RTGUI_WIDGET(dc_win->owner->toplevel)->extent.y1)
+			rtgui_rect_moveto(rect, dx, dy);
+
+			break;
+		}
+	}
+}
+RTM_EXPORT(rtgui_dc_rect_to_device);
+

@@ -30,7 +30,7 @@ enum rtgui_dc_type
     RTGUI_DC_HW,
     RTGUI_DC_CLIENT,
     RTGUI_DC_BUFFER,
-    RTGUI_DC_WIN,
+    RTGUI_DC_WIDGET,
 };
 
 struct rtgui_dc_engine
@@ -85,11 +85,13 @@ struct rtgui_dc_buffer
 	rt_uint8_t *pixel;
 };
 
-struct rtgui_dc_win
+struct rtgui_dc_widget
 {
 	struct rtgui_dc parent;
 
-	struct rtgui_win *owner;
+	struct rtgui_widget *owner;
+
+	/* dc buffer which refer to the DC buffer of window */
 	struct rtgui_dc_buffer *buffer;
 };
 
@@ -224,6 +226,9 @@ rt_bool_t rtgui_dc_get_visible(struct rtgui_dc *dc);
 void rtgui_dc_get_rect(struct rtgui_dc *dc, rtgui_rect_t *rect);
 /* get pixel format */
 rt_uint8_t rtgui_dc_get_pixel_format(struct rtgui_dc *dc);
+/* coordinate conversion */
+void rtgui_dc_logic_to_device(struct rtgui_dc* dc, struct rtgui_point *point);
+void rtgui_dc_rect_to_device(struct rtgui_dc* dc, struct rtgui_rect* rect);
 
 /* dc rotation and zoom operations */
 struct rtgui_dc *rtgui_dc_shrink(struct rtgui_dc *dc, int factorx, int factory);

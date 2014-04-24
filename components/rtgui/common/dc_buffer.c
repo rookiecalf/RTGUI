@@ -435,17 +435,18 @@ static void rtgui_dc_buffer_blit(struct rtgui_dc *self, struct rtgui_point *dc_p
 			}
         }
     }
-	else if ((dest->type == RTGUI_DC_BUFFER) || (dest->type == RTGUI_DC_WIN))
+	else if ((dest->type == RTGUI_DC_BUFFER) || (dest->type == RTGUI_DC_WIDGET))
 	{
 		struct rtgui_dc_buffer *dest_dc;
 
-		if (dest->type == RTGUI_DC_WIN)
+		if (dest->type == RTGUI_DC_WIDGET)
 		{
-			struct rtgui_dc_win *dc_win = (struct rtgui_dc_win*)dest;
-			struct rtgui_widget *owner = RTGUI_WIDGET(dc_win->owner);
+			struct rtgui_dc_widget *dc_widget = (struct rtgui_dc_widget*)dest;
 
-			dest_dc = dc_win->buffer;
-			rtgui_widget_rect_to_logic(owner, dest_rect);
+			dest_dc = dc_widget->buffer;
+
+			/* coordinate conversion */
+			rtgui_dc_rect_to_device(dest, dest_rect);
 		}
 		else
 		{
