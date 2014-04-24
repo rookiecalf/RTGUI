@@ -46,6 +46,13 @@ struct rtgui_dc *rtgui_dc_begin_drawing(rtgui_widget_t *owner)
     struct rtgui_dc *dc;
     RT_ASSERT(owner != RT_NULL);
 
+	/* it's a virtual buffer dc */
+	if (owner->toplevel->flag & RTGUI_WIN_FLAG_BUFFER_DRAWING)
+	{
+		dc = rtgui_dc_widget_create(owner);
+		return dc;
+	}
+
     rtgui_screen_lock(RT_WAITING_FOREVER);
 
     if ((rtgui_region_is_flat(&owner->clip) == RT_EOK) &&

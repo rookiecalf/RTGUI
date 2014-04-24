@@ -781,6 +781,15 @@ rtgui_widget_t *rtgui_widget_get_prev_sibling(rtgui_widget_t *widget)
 }
 RTM_EXPORT(rtgui_widget_get_prev_sibling);
 
+/* get the widget drawing DC buffer */
+struct rtgui_dc* rtgui_widget_get_buffer_dc(rtgui_widget_t* widget)
+{
+	struct rtgui_dc* dc = RT_NULL;
+
+	return dc;
+}
+RTM_EXPORT(rtgui_widget_get_buffer_dc);
+
 #ifdef RTGUI_WIDGET_DEBUG
 #include <rtgui/widgets/label.h>
 #include <rtgui/widgets/button.h>

@@ -4,13 +4,14 @@
 
 #include <rtgui/dc.h>
 #include <rtgui/rtgui_system.h>
+#include <rtgui/widgets/window.h>
 
 #define _OWNER(dc)	(dc->owner)
 #define _WIN(dc)	(RTGUI_WIDGET(dc->owner->toplevel))
 #define _DC(dc)		((struct rtgui_dc*)(dc->buffer))
 
-#define _DX(dc)		(_OWNER(dc)->extent.x1 - (_WIN(dc)->extent.x1))
-#define _DY(dc)		(_OWNER(dc)->extent.y1 - (_WIN(dc)->extent.y1))
+#define _DX(dc)		(dc->offset_x)
+#define _DY(dc)		(dc->offset_y)
 
 static rt_bool_t rtgui_dc_widget_fini(struct rtgui_dc *dc);
 static void rtgui_dc_widget_draw_point(struct rtgui_dc *dc, int x, int y);
@@ -56,7 +57,6 @@ static void rtgui_dc_widget_draw_point(struct rtgui_dc *dc, int x, int y)
 
 	dc_widget = (struct rtgui_dc_widget*)dc;
 	RT_ASSERT(dc_widget != RT_NULL);
-	RT_ASSERT(dc_widget->owner != RT_NULL);
 
 	/* get logic coordinate */
 	x += _DX(dc_widget);
@@ -71,7 +71,6 @@ static void rtgui_dc_widget_draw_color_point(struct rtgui_dc *dc, int x, int y, 
 
 	dc_widget = (struct rtgui_dc_widget*)dc;
 	RT_ASSERT(dc_widget != RT_NULL);
-	RT_ASSERT(dc_widget->owner != RT_NULL);
 
 	/* get logic coordinate */
 	x += _DX(dc_widget);
@@ -86,7 +85,6 @@ static void rtgui_dc_widget_draw_vline(struct rtgui_dc *dc, int x, int y1, int y
 
 	dc_widget = (struct rtgui_dc_widget*)dc;
 	RT_ASSERT(dc_widget != RT_NULL);
-	RT_ASSERT(dc_widget->owner != RT_NULL);
 
 	/* get logic coordinate */
 	x  += _DX(dc_widget);
@@ -102,7 +100,6 @@ static void rtgui_dc_widget_draw_hline(struct rtgui_dc *dc, int x1, int x2, int 
 
 	dc_widget = (struct rtgui_dc_widget*)dc;
 	RT_ASSERT(dc_widget != RT_NULL);
-	RT_ASSERT(dc_widget->owner != RT_NULL);
 	
 	/* get logic coordinate */
 	x1 += _DX(dc_widget);
@@ -119,7 +116,6 @@ static void rtgui_dc_widget_fill_rect(struct rtgui_dc *dc, struct rtgui_rect *re
 
 	dc_widget = (struct rtgui_dc_widget*)dc;
 	RT_ASSERT(dc_widget != RT_NULL);
-	RT_ASSERT(dc_widget->owner != RT_NULL);
 
 	r = *rect;
 	rtgui_rect_moveto(&r, _DX(dc_widget), _DY(dc_widget));
@@ -132,7 +128,6 @@ static void rtgui_dc_widget_blit_line(struct rtgui_dc *dc, int x1, int x2, int y
 
 	dc_widget = (struct rtgui_dc_widget*)dc;
 	RT_ASSERT(dc_widget != RT_NULL);
-	RT_ASSERT(dc_widget->owner != RT_NULL);
 
 	/* get logic coordinate */
 	x1 += _DX(dc_widget);
@@ -150,7 +145,6 @@ static void rtgui_dc_widget_blit(struct rtgui_dc *dc, struct rtgui_point *dc_poi
 
 	dc_widget = (struct rtgui_dc_widget*)dc;
 	RT_ASSERT(dc_widget != RT_NULL);
-	RT_ASSERT(dc_widget->owner != RT_NULL);
 
 	p = *dc_point;
 	p.x += _DX(dc_widget);
@@ -170,6 +164,10 @@ struct rtgui_dc* rtgui_dc_widget_create(struct rtgui_widget* owner)
 	{
 		/* initialize DC window buffer */
 		dc->owner = owner;
+		dc->buffer = owner->toplevel->buffer;
+
+		dc->offset_x = (_OWNER(dc)->extent.x1 - (_WIN(dc)->extent.x1));
+		dc->offset_y = (_OWNER(dc)->extent.y1 - (_WIN(dc)->extent.y1));
 
 		dc->parent.type = RTGUI_DC_WIDGET;
 		dc->parent.engine = &dc_widget_engine;
@@ -177,3 +175,29 @@ struct rtgui_dc* rtgui_dc_widget_create(struct rtgui_widget* owner)
 	
 	return (struct rtgui_dc*)dc;
 }
+RTM_EXPORT(rtgui_dc_widget_create);
+
+struct rtgui_dc* rtgui_dc_widget_create_from_buffer(struct rtgui_widget* owner, struct rtgui_dc_buffer* buffer, 
+	int offset_x, int offset_y)
+{
+	struct rtgui_dc_widget* dc;
+
+	RT_ASSERT(owner != RT_NULL);
+	RT_ASSERT(buffer != RT_NULL);
+
+	dc = (struct rtgui_dc_widget*) rtgui_malloc (sizeof(struct rtgui_dc_widget));
+	if (dc != RT_NULL)
+	{
+		dc->owner = owner;
+		dc->offset_x = offset_x;
+		dc->offset_y = offset_y;
+
+		dc->buffer = buffer;
+		dc->parent.type = RTGUI_DC_WIDGET;
+		dc->parent.engine = &dc_widget_engine;
+	}
+
+	return (struct rtgui_dc*)dc;
+}
+RTM_EXPORT(rtgui_dc_widget_create_from_buffer);
+

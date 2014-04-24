@@ -1626,15 +1626,10 @@ void rtgui_dc_logic_to_device(struct rtgui_dc* dc, struct rtgui_point *point)
 
 	case RTGUI_DC_WIDGET:
 		{
-			struct rtgui_dc_widget *dc_win;
+			struct rtgui_dc_widget *dc_widget = (struct rtgui_dc_widget*)dc;
 
-			dc_win = (struct rtgui_dc_widget*)dc;
-
-			RT_ASSERT(dc_win->owner != RT_NULL);
-			RT_ASSERT(dc_win->owner->toplevel != RT_NULL);
-
-			point->x += (dc_win->owner->extent.x1 - RTGUI_WIDGET(dc_win->owner->toplevel)->extent.x1);
-			point->y += (dc_win->owner->extent.y1 - RTGUI_WIDGET(dc_win->owner->toplevel)->extent.y1);
+			point->x += dc_widget->offset_x;
+			point->y += dc_widget->offset_y;
 			break;
 		}
 	}
@@ -1670,18 +1665,8 @@ void rtgui_dc_rect_to_device(struct rtgui_dc* dc, struct rtgui_rect* rect)
 
 	case RTGUI_DC_WIDGET:
 		{
-			int dx, dy;
-			struct rtgui_dc_widget *dc_win;
-
-			dc_win = (struct rtgui_dc_widget*)dc;
-
-			RT_ASSERT(dc_win->owner != RT_NULL);
-			RT_ASSERT(dc_win->owner->toplevel != RT_NULL);
-
-			dx = (dc_win->owner->extent.x1 - RTGUI_WIDGET(dc_win->owner->toplevel)->extent.x1);
-			dy = (dc_win->owner->extent.y1 - RTGUI_WIDGET(dc_win->owner->toplevel)->extent.y1)
-			rtgui_rect_moveto(rect, dx, dy);
-
+			struct rtgui_dc_widget *dc_widget = (struct rtgui_dc_widget*)dc;
+			rtgui_rect_moveto(rect, dc_widget->offset_x, dc_widget->offset_y);
 			break;
 		}
 	}

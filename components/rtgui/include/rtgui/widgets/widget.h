@@ -43,7 +43,7 @@ extern "C" {
 #define RTGUI_WIDGET_FLAG_FOCUSABLE     0x0010
 #define RTGUI_WIDGET_FLAG_DC_VISIBLE    0x0100
 
-    /* rtgui widget attribute */
+/* rtgui widget attribute */
 #define RTGUI_WIDGET_FOREGROUND(w)      (RTGUI_WIDGET(w)->gc.foreground)
 #define RTGUI_WIDGET_BACKGROUND(w)      (RTGUI_WIDGET(w)->gc.background)
 #define RTGUI_WIDGET_TEXTALIGN(w)       (RTGUI_WIDGET(w)->gc.textalign)
@@ -181,6 +181,9 @@ void rtgui_widget_rect_to_logic(rtgui_widget_t *widget, rtgui_rect_t *rect);
 /* move widget and its children to a logic point */
 void rtgui_widget_move_to_logic(rtgui_widget_t *widget, int dx, int dy);
 
+/* get the widget drawing DC buffer */
+struct rtgui_dc* rtgui_widget_get_buffer_dc(rtgui_widget_t* widget);
+
 /* update the clip info of widget */
 void rtgui_widget_update_clip(rtgui_widget_t *widget);
 
@@ -211,3 +214,4 @@ void rtgui_widget_dump(rtgui_widget_t *widget);
 #endif
 
 #endif
+

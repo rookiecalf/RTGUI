@@ -90,6 +90,8 @@ struct rtgui_dc_widget
 	struct rtgui_dc parent;
 
 	struct rtgui_widget *owner;
+	/* offset (x, y) in the DC buffer */
+	rt_uint16_t offset_x, offset_y;
 
 	/* dc buffer which refer to the DC buffer of window */
 	struct rtgui_dc_buffer *buffer;

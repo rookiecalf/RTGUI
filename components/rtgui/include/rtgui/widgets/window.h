@@ -17,6 +17,7 @@
 
 #include <rtgui/rtgui.h>
 #include <rtgui/list.h>
+#include <rtgui/dc.h>
 #include <rtgui/widgets/widget.h>
 #include <rtgui/widgets/box.h>
 
@@ -28,16 +29,17 @@ DECLARE_CLASS_TYPE(win);
 /** Checks if the object is an rtgui_win */
 #define RTGUI_IS_WIN(obj)    (RTGUI_OBJECT_CHECK_TYPE((obj), RTGUI_WIN_TYPE))
 
-#define RTGUI_WIN_STYLE_NO_FOCUS            0x0001  /* non-focused window           */
-#define RTGUI_WIN_STYLE_NO_TITLE            0x0002  /* no title window              */
-#define RTGUI_WIN_STYLE_NO_BORDER           0x0004  /* no border window             */
-#define RTGUI_WIN_STYLE_CLOSEBOX            0x0008  /* window has the close button  */
-#define RTGUI_WIN_STYLE_MINIBOX             0x0010  /* window has the mini button   */
+#define RTGUI_WIN_STYLE_NO_FOCUS            0x0001  /* non-focused window            */
+#define RTGUI_WIN_STYLE_NO_TITLE            0x0002  /* no title window               */
+#define RTGUI_WIN_STYLE_NO_BORDER           0x0004  /* no border window              */
+#define RTGUI_WIN_STYLE_CLOSEBOX            0x0008  /* window has the close button   */
+#define RTGUI_WIN_STYLE_MINIBOX             0x0010  /* window has the mini button    */
 
 #define RTGUI_WIN_STYLE_DESTROY_ON_CLOSE    0x0020  /* window is destroyed when closed */
-#define RTGUI_WIN_STYLE_ONTOP               0x0040  /* window is in the top layer */
+#define RTGUI_WIN_STYLE_ONTOP               0x0040  /* window is in the top layer    */
 #define RTGUI_WIN_STYLE_ONBTM               0x0080  /* window is in the bottom layer */
-#define RTGUI_WIN_STYLE_MAINWIN             0x0106  /* window is a main window */
+#define RTGUI_WIN_STYLE_MAINWIN             0x0106  /* window is a main window       */
+#define RTGUI_WIN_STYLE_BUFFERED			0x0200  /* window has buffered DC        */
 
 #define RTGUI_WIN_STYLE_DEFAULT     (RTGUI_WIN_STYLE_CLOSEBOX | RTGUI_WIN_STYLE_MINIBOX)
 
@@ -58,7 +60,8 @@ enum rtgui_win_flag
      *
      * If this flag is set, we are in key-handling mode.
      */
-    RTGUI_WIN_FLAG_HANDLE_KEY  = 0x20
+    RTGUI_WIN_FLAG_HANDLE_KEY  = 0x20,
+    RTGUI_WIN_FLAG_BUFFER_DRAWING = 0x40,
 };
 
 struct rtgui_win_title;
@@ -107,6 +110,9 @@ struct rtgui_win
      * this function other than handle EVENT_KBD in event_handler.
      */
     rt_bool_t (*on_key)(struct rtgui_object *widget, struct rtgui_event *event);
+
+	/* window buffered DC */
+	struct rtgui_dc_buffer *buffer;
 
     /* reserved user data */
     rt_uint32_t user_data;
