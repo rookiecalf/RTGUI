@@ -47,6 +47,7 @@ static rt_bool_t rtgui_dc_widget_fini(struct rtgui_dc *dc)
 
 	dc_widget->buffer = RT_NULL;
 	dc_widget->owner = RT_NULL;
+    rtgui_free(dc);
 
 	return RT_TRUE;
 }
@@ -165,7 +166,7 @@ struct rtgui_dc* rtgui_dc_widget_create_from_buffer(struct rtgui_widget* owner,
     if (!buffer)
         return RT_NULL;
 
-	dc = (struct rtgui_dc_widget*) rtgui_malloc (sizeof(struct rtgui_dc_widget));
+	dc = (struct rtgui_dc_widget*)rtgui_malloc(sizeof(*dc));
 	if (dc != RT_NULL)
 	{
 		dc->owner = owner;
