@@ -275,10 +275,10 @@ static void rtgui_dc_buffer_fill_rect(struct rtgui_dc *self, struct rtgui_rect *
     if (_r.y2 > dst->height) _r.y2 = dst->height;
 	rect = &_r;
 
-	r = RTGUI_RGB_R(dst->gc.foreground);
-	g = RTGUI_RGB_G(dst->gc.foreground);
-	b = RTGUI_RGB_B(dst->gc.foreground);
-	a = RTGUI_RGB_A(dst->gc.foreground);
+	r = RTGUI_RGB_R(dst->gc.background);
+	g = RTGUI_RGB_G(dst->gc.background);
+	b = RTGUI_RGB_B(dst->gc.background);
+	a = RTGUI_RGB_A(dst->gc.background);
 
 	switch (dst->pixel_format)
 	{

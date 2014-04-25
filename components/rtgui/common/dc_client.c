@@ -159,7 +159,7 @@ static void rtgui_dc_client_draw_vline(struct rtgui_dc *self, int x, int y1, int
         /* draw vline */
         hw_driver->ops->draw_vline(&(owner->gc.foreground), x, y1, y2);
     }
-    else 
+    else
 	{
 		for (index = 0; index < rtgui_region_num_rects(&(owner->clip)); index ++)
     	{

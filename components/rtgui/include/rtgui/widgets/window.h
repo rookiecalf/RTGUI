@@ -63,7 +63,7 @@ enum rtgui_win_flag
     RTGUI_WIN_FLAG_HANDLE_KEY  = 0x20,
 
     /* buffer drawing flag */
-    RTGUI_WIN_FLAG_BUFFER_BLIT = 0x40,   /* blit buffer to hardware 
+    RTGUI_WIN_FLAG_BUFFER_BLIT = 0x40,   /* blit buffer to hardware
                                           * in the end of drawing */
 };
 
