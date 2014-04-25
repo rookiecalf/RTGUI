@@ -106,7 +106,9 @@ struct rtgui_dc_widget
 struct rtgui_dc *rtgui_dc_buffer_create(int width, int height);
 struct rtgui_dc *rtgui_dc_buffer_create_pixformat(rt_uint8_t pixel_format, int w, int h);
 struct rtgui_dc *rtgui_dc_buffer_create_from_dc(struct rtgui_dc* dc);
-rt_uint8_t *rtgui_dc_buffer_get_pixel(struct rtgui_dc *dc);
+
+/* create a widget dc */
+struct rtgui_dc *rtgui_dc_widget_create(struct rtgui_widget * owner);
 
 /* begin and end a drawing */
 struct rtgui_dc *rtgui_dc_begin_drawing(rtgui_widget_t *owner);
@@ -114,6 +116,8 @@ void rtgui_dc_end_drawing(struct rtgui_dc *dc);
 
 /* destroy a dc */
 void rtgui_dc_destory(struct rtgui_dc *dc);
+
+rt_uint8_t *rtgui_dc_buffer_get_pixel(struct rtgui_dc *dc);
 
 void rtgui_dc_draw_line(struct rtgui_dc *dc, int x1, int y1, int x2, int y2);
 void rtgui_dc_draw_rect(struct rtgui_dc *dc, struct rtgui_rect *rect);

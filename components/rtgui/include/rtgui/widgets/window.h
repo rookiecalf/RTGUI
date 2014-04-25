@@ -61,7 +61,10 @@ enum rtgui_win_flag
      * If this flag is set, we are in key-handling mode.
      */
     RTGUI_WIN_FLAG_HANDLE_KEY  = 0x20,
-    RTGUI_WIN_FLAG_BUFFER_DRAWING = 0x40,
+
+    /* buffer drawing flag */
+    RTGUI_WIN_FLAG_BUFFER_BLIT = 0x40,   /* blit buffer to hardware 
+                                          * in the end of drawing */
 };
 
 struct rtgui_win_title;
@@ -159,4 +162,10 @@ void rtgui_win_event_loop(rtgui_win_t *wnd);
 void rtgui_win_set_title(rtgui_win_t *win, const char *title);
 char *rtgui_win_get_title(rtgui_win_t *win);
 
+rt_inline struct rtgui_dc* rtgui_win_get_drawing_buffer(struct rtgui_win *win)
+{
+	return (struct rtgui_dc*) win->buffer;
+}
+
 #endif
+

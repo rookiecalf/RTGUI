@@ -182,7 +182,7 @@ void rtgui_widget_rect_to_logic(rtgui_widget_t *widget, rtgui_rect_t *rect);
 void rtgui_widget_move_to_logic(rtgui_widget_t *widget, int dx, int dy);
 
 /* get the widget drawing DC buffer */
-struct rtgui_dc* rtgui_widget_get_buffer_dc(rtgui_widget_t* widget);
+struct rtgui_dc* rtgui_widget_get_drawing(rtgui_widget_t* widget);
 
 /* update the clip info of widget */
 void rtgui_widget_update_clip(rtgui_widget_t *widget);

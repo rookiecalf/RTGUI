@@ -782,10 +782,23 @@ rtgui_widget_t *rtgui_widget_get_prev_sibling(rtgui_widget_t *widget)
 RTM_EXPORT(rtgui_widget_get_prev_sibling);
 
 /* get the widget drawing DC buffer */
-struct rtgui_dc* rtgui_widget_get_buffer_dc(rtgui_widget_t* widget)
+struct rtgui_dc* rtgui_widget_get_drawing(rtgui_widget_t* widget)
 {
+	int w, h;
 	struct rtgui_dc* dc = RT_NULL;
 
+	if ((widget->toplevel != RT_NULL) && (widget->toplevel->style & RTGUI_WIN_STYLE_BUFFERED))
+	{
+		w = widget->extent.x2 - widget->extent.x1;
+		h = widget->extent.y2 - widget->extent.y1;
+
+		dc = rtgui_dc_buffer_create(w, h);
+		if (dc != RT_NULL)
+		{
+			/* update widget and get the buffer */
+		}
+	}
+	
 	return dc;
 }
 RTM_EXPORT(rtgui_widget_get_buffer_dc);
