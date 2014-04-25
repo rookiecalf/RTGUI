@@ -154,6 +154,8 @@ rtgui_win_t *rtgui_win_create(struct rtgui_win *parent_window,
 	{
 		int w, h;
 
+        RT_ASSERT((style & RTGUI_WIN_STYLE_NO_TITLE) && (style & RTGUI_WIN_STYLE_NO_BORDER));
+
 		w = rtgui_rect_width(*rect);
 		h = rtgui_rect_height(*rect);
         win->buffer = rtgui_dc_buffer_create(w, h);
@@ -441,6 +443,16 @@ static rt_bool_t rtgui_win_ondraw(struct rtgui_win *win)
                                    (rtgui_event_t *)&event);
 
     rtgui_dc_end_drawing(dc);
+
+    if (win->buffer)
+    {
+        struct rtgui_dc *dc;
+
+        rtgui_screen_lock(RT_WAITING_FOREVER);
+        dc = rtgui_dc_client_create(RTGUI_WIDGET(win));
+        rtgui_dc_blit(win->buffer, RT_NULL, dc, RT_NULL);
+        rtgui_screen_unlock();
+    }
 
     return RT_FALSE;
 }

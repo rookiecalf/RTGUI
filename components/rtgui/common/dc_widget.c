@@ -170,8 +170,8 @@ struct rtgui_dc* rtgui_dc_widget_create_from_buffer(struct rtgui_widget* owner,
 	if (dc != RT_NULL)
 	{
 		dc->owner = owner;
-		dc->offset_x = (_OWNER(dc)->extent.x1 - (parent->extent.x1));
-		dc->offset_y = (_OWNER(dc)->extent.y1 - (parent->extent.y1));
+		dc->offset_x = (owner->extent.x1 - (parent->extent.x1));
+		dc->offset_y = (owner->extent.y1 - (parent->extent.y1));
 		dc->buffer = buffer;
 
 		dc->parent.type = RTGUI_DC_WIDGET;

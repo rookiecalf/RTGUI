@@ -49,7 +49,7 @@ struct rtgui_dc *rtgui_dc_begin_drawing(rtgui_widget_t *owner)
     rtgui_screen_lock(RT_WAITING_FOREVER);
 
     /* it's a virtual buffer dc */
-    if (owner->toplevel->buffer)
+    if (owner->toplevel && owner->toplevel->buffer)
         dc = rtgui_dc_widget_create(owner);
     else if ((rtgui_region_is_flat(&owner->clip) == RT_EOK) &&
             rtgui_rect_is_equal(&(owner->extent), &(owner->clip.extents)) == RT_EOK)
