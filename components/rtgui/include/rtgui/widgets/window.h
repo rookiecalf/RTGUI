@@ -61,7 +61,6 @@ enum rtgui_win_flag
      * If this flag is set, we are in key-handling mode.
      */
     RTGUI_WIN_FLAG_HANDLE_KEY  = 0x20,
-    RTGUI_WIN_FLAG_BUFFER_DRAWING = 0x40,
 };
 
 struct rtgui_win_title;

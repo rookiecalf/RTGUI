@@ -153,46 +153,26 @@ static void rtgui_dc_widget_blit(struct rtgui_dc *dc, struct rtgui_point *dc_poi
 	rtgui_dc_blit(_DC(dc_widget), &p, dest, rect);
 }
 
-struct rtgui_dc* rtgui_dc_widget_create(struct rtgui_widget* owner)
-{
-	struct rtgui_dc_widget* dc;
-	
-	RT_ASSERT(owner != RT_NULL);
-
-	dc = (struct rtgui_dc_widget*) rtgui_malloc (sizeof(struct rtgui_dc_widget));
-	if (dc != RT_NULL)
-	{
-		/* initialize DC window buffer */
-		dc->owner = owner;
-		dc->buffer = owner->toplevel->buffer;
-
-		dc->offset_x = (_OWNER(dc)->extent.x1 - (_WIN(dc)->extent.x1));
-		dc->offset_y = (_OWNER(dc)->extent.y1 - (_WIN(dc)->extent.y1));
-
-		dc->parent.type = RTGUI_DC_WIDGET;
-		dc->parent.engine = &dc_widget_engine;
-	}
-	
-	return (struct rtgui_dc*)dc;
-}
-RTM_EXPORT(rtgui_dc_widget_create);
-
-struct rtgui_dc* rtgui_dc_widget_create_from_buffer(struct rtgui_widget* owner, struct rtgui_dc_buffer* buffer, 
-	int offset_x, int offset_y)
+struct rtgui_dc* rtgui_dc_widget_create_from_buffer(struct rtgui_widget* owner,
+                                                    struct rtgui_widget *parent,
+                                                    struct rtgui_dc_buffer* buffer)
 {
 	struct rtgui_dc_widget* dc;
 
 	RT_ASSERT(owner != RT_NULL);
-	RT_ASSERT(buffer != RT_NULL);
+	RT_ASSERT(parent != RT_NULL);
+
+    if (!buffer)
+        return RT_NULL;
 
 	dc = (struct rtgui_dc_widget*) rtgui_malloc (sizeof(struct rtgui_dc_widget));
 	if (dc != RT_NULL)
 	{
 		dc->owner = owner;
-		dc->offset_x = offset_x;
-		dc->offset_y = offset_y;
-
+		dc->offset_x = (_OWNER(dc)->extent.x1 - (parent->extent.x1));
+		dc->offset_y = (_OWNER(dc)->extent.y1 - (parent->extent.y1));
 		dc->buffer = buffer;
+
 		dc->parent.type = RTGUI_DC_WIDGET;
 		dc->parent.engine = &dc_widget_engine;
 	}
@@ -200,4 +180,12 @@ struct rtgui_dc* rtgui_dc_widget_create_from_buffer(struct rtgui_widget* owner, 
 	return (struct rtgui_dc*)dc;
 }
 RTM_EXPORT(rtgui_dc_widget_create_from_buffer);
+
+struct rtgui_dc* rtgui_dc_widget_create(struct rtgui_widget* owner)
+{
+    return rtgui_dc_widget_create_from_buffer(owner,
+                                              RTGUI_WIDGET(owner->toplevel),
+                                              owner->toplevel->buffer);
+}
+RTM_EXPORT(rtgui_dc_widget_create);
 

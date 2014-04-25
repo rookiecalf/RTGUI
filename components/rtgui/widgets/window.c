@@ -150,16 +150,13 @@ rtgui_win_t *rtgui_win_create(struct rtgui_win *parent_window,
 
     rtgui_widget_set_rect(RTGUI_WIDGET(win), rect);
     win->style = style;
-	if (win->style & RTGUI_WIN_STYLE_BUFFERED && rect != RT_NULL)
+	if (win->style & RTGUI_WIN_STYLE_BUFFERED)
 	{
 		int w, h;
 
 		w = rtgui_rect_width(*rect);
 		h = rtgui_rect_height(*rect);
-		if (w && h)
-		{
-			win->buffer = rtgui_dc_buffer_create(w, h);
-		}
+        win->buffer = rtgui_dc_buffer_create(w, h);
 	}
 
     if (_rtgui_win_create_in_server(win) == RT_FALSE)
