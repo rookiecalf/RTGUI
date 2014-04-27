@@ -68,6 +68,7 @@ static void rtgui_time_out(void *parameter)
     event.parent.sender = RT_NULL;
 
     event.timer = timer;
+    timer->pending_cnt++;
 
     rtgui_send(timer->app, &(event.parent), sizeof(rtgui_event_timer_t));
 }
@@ -79,6 +80,8 @@ rtgui_timer_t *rtgui_timer_create(rt_int32_t time, rt_int32_t flag, rtgui_timeou
     timer = (rtgui_timer_t *) rtgui_malloc(sizeof(rtgui_timer_t));
     timer->app = rtgui_app_self();
     timer->timeout = timeout;
+    timer->pending_cnt = 0;
+    timer->destroy_pending = 0;
     timer->user_data = parameter;
 
     /* init rt-thread timer */
@@ -94,11 +97,16 @@ void rtgui_timer_destory(rtgui_timer_t *timer)
 
     /* stop timer firstly */
     rtgui_timer_stop(timer);
-
-    /* detach rt-thread timer */
-    rt_timer_detach(&(timer->timer));
-
-    rtgui_free(timer);
+    if (timer->pending_cnt != 0)
+    {
+        timer->destroy_pending = 1;
+    }
+    else
+    {
+        /* detach rt-thread timer */
+        rt_timer_detach(&(timer->timer));
+        rtgui_free(timer);
+    }
 }
 RTM_EXPORT(rtgui_timer_destory);
 

@@ -30,6 +30,9 @@ struct rtgui_timer
     struct rtgui_app* app;
     /* rt timer */
     struct rt_timer timer;
+    /* How many events are pending on the queue. */
+    unsigned int pending_cnt;
+    int destroy_pending;
 
     /* timeout function and user data */
     rtgui_timeout_func timeout;

@@ -185,11 +185,11 @@ rt_inline rt_bool_t _rtgui_application_dest_handle(
     struct rtgui_event_win *wevent = (struct rtgui_event_win *)event;
     struct rtgui_object *dest_object;
 
-	/* this window has been closed. */
-	if (wevent->wid != RT_NULL && wevent->wid->flag & RTGUI_WIN_FLAG_CLOSED)
-		return RT_TRUE;
+    /* this window has been closed. */
+    if (wevent->wid != RT_NULL && wevent->wid->flag & RTGUI_WIN_FLAG_CLOSED)
+        return RT_TRUE;
 
-	dest_object = RTGUI_OBJECT(wevent->wid);
+    dest_object = RTGUI_OBJECT(wevent->wid);
     if (dest_object != RT_NULL)
     {
         if (dest_object->event_handler != RT_NULL)
@@ -244,7 +244,15 @@ rt_bool_t rtgui_app_event_handler(struct rtgui_object *object, rtgui_event_t *ev
         struct rtgui_event_timer *etimer = (struct rtgui_event_timer *) event;
 
         timer = etimer->timer;
-        if (timer->timeout != RT_NULL)
+        timer->pending_cnt--;
+        RT_ASSERT(timer->pending_cnt >= 0);
+        if (timer->destroy_pending)
+        {
+            /* Truly destroy the timer when there is no pending event. */
+            if (timer->destroy_pending == 0)
+                rtgui_timer_destory(timer);
+        }
+        else if (timer->timeout != RT_NULL)
         {
             /* call timeout function */
             timer->timeout(timer, timer->user_data);
@@ -267,7 +275,7 @@ rt_bool_t rtgui_app_event_handler(struct rtgui_object *object, rtgui_event_t *ev
             return _rtgui_application_dest_handle(app, event);
     }
     default:
-    return rtgui_object_event_handler(object, event);
+        return rtgui_object_event_handler(object, event);
     }
 
     return RT_TRUE;
@@ -388,7 +396,7 @@ RTM_EXPORT(rtgui_app_set_main_win);
 
 struct rtgui_win* rtgui_app_get_main_win(struct rtgui_app *app)
 {
-	return RTGUI_WIN(app->main_object);
+    return RTGUI_WIN(app->main_object);
 }
 RTM_EXPORT(rtgui_app_get_main_win);
 
