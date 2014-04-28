@@ -81,13 +81,6 @@ rt_inline rt_uint16_t _dc_get_pitch(struct rtgui_dc* dc)
 		dc_buffer = (struct rtgui_dc_buffer*)dc;
 		pitch = dc_buffer->pitch;
 	}
-	else if (dc->type == RTGUI_DC_WIDGET)
-	{
-		struct rtgui_dc_widget *dc_widget;
-
-		dc_widget = (struct rtgui_dc_widget*)dc;
-		pitch = dc_widget->buffer->pitch;
-	}
 
 	return pitch;
 }
@@ -111,15 +104,6 @@ rt_inline rt_uint8_t* _dc_get_pixel(struct rtgui_dc* dc, int x, int y)
 
 		pixel = dc_buffer->pixel + y * dc_buffer->pitch + 
 			x * rtgui_color_get_bpp(dc_buffer->pixel_format);
-	}
-	else if (dc->type == RTGUI_DC_WIDGET)
-	{
-		struct rtgui_dc_widget *dc_widget;
-
-		dc_widget = (struct rtgui_dc_widget*)dc;
-
-		pixel = dc_widget->buffer->pixel + y * dc_widget->buffer->pitch + 
-			x * rtgui_color_get_bpp(dc_widget->buffer->pixel_format);
 	}
 
 	return pixel;

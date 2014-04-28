@@ -280,12 +280,17 @@ struct rtgui_event_update_toplvl
     } while (0)
 
 #define rtgui_event_vpaint_req rtgui_event_win
-#define rtgui_event_vpaint_ack rtgui_event_win
+struct rtgui_event_vpaint_ack
+{
+	_RTGUI_EVENT_WIN_ELEMENTS
+
+	struct rtgui_dc* buffer;
+};
 
 #define RTGUI_EVENT_VPAINT_REQ_INIT(e, win)	\
 	do { \
         RTGUI_EVENT_INIT(&((e)->parent), RTGUI_EVENT_VPAINT_REQ); \
-		e->wid = win; \
+		(e)->wid = win; \
 	} while (0)
 
 #define RTGUI_EVENT_VPAINT_ACK_INIT(e, win)	\

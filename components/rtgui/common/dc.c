@@ -1413,14 +1413,6 @@ void rtgui_dc_set_gc(struct rtgui_dc *dc, rtgui_gc_t *gc)
 			dc_buffer->gc = *gc;
 			break;
 	    }
-	case RTGUI_DC_WIDGET:
-		{
-			struct rtgui_dc_widget *dc_win;
-
-			dc_win = (struct rtgui_dc_widget*)dc;
-			dc_win->buffer->gc = *gc;
-			break;
-		}
 	}
 }
 RTM_EXPORT(rtgui_dc_set_gc);
@@ -1461,14 +1453,6 @@ rtgui_gc_t *rtgui_dc_get_gc(struct rtgui_dc *dc)
 			gc = &dc_buffer->gc;
 			break;
 	    }
-	case RTGUI_DC_WIDGET:
-		{
-			struct rtgui_dc_widget *dc_win;
-
-			dc_win = (struct rtgui_dc_widget*)dc;
-			gc = &(dc_win->buffer->gc);
-			break;
-		}
 	}
 
 	return gc;
@@ -1547,14 +1531,6 @@ void rtgui_dc_get_rect(struct rtgui_dc *dc, rtgui_rect_t *rect)
 			rtgui_rect_init(rect, 0, 0, dc_buffer->width, dc_buffer->height);
 			break;
 	    }
-	case RTGUI_DC_WIDGET:
-		{
-			struct rtgui_dc_widget *dc_widget;
-
-			dc_widget = (struct rtgui_dc_widget*)dc;
-			rtgui_widget_get_rect(dc_widget->owner, rect);
-			break;
-		}
 	}
 
 	return;
@@ -1584,14 +1560,6 @@ rt_uint8_t rtgui_dc_get_pixel_format(struct rtgui_dc *dc)
 
 			dc_buffer = (struct rtgui_dc_buffer*)dc;
 			pixel_fmt = dc_buffer->pixel_format;
-			break;
-		}
-	case RTGUI_DC_WIDGET:
-		{
-			struct rtgui_dc_widget *dc_widget;
-
-			dc_widget = (struct rtgui_dc_widget*)dc;
-			pixel_fmt = dc_widget->buffer->pixel_format;
 			break;
 		}
 	}
@@ -1627,15 +1595,6 @@ void rtgui_dc_logic_to_device(struct rtgui_dc* dc, struct rtgui_point *point)
 
 	case RTGUI_DC_BUFFER: /* no conversion */
 		break;
-
-	case RTGUI_DC_WIDGET:
-		{
-			struct rtgui_dc_widget *dc_widget = (struct rtgui_dc_widget*)dc;
-
-			point->x += dc_widget->offset_x;
-			point->y += dc_widget->offset_y;
-			break;
-		}
 	}
 }
 RTM_EXPORT(rtgui_dc_logic_to_device);
@@ -1666,13 +1625,6 @@ void rtgui_dc_rect_to_device(struct rtgui_dc* dc, struct rtgui_rect* rect)
 
 	case RTGUI_DC_BUFFER: /* no conversion */
 		break;
-
-	case RTGUI_DC_WIDGET:
-		{
-			struct rtgui_dc_widget *dc_widget = (struct rtgui_dc_widget*)dc;
-			rtgui_rect_moveto(rect, dc_widget->offset_x, dc_widget->offset_y);
-			break;
-		}
 	}
 }
 RTM_EXPORT(rtgui_dc_rect_to_device);
@@ -1683,11 +1635,11 @@ extern void rtgui_mouse_hide_cursor(void);
 
 struct rtgui_dc *rtgui_dc_begin_drawing(rtgui_widget_t *owner)
 {
-    struct rtgui_dc *dc;
+	struct rtgui_dc *dc;
 	struct rtgui_widget *widget;
 	struct rtgui_win *win;
-	
-    RT_ASSERT(owner != RT_NULL);
+
+	RT_ASSERT(owner != RT_NULL);
 
 	win = owner->toplevel;
 	if (win == RT_NULL) return RT_NULL;
@@ -1695,65 +1647,56 @@ struct rtgui_dc *rtgui_dc_begin_drawing(rtgui_widget_t *owner)
 	/* increase drawing count */
 	win->drawing ++;
 
-	if ((win->style & RTGUI_WIN_STYLE_BUFFERED) || (win->flag & RTGUI_WIN_FLAG_BUFFER_DRAWING))
+	/* set the initial visible as true */
+	RTGUI_WIDGET_DC_SET_VISIBLE(owner);
+
+	/* check the visible of widget */
+	widget = owner;
+	while (widget != RT_NULL)
 	{
-		/* drawing on the window buffer */
-		dc = rtgui_dc_widget_create(owner);
-		if (dc == RT_NULL) win->drawing --;		
-	}
-	else
-	{
-		/* set the initial visible as true */
-		RTGUI_WIDGET_DC_SET_VISIBLE(owner);
-
-		/* check the visible of widget */
-		widget = owner;
-		while (widget != RT_NULL)
+		if (RTGUI_WIDGET_IS_HIDE(widget))
 		{
-			if (RTGUI_WIDGET_IS_HIDE(widget))
-			{
-				RTGUI_WIDGET_DC_SET_UNVISIBLE(owner);
-				win->drawing --;
-				return RT_NULL;
-			}
-			widget = widget->parent;
-		}
-
-		rtgui_screen_lock(RT_WAITING_FOREVER);
-
-		/* create client or hardware DC */
-	    if ((rtgui_region_is_flat(&owner->clip) == RT_EOK) &&
-	            rtgui_rect_is_equal(&(owner->extent), &(owner->clip.extents)) == RT_EOK)
-	        dc = rtgui_dc_hw_create(owner);
-	    else
-	        dc = rtgui_dc_client_create(owner);
-
-	    if (dc == RT_NULL)
-		{
-			/* restore drawing counter */
+			RTGUI_WIDGET_DC_SET_UNVISIBLE(owner);
 			win->drawing --;
-			rtgui_screen_unlock();
-	    }
-		else if (win->drawing == 1)
-		{
-			#ifdef RTGUI_USING_MOUSE_CURSOR
-			rt_mutex_take(&cursor_mutex, RT_WAITING_FOREVER);
-			rtgui_mouse_hide_cursor();
-			#endif
-
-			if (! RTGUI_IS_WINTITLE(win))
-			{
-				/* send draw begin to server */
-				struct rtgui_event_update_begin eupdate;
-				RTGUI_EVENT_UPDATE_BEGIN_INIT(&(eupdate));
-				eupdate.rect = RTGUI_WIDGET(win)->extent;
-
-				rtgui_server_post_event((struct rtgui_event *)&eupdate, sizeof(eupdate));
-			}
-		}		
+			return RT_NULL;
+		}
+		widget = widget->parent;
 	}
 
-    return dc;
+	rtgui_screen_lock(RT_WAITING_FOREVER);
+
+	/* create client or hardware DC */
+	if ((rtgui_region_is_flat(&owner->clip) == RT_EOK) &&
+		rtgui_rect_is_equal(&(owner->extent), &(owner->clip.extents)) == RT_EOK)
+		dc = rtgui_dc_hw_create(owner);
+	else
+		dc = rtgui_dc_client_create(owner);
+
+	if (dc == RT_NULL)
+	{
+		/* restore drawing counter */
+		win->drawing --;
+		rtgui_screen_unlock();
+	}
+	else if (win->drawing == 1)
+	{
+		#ifdef RTGUI_USING_MOUSE_CURSOR
+		rt_mutex_take(&cursor_mutex, RT_WAITING_FOREVER);
+		rtgui_mouse_hide_cursor();
+		#endif
+
+		if (! RTGUI_IS_WINTITLE(win))
+		{
+			/* send draw begin to server */
+			struct rtgui_event_update_begin eupdate;
+			RTGUI_EVENT_UPDATE_BEGIN_INIT(&(eupdate));
+			eupdate.rect = RTGUI_WIDGET(win)->extent;
+
+			rtgui_server_post_event((struct rtgui_event *)&eupdate, sizeof(eupdate));
+		}
+	}
+
+	return dc;
 }
 RTM_EXPORT(rtgui_dc_begin_drawing);
 
@@ -1769,8 +1712,6 @@ void rtgui_dc_end_drawing(struct rtgui_dc *dc)
 		owner = RTGUI_CONTAINER_OF(dc, struct rtgui_widget, dc_type);
 	else if (dc->type == RTGUI_DC_HW)
 		owner = ((struct rtgui_dc_hw *)dc)->owner;
-	else if (dc->type == RTGUI_DC_WIDGET)
-		owner = ((struct rtgui_dc_widget *)dc)->owner;
 	else return ; /* bad DC type */
 	/* get window */	
 	win = owner->toplevel;
@@ -1779,55 +1720,30 @@ void rtgui_dc_end_drawing(struct rtgui_dc *dc)
 	win->drawing --;
 	if (win->drawing == 0)
 	{
-		if (dc->type == RTGUI_DC_WIDGET)
+		#ifdef RTGUI_USING_MOUSE_CURSOR
+		rt_mutex_release(&cursor_mutex);
+		/* show cursor */
+		rtgui_mouse_show_cursor();
+		#endif
+
+		if (RTGUI_IS_WINTITLE(win))
 		{
-			if ((win->style & RTGUI_WIN_STYLE_BUFFERED) && (win->buffer != RT_NULL))
-			{
-				/* blit on the hardware DC */
-				struct rtgui_dc *dest;
-				int flag = win->flag;
-
-				/* remove buffer information in the window */
-				win->style &= ~RTGUI_WIN_STYLE_BUFFERED;
-				win->flag  &= ~RTGUI_WIN_FLAG_BUFFER_DRAWING;
-
-				dest = rtgui_dc_begin_drawing(owner);
-				rtgui_dc_blit((struct rtgui_dc*)win->buffer, RT_NULL, dest, RT_NULL);
-				rtgui_dc_end_drawing(dest);
-
-				win->style |= RTGUI_WIN_STYLE_BUFFERED;
-				win->flag  = flag;
-			}
+			/* update screen */
+			rtgui_graphic_driver_screen_update(rtgui_graphic_driver_get_default(), 
+				&(owner->extent));
 		}
 		else
 		{
-			#ifdef RTGUI_USING_MOUSE_CURSOR
-			rt_mutex_release(&cursor_mutex);
-			/* show cursor */
-			rtgui_mouse_show_cursor();
-			#endif
+			/* send to server for window update */
+			struct rtgui_event_update_end eupdate;
+			RTGUI_EVENT_UPDATE_END_INIT(&(eupdate));
+			eupdate.rect = owner->extent;
 
-			if (RTGUI_IS_WINTITLE(win))
-			{
-				/* update screen */
-				rtgui_graphic_driver_screen_update(rtgui_graphic_driver_get_default(), 
-					&(owner->extent));
-			}
-			else
-			{
-				/* send to server for window update */
-				struct rtgui_event_update_end eupdate;
-				RTGUI_EVENT_UPDATE_END_INIT(&(eupdate));
-				eupdate.rect = owner->extent;
-
-				rtgui_server_post_event((struct rtgui_event *)&eupdate, sizeof(eupdate));			
-			}
+			rtgui_server_post_event((struct rtgui_event *)&eupdate, sizeof(eupdate));
 		}
 	}
 
     dc->engine->fini(dc);
-	if (dc->type != RTGUI_DC_WIDGET) /* not locking screen for WIDGET DC */
-        rtgui_screen_unlock();
+    rtgui_screen_unlock();
 }
 RTM_EXPORT(rtgui_dc_end_drawing);
-

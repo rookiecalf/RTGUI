@@ -42,7 +42,6 @@ static void _rtgui_win_constructor(rtgui_win_t *win)
     win->on_key        = RT_NULL;
     win->title         = RT_NULL;
     win->modal_code    = RTGUI_MODAL_OK;
-	win->buffer        = RT_NULL;
 
     /* initialize last mouse event handled widget */
     win->last_mevent_widget = RT_NULL;
@@ -82,11 +81,6 @@ static void _rtgui_win_destructor(rtgui_win_t *win)
     /* release field */
     if (win->title != RT_NULL)
         rt_free(win->title);
-	if (win->buffer != RT_NULL)
-	{
-		rtgui_dc_destory(win->buffer);
-		win->buffer = RT_NULL;
-	}
     /* release external clip info */
     win->drawing = 0;
 }
@@ -150,17 +144,6 @@ rtgui_win_t *rtgui_win_create(struct rtgui_win *parent_window,
 
     rtgui_widget_set_rect(RTGUI_WIDGET(win), rect);
     win->style = style;
-	if (win->style & RTGUI_WIN_STYLE_BUFFERED && rect != RT_NULL)
-	{
-		int w, h;
-
-		w = rtgui_rect_width(*rect);
-		h = rtgui_rect_height(*rect);
-		if (w && h)
-		{
-			win->buffer = rtgui_dc_buffer_create(w, h);
-		}
-	}
 
     if (_rtgui_win_create_in_server(win) == RT_FALSE)
     {
@@ -552,14 +535,18 @@ rt_bool_t rtgui_win_event_handler(struct rtgui_object *object, struct rtgui_even
 
 	case RTGUI_EVENT_VPAINT_REQ:
 	{
-		struct rtgui_event_vpaint_req vpaint_req;
+		struct rtgui_dc *dc;
+		struct rtgui_event_vpaint_ack vpaint_ack;
 
-		rtgui_widget_update(RTGUI_WIDGET(win));
+		/* get drawing dc */
+		dc = rtgui_win_get_drawing(win);
 
 		/* send ack for vpaint request */
-		RTGUI_EVENT_VPAINT_ACK_INIT((&vpaint_req), win);
-		rtgui_server_post_event_sync(RTGUI_EVENT(&vpaint_req),
-			sizeof(struct rtgui_event_vpaint_req));
+		RTGUI_EVENT_VPAINT_ACK_INIT((&vpaint_ack), win);
+		vpaint_ack.buffer = dc;
+
+		rtgui_send(event->sender, RTGUI_EVENT(&vpaint_ack),
+			sizeof(struct rtgui_event_vpaint_ack));
 		break;
 	}
 
@@ -770,6 +757,7 @@ struct rtgui_dc *rtgui_win_get_drawing(rtgui_win_t * win)
 	struct rtgui_dc *dc;
 	struct rtgui_rect rect;
 
+	if (rtgui_app_self() == RT_NULL) return RT_NULL;
 	if (win == RT_NULL || (win->flag & (RTGUI_WIN_FLAG_INIT | RTGUI_WIN_FLAG_CLOSED))) return RT_NULL;
 
 	if (win->app == rtgui_app_self())
@@ -818,7 +806,16 @@ struct rtgui_dc *rtgui_win_get_drawing(rtgui_win_t * win)
 	}
 	else
 	{
-		/* send event to the server side to request a virtual buffer */
+		/* send vpaint_req to the window and wait for response */
+		struct rtgui_event_vpaint_req req;
+		struct rtgui_event_vpaint_ack ack;
+
+		RTGUI_EVENT_VPAINT_REQ_INIT(&req, win);
+		rtgui_send(win->app, &(req.parent), sizeof(struct rtgui_event_vpaint_req));
+
+		/* wait for vpaint_ack event */
+		rtgui_recv_filter(RTGUI_EVENT_VPAINT_ACK, &(ack.parent), sizeof(ack));
+		dc = ack.buffer;
 	}
 
 	return dc;

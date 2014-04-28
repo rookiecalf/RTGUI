@@ -39,7 +39,6 @@ DECLARE_CLASS_TYPE(win);
 #define RTGUI_WIN_STYLE_ONTOP               0x0040  /* window is in the top layer    */
 #define RTGUI_WIN_STYLE_ONBTM               0x0080  /* window is in the bottom layer */
 #define RTGUI_WIN_STYLE_MAINWIN             0x0106  /* window is a main window       */
-#define RTGUI_WIN_STYLE_BUFFERED			0x0200  /* window has buffered DC        */
 
 #define RTGUI_WIN_STYLE_DEFAULT     (RTGUI_WIN_STYLE_CLOSEBOX | RTGUI_WIN_STYLE_MINIBOX)
 
@@ -61,9 +60,6 @@ enum rtgui_win_flag
      * If this flag is set, we are in key-handling mode.
      */
     RTGUI_WIN_FLAG_HANDLE_KEY  = 0x20,
-
-    /* buffer drawing flag */
-	RTGUI_WIN_FLAG_BUFFER_DRAWING = 0x40, /* drawing on the buffer */
 };
 
 struct rtgui_win_title;
@@ -113,9 +109,6 @@ struct rtgui_win
      */
     rt_bool_t (*on_key)(struct rtgui_object *widget, struct rtgui_event *event);
 
-	/* window buffered DC */
-	struct rtgui_dc *buffer;
-
     /* reserved user data */
     rt_uint32_t user_data;
 };
@@ -161,10 +154,7 @@ void rtgui_win_event_loop(rtgui_win_t *wnd);
 void rtgui_win_set_title(rtgui_win_t *win, const char *title);
 char *rtgui_win_get_title(rtgui_win_t *win);
 
-rt_inline struct rtgui_dc* rtgui_win_get_drawing_buffer(struct rtgui_win *win)
-{
-	return (struct rtgui_dc*) win->buffer;
-}
+struct rtgui_dc *rtgui_win_get_drawing(rtgui_win_t * win);
 
 #endif
 

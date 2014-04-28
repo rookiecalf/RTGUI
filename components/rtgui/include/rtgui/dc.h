@@ -30,7 +30,6 @@ enum rtgui_dc_type
     RTGUI_DC_HW,
     RTGUI_DC_CLIENT,
     RTGUI_DC_BUFFER,
-    RTGUI_DC_WIDGET,
 };
 
 struct rtgui_dc_engine
@@ -83,18 +82,6 @@ struct rtgui_dc_buffer
 
 	/* pixel data */
 	rt_uint8_t *pixel;
-};
-
-struct rtgui_dc_widget
-{
-	struct rtgui_dc parent;
-
-	struct rtgui_widget *owner;
-	/* offset (x, y) in the DC buffer */
-	rt_int16_t offset_x, offset_y;
-
-	/* dc buffer which refer to the DC buffer of window */
-	struct rtgui_dc_buffer *buffer;
 };
 
 #define RTGUI_DC_FC(dc)         (rtgui_dc_get_gc(RTGUI_DC(dc))->foreground)

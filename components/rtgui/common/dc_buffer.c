@@ -435,23 +435,9 @@ static void rtgui_dc_buffer_blit(struct rtgui_dc *self, struct rtgui_point *dc_p
 			}
         }
     }
-	else if ((dest->type == RTGUI_DC_BUFFER) || (dest->type == RTGUI_DC_WIDGET))
+	else if (dest->type == RTGUI_DC_BUFFER)
 	{
-		struct rtgui_dc_buffer *dest_dc;
-
-		if (dest->type == RTGUI_DC_WIDGET)
-		{
-			struct rtgui_dc_widget *dc_widget = (struct rtgui_dc_widget*)dest;
-
-			dest_dc = dc_widget->buffer;
-
-			/* coordinate conversion */
-			rtgui_dc_rect_to_device(dest, dest_rect);
-		}
-		else
-		{
-			dest_dc = (struct rtgui_dc_buffer*)dest;
-		}
+		struct rtgui_dc_buffer *dest_dc = (struct rtgui_dc_buffer*)dest;
 
 		if (dest_dc->pixel_format == dc->pixel_format)
 		{
@@ -514,4 +500,3 @@ static void rtgui_dc_buffer_blit_line(struct rtgui_dc *self, int x1, int x2, int
 	pixel = _dc_get_pixel(dc,x1,y);
     rt_memcpy(pixel, line_data, (x2 - x1) * rtgui_color_get_bpp(dc->pixel_format));
 }
-
