@@ -165,7 +165,7 @@ struct rtgui_dc* rtgui_dc_widget_create(struct rtgui_widget* owner)
 	{
 		/* initialize DC window buffer */
 		dc->owner = owner;
-		dc->buffer = owner->toplevel->buffer;
+		dc->buffer = (struct rtgui_dc_buffer*)(owner->toplevel->buffer);
 
 		dc->offset_x = (_OWNER(dc)->extent.x1 - (_WIN(dc)->extent.x1));
 		dc->offset_y = (_OWNER(dc)->extent.y1 - (_WIN(dc)->extent.y1));

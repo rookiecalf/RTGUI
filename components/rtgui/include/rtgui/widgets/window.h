@@ -63,8 +63,7 @@ enum rtgui_win_flag
     RTGUI_WIN_FLAG_HANDLE_KEY  = 0x20,
 
     /* buffer drawing flag */
-    RTGUI_WIN_FLAG_BUFFER_BLIT = 0x40,   /* blit buffer to hardware
-                                          * in the end of drawing */
+	RTGUI_WIN_FLAG_BUFFER_DRAWING = 0x40, /* drawing on the buffer */
 };
 
 struct rtgui_win_title;
@@ -115,7 +114,7 @@ struct rtgui_win
     rt_bool_t (*on_key)(struct rtgui_object *widget, struct rtgui_event *event);
 
 	/* window buffered DC */
-	struct rtgui_dc_buffer *buffer;
+	struct rtgui_dc *buffer;
 
     /* reserved user data */
     rt_uint32_t user_data;

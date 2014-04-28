@@ -54,6 +54,10 @@ enum _rtgui_event_type
     RTGUI_EVENT_TIMER,                 /* timer                 */
     RTGUI_EVENT_UPDATE_TOPLVL,         /* update the toplevel   */
 
+	/* virtual paint event */
+	RTGUI_EVENT_VPAINT_REQ, 		   /* virtual paint request (server -> client) */
+	RTGUI_EVENT_VPAINT_ACK,			   /* virtual paint ack (clint -> server) */
+
     /* clip rect information */
     RTGUI_EVENT_CLIP_INFO,             /* clip rect info        */
 
@@ -274,6 +278,21 @@ struct rtgui_event_update_toplvl
         RTGUI_EVENT_INIT(&((e)->parent), RTGUI_EVENT_UPDATE_TOPLVL); \
         (e)->toplvl = RT_NULL; \
     } while (0)
+
+#define rtgui_event_vpaint_req rtgui_event_win
+#define rtgui_event_vpaint_ack rtgui_event_win
+
+#define RTGUI_EVENT_VPAINT_REQ_INIT(e, win)	\
+	do { \
+        RTGUI_EVENT_INIT(&((e)->parent), RTGUI_EVENT_VPAINT_REQ); \
+		e->wid = win; \
+	} while (0)
+
+#define RTGUI_EVENT_VPAINT_ACK_INIT(e, win)	\
+	do { \
+		RTGUI_EVENT_INIT(&((e)->parent), RTGUI_EVENT_VPAINT_ACK); \
+		(e)->wid = win; \
+	} while (0)
 
 /*
  * RTGUI Mouse and Keyboard Event

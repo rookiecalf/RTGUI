@@ -1695,7 +1695,13 @@ struct rtgui_dc *rtgui_dc_begin_drawing(rtgui_widget_t *owner)
 	/* increase drawing count */
 	win->drawing ++;
 
-	if (!(win->style & RTGUI_WIN_STYLE_BUFFERED))
+	if ((win->style & RTGUI_WIN_STYLE_BUFFERED) || (win->flag & RTGUI_WIN_FLAG_BUFFER_DRAWING))
+	{
+		/* drawing on the window buffer */
+		dc = rtgui_dc_widget_create(owner);
+		if (dc == RT_NULL) win->drawing --;		
+	}
+	else
 	{
 		/* set the initial visible as true */
 		RTGUI_WIDGET_DC_SET_VISIBLE(owner);
@@ -1746,12 +1752,6 @@ struct rtgui_dc *rtgui_dc_begin_drawing(rtgui_widget_t *owner)
 			}
 		}		
 	}
-	else
-	{
-		/* drawing on the window buffer */
-		dc = rtgui_dc_widget_create(owner);
-		if (dc == RT_NULL) win->drawing --;
-	}
 
     return dc;
 }
@@ -1781,21 +1781,22 @@ void rtgui_dc_end_drawing(struct rtgui_dc *dc)
 	{
 		if (dc->type == RTGUI_DC_WIDGET)
 		{
-			if ((win->flag & RTGUI_WIN_FLAG_BUFFER_BLIT) && (win->buffer != RT_NULL))
+			if ((win->style & RTGUI_WIN_STYLE_BUFFERED) && (win->buffer != RT_NULL))
 			{
 				/* blit on the hardware DC */
 				struct rtgui_dc *dest;
+				int flag = win->flag;
 
 				/* remove buffer information in the window */
 				win->style &= ~RTGUI_WIN_STYLE_BUFFERED;
-				win->flag  &= ~RTGUI_WIN_FLAG_BUFFER_BLIT;
+				win->flag  &= ~RTGUI_WIN_FLAG_BUFFER_DRAWING;
 
 				dest = rtgui_dc_begin_drawing(owner);
-				rtgui_dc_blit(win->buffer, RT_NULL, dest, RT_NULL);
-				rtgui_dc_end_drawing(dc);
+				rtgui_dc_blit((struct rtgui_dc*)win->buffer, RT_NULL, dest, RT_NULL);
+				rtgui_dc_end_drawing(dest);
 
 				win->style |= RTGUI_WIN_STYLE_BUFFERED;
-				win->flag  |= RTGUI_WIN_FLAG_BUFFER_BLIT;
+				win->flag  = flag;
 			}
 		}
 		else

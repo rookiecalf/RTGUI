@@ -550,6 +550,19 @@ rt_bool_t rtgui_win_event_handler(struct rtgui_object *object, struct rtgui_even
             rtgui_win_ondraw(win);
         break;
 
+	case RTGUI_EVENT_VPAINT_REQ:
+	{
+		struct rtgui_event_vpaint_req vpaint_req;
+
+		rtgui_widget_update(RTGUI_WIDGET(win));
+
+		/* send ack for vpaint request */
+		RTGUI_EVENT_VPAINT_ACK_INIT((&vpaint_req), win);
+		rtgui_server_post_event_sync(RTGUI_EVENT(&vpaint_req),
+			sizeof(struct rtgui_event_vpaint_req));
+		break;
+	}
+
     case RTGUI_EVENT_MOUSE_BUTTON:
         {
             rt_bool_t res;
@@ -749,4 +762,67 @@ char *rtgui_win_get_title(rtgui_win_t *win)
     return win->title;
 }
 RTM_EXPORT(rtgui_win_get_title);
+
+#ifdef RTGUI_USING_VFRAMEBUFFER
+#include <rtgui/driver.h>
+struct rtgui_dc *rtgui_win_get_drawing(rtgui_win_t * win)
+{
+	struct rtgui_dc *dc;
+	struct rtgui_rect rect;
+
+	if (win == RT_NULL || (win->flag & (RTGUI_WIN_FLAG_INIT | RTGUI_WIN_FLAG_CLOSED))) return RT_NULL;
+
+	if (win->app == rtgui_app_self())
+	{
+		/* under the same application context */
+		rtgui_region_t region;
+		rtgui_region_t clip_region;
+
+		rtgui_region_copy(&RTGUI_WIDGET(win)->clip, &clip_region);
+
+		rtgui_graphic_driver_vmode_enter();
+
+		rtgui_graphic_driver_get_rect(RT_NULL, &rect);
+	    region.data = RT_NULL;
+	    region.extents.x1 = rect.x1;
+	    region.extents.y1 = rect.y1;
+	    region.extents.x2 = rect.x2;
+	    region.extents.y2 = rect.y2;
+		
+		/* remove clip */
+	    rtgui_region_reset(&RTGUI_WIDGET(win)->clip,
+	                       &RTGUI_WIDGET(win)->extent);
+		rtgui_region_intersect(&(RTGUI_WIDGET(win)->clip),
+							   &(RTGUI_WIDGET(win)->clip),
+							   &region);
+		rtgui_win_update_clip(win);
+		/* use virtual framebuffer */
+		rtgui_widget_update(RTGUI_WIDGET(win));
+
+		rtgui_graphic_driver_vmode_exit();
+
+		/* get the extent of widget */
+		rtgui_widget_get_extent(RTGUI_WIDGET(win), &rect);
+
+		dc = rtgui_graphic_driver_get_rect_buffer(RT_NULL, &rect);
+
+		/* restore the clip information of window */
+	    rtgui_region_reset(&RTGUI_WIDGET(win)->clip,
+	                       &RTGUI_WIDGET(win)->extent);
+		rtgui_region_intersect(&(RTGUI_WIDGET(win)->clip),
+							   &(RTGUI_WIDGET(win)->clip),
+							   &clip_region);
+		rtgui_region_fini(&clip_region);
+
+		rtgui_win_update_clip(win);
+	}
+	else
+	{
+		/* send event to the server side to request a virtual buffer */
+	}
+
+	return dc;
+}
+RTM_EXPORT(rtgui_win_get_drawing);
+#endif
 
