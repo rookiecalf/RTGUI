@@ -766,7 +766,8 @@ struct rtgui_dc *rtgui_win_get_drawing(rtgui_win_t * win)
 		rtgui_region_t region;
 		rtgui_region_t clip_region;
 
-		rtgui_region_copy(&RTGUI_WIDGET(win)->clip, &clip_region);
+		rtgui_region_init(&clip_region);
+		rtgui_region_copy(&clip_region, &RTGUI_WIDGET(win)->clip);
 
 		rtgui_graphic_driver_vmode_enter();
 
