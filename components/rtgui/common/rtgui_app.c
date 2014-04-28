@@ -249,7 +249,7 @@ rt_bool_t rtgui_app_event_handler(struct rtgui_object *object, rtgui_event_t *ev
         if (timer->destroy_pending)
         {
             /* Truly destroy the timer when there is no pending event. */
-            if (timer->destroy_pending == 0)
+            if (timer->pending_cnt == 0)
                 rtgui_timer_destory(timer);
         }
         else if (timer->timeout != RT_NULL)
