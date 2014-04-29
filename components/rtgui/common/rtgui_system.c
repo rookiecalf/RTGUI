@@ -22,6 +22,8 @@
 #include <rtgui/widgets/window.h>
 #include <rtgui/rtgui_theme.h>
 
+#define RTGUI_EVENT_DEBUG
+
 #ifdef _WIN32_NATIVE
 #define RTGUI_MEM_TRACE
 #endif
@@ -347,6 +349,9 @@ const char *event_string[] =
     "TIMER",                /* timer                */
     "UPDATE_TOPLVL",        /* update toplevel      */
 
+	"VPAINT_REQ", 			/* virtual paint request */
+	"VPAINT_ACK", 			/* virtual paint ack    */
+	
     /* clip rect information */
     "CLIP_INFO",            /* clip rect info       */
 

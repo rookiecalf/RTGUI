@@ -496,6 +496,8 @@ union rtgui_event_generic
     struct rtgui_event_paint paint;
     struct rtgui_event_timer timer;
     struct rtgui_event_update_toplvl update_toplvl;
+	struct rtgui_event_vpaint_req vpaint_req;
+	struct rtgui_event_vpaint_ack vpaint_ack;
     struct rtgui_event_clip_info clip_info;
     struct rtgui_event_mouse mouse;
     struct rtgui_event_kbd kbd;
