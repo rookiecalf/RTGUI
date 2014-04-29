@@ -50,6 +50,7 @@ static void _graphic_driver_vmode_init(void)
 
 void rtgui_graphic_driver_vmode_enter(void)
 {
+	rtgui_screen_lock(RT_WAITING_FOREVER);
 	_current_driver = &_vfb_driver;
 }
 RTM_EXPORT(rtgui_graphic_driver_vmode_enter);
@@ -57,8 +58,18 @@ RTM_EXPORT(rtgui_graphic_driver_vmode_enter);
 void rtgui_graphic_driver_vmode_exit(void)
 {
 	_current_driver = &_driver;
+	rtgui_screen_unlock();
 }
 RTM_EXPORT(rtgui_graphic_driver_vmode_exit);
+
+rt_bool_t rtgui_graphic_driver_is_vmode(void)
+{
+	if (_current_driver == &_vfb_driver)
+		return RT_TRUE;
+
+	return RT_FALSE;
+}
+RTM_EXPORT(rtgui_graphic_driver_vmode_enable);
 
 struct rtgui_dc* rtgui_graphic_driver_get_rect_buffer(const struct rtgui_graphic_driver *driver, struct rtgui_rect *r)
 {

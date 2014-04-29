@@ -758,7 +758,7 @@ struct rtgui_dc *rtgui_win_get_drawing(rtgui_win_t * win)
 	struct rtgui_rect rect;
 
 	if (rtgui_app_self() == RT_NULL) return RT_NULL;
-	if (win == RT_NULL || (win->flag & (RTGUI_WIN_FLAG_INIT | RTGUI_WIN_FLAG_CLOSED))) return RT_NULL;
+	if (win == RT_NULL || !(win->flag & RTGUI_WIN_FLAG_CONNECTED)) return RT_NULL;
 
 	if (win->app == rtgui_app_self())
 	{
@@ -810,6 +810,10 @@ struct rtgui_dc *rtgui_win_get_drawing(rtgui_win_t * win)
 		/* send vpaint_req to the window and wait for response */
 		struct rtgui_event_vpaint_req req;
 		struct rtgui_event_vpaint_ack ack;
+		int freeze;
+
+		/* make sure the screen is not locked. */
+		freeze = rtgui_screen_lock_freeze();
 
 		RTGUI_EVENT_VPAINT_REQ_INIT(&req, win);
 		rtgui_send(win->app, &(req.parent), sizeof(struct rtgui_event_vpaint_req));
@@ -817,6 +821,8 @@ struct rtgui_dc *rtgui_win_get_drawing(rtgui_win_t * win)
 		/* wait for vpaint_ack event */
 		rtgui_recv_filter(RTGUI_EVENT_VPAINT_ACK, &(ack.parent), sizeof(ack));
 		dc = ack.buffer;
+
+		rtgui_screen_lock_thaw(freeze);
 	}
 
 	return dc;

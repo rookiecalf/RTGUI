@@ -65,6 +65,8 @@ void rtgui_get_screen_rect(struct rtgui_rect *rect);
 
 void rtgui_screen_lock(rt_int32_t timeout);
 void rtgui_screen_unlock(void);
+int rtgui_screen_lock_freeze(void);
+void rtgui_screen_lock_thaw(int value);
 
 struct rtgui_event;
 rt_err_t rtgui_send(struct rtgui_app* app, struct rtgui_event *event, rt_size_t event_size);

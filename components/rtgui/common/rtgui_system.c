@@ -680,8 +680,9 @@ RTM_EXPORT(rtgui_recv_nosuspend);
 
 rt_err_t rtgui_recv_filter(rt_uint32_t type, rtgui_event_t *event, rt_size_t event_size)
 {
+	rtgui_event_t *e;
     struct rtgui_app *app;
-
+	
     RT_ASSERT(event != RT_NULL);
     RT_ASSERT(event_size != 0);
 
@@ -689,17 +690,19 @@ rt_err_t rtgui_recv_filter(rt_uint32_t type, rtgui_event_t *event, rt_size_t eve
     if (app == RT_NULL)
         return -RT_ERROR;
 
-    while (rt_mq_recv(app->mq, event, event_size, RT_WAITING_FOREVER) == RT_EOK)
+	e = (rtgui_event_t*)&app->event_buffer[0];
+    while (rt_mq_recv(app->mq, e, sizeof(union rtgui_event_generic), RT_WAITING_FOREVER) == RT_EOK)
     {
-        if (event->type == type)
+        if (e->type == type)
         {
+        	memcpy(event, e, event_size);
             return RT_EOK;
         }
         else
         {
             if (RTGUI_OBJECT(app)->event_handler != RT_NULL)
             {
-                RTGUI_OBJECT(app)->event_handler(RTGUI_OBJECT(app), event);
+                RTGUI_OBJECT(app)->event_handler(RTGUI_OBJECT(app), e);
             }
         }
     }
@@ -737,4 +740,26 @@ void rtgui_screen_unlock(void)
     rt_mutex_release(&_screen_lock);
 }
 RTM_EXPORT(rtgui_screen_unlock);
+
+int rtgui_screen_lock_freeze(void)
+{
+	int hold = 0;
+
+	if (_screen_lock.owner == rt_thread_self())
+	{
+		int index;
+		
+		index = hold = _screen_lock.hold;
+		while (index --) rt_mutex_release(&_screen_lock);
+	}
+
+	return hold;
+}
+RTM_EXPORT(rtgui_screen_lock_freeze);
+
+void rtgui_screen_lock_thaw(int value)
+{
+	while (value--) rt_mutex_take(&_screen_lock, RT_WAITING_FOREVER);
+}
+RTM_EXPORT(rtgui_screen_lock_thaw);
 
