@@ -12,7 +12,7 @@ struct rtgui_filedialog
 {
     struct rtgui_win *win;
     /* file list */
-    rtgui_filelist_view_t *file_list;
+    struct rtgui_filelist_view *file_list;
     /* rename win dialog*/
     struct rtgui_win *rename_win;
     /* dir name textbox */
