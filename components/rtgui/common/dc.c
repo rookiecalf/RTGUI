@@ -1467,6 +1467,7 @@ rt_bool_t rtgui_dc_get_visible(struct rtgui_dc *dc)
 	rt_bool_t result = RT_TRUE;
 	
 	RT_ASSERT(dc != RT_NULL);
+	if (rtgui_graphic_driver_is_vmode()) return RT_TRUE;
 
 	switch (dc->type)
 	{
@@ -1647,20 +1648,24 @@ struct rtgui_dc *rtgui_dc_begin_drawing(rtgui_widget_t *owner)
 	/* increase drawing count */
 	win->drawing ++;
 
-	/* set the initial visible as true */
-	RTGUI_WIDGET_DC_SET_VISIBLE(owner);
-
-	/* check the visible of widget */
-	widget = owner;
-	while (widget != RT_NULL)
+	/* always drawing on the virtual mode */
+	if (rtgui_graphic_driver_is_vmode() == RT_FALSE)
 	{
-		if (RTGUI_WIDGET_IS_HIDE(widget))
+		/* set the initial visible as true */
+		RTGUI_WIDGET_DC_SET_VISIBLE(owner);
+
+		/* check the visible of widget */
+		widget = owner;
+		while (widget != RT_NULL)
 		{
-			RTGUI_WIDGET_DC_SET_UNVISIBLE(owner);
-			win->drawing --;
-			return RT_NULL;
+			if (RTGUI_WIDGET_IS_HIDE(widget))
+			{
+				RTGUI_WIDGET_DC_SET_UNVISIBLE(owner);
+				win->drawing --;
+				return RT_NULL;
+			}
+			widget = widget->parent;
 		}
-		widget = widget->parent;
 	}
 
 	rtgui_screen_lock(RT_WAITING_FOREVER);
@@ -1678,7 +1683,7 @@ struct rtgui_dc *rtgui_dc_begin_drawing(rtgui_widget_t *owner)
 		win->drawing --;
 		rtgui_screen_unlock();
 	}
-	else if (win->drawing == 1)
+	else if (win->drawing == 1 && rtgui_graphic_driver_is_vmode() == RT_FALSE)
 	{
 		#ifdef RTGUI_USING_MOUSE_CURSOR
 		rt_mutex_take(&cursor_mutex, RT_WAITING_FOREVER);
@@ -1718,7 +1723,7 @@ void rtgui_dc_end_drawing(struct rtgui_dc *dc)
 
 	/* decrease drawing counter */
 	win->drawing --;
-	if (win->drawing == 0)
+	if (win->drawing == 0 && rtgui_graphic_driver_is_vmode() == RT_FALSE)
 	{
 		#ifdef RTGUI_USING_MOUSE_CURSOR
 		rt_mutex_release(&cursor_mutex);
@@ -1747,3 +1752,4 @@ void rtgui_dc_end_drawing(struct rtgui_dc *dc)
     rtgui_screen_unlock();
 }
 RTM_EXPORT(rtgui_dc_end_drawing);
+

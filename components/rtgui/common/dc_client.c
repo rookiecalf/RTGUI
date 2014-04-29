@@ -88,10 +88,10 @@ static void rtgui_dc_client_draw_point(struct rtgui_dc *self, int x, int y)
     rtgui_widget_t *owner;
 
     if (self == RT_NULL) return;
+	if (!rtgui_dc_get_visible(self)) return;
 
     /* get owner */
     owner = RTGUI_CONTAINER_OF(self, struct rtgui_widget, dc_type);
-    if (!RTGUI_WIDGET_IS_DC_VISIBLE(owner)) return;
 
     x = x + owner->extent.x1;
     y = y + owner->extent.y1;
@@ -109,10 +109,10 @@ static void rtgui_dc_client_draw_color_point(struct rtgui_dc *self, int x, int y
     rtgui_widget_t *owner;
 
     if (self == RT_NULL) return;
+	if (!rtgui_dc_get_visible(self)) return;
 
     /* get owner */
     owner = RTGUI_CONTAINER_OF(self, struct rtgui_widget, dc_type);
-    if (!RTGUI_WIDGET_IS_DC_VISIBLE(owner)) return;
 
     x = x + owner->extent.x1;
     y = y + owner->extent.y1;
@@ -133,10 +133,10 @@ static void rtgui_dc_client_draw_vline(struct rtgui_dc *self, int x, int y1, int
     rtgui_widget_t *owner;
 
     if (self == RT_NULL) return;
+	if (!rtgui_dc_get_visible(self)) return;
 
     /* get owner */
     owner = RTGUI_CONTAINER_OF(self, struct rtgui_widget, dc_type);
-    if (!RTGUI_WIDGET_IS_DC_VISIBLE(owner)) return;
 
     x  = x + owner->extent.x1;
     y1 = y1 + owner->extent.y1;
@@ -192,10 +192,10 @@ static void rtgui_dc_client_draw_hline(struct rtgui_dc *self, int x1, int x2, in
     rtgui_widget_t *owner;
 
     if (self == RT_NULL) return;
+	if (!rtgui_dc_get_visible(self)) return;
 
     /* get owner */
     owner = RTGUI_CONTAINER_OF(self, struct rtgui_widget, dc_type);
-    if (!RTGUI_WIDGET_IS_DC_VISIBLE(owner)) return;
 
     /* convert logic to device */
     x1 = x1 + owner->extent.x1;
@@ -250,10 +250,10 @@ static void rtgui_dc_client_fill_rect(struct rtgui_dc *self, struct rtgui_rect *
     rtgui_widget_t *owner;
 
     if (self == RT_NULL) return;
+	if (!rtgui_dc_get_visible(self)) return;
 
     /* get owner */
     owner = RTGUI_CONTAINER_OF(self, struct rtgui_widget, dc_type);
-    if (!RTGUI_WIDGET_IS_DC_VISIBLE(owner)) return;
 
     /* save foreground color */
     foreground = owner->gc.foreground;
@@ -277,10 +277,10 @@ static void rtgui_dc_client_blit_line(struct rtgui_dc *self, int x1, int x2, int
     rtgui_widget_t *owner;
 
     if (self == RT_NULL) return;
+	if (!rtgui_dc_get_visible(self)) return;
 
     /* get owner */
     owner = RTGUI_CONTAINER_OF(self, struct rtgui_widget, dc_type);
-    if (!RTGUI_WIDGET_IS_DC_VISIBLE(owner)) return;
 
     /* convert logic to device */
     x1 = x1 + owner->extent.x1;

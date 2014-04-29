@@ -376,6 +376,7 @@ void rtgui_dc_draw_aa_line(struct rtgui_dc * dst, int x1, int y1, int x2, int y2
 	rtgui_widget_t *owner;
 
 	RT_ASSERT(dst != RT_NULL);
+	if (!rtgui_dc_get_visible(dst)) return;
 	/* we do not support pixel DC */
 	if (_dc_get_pixel(dst, 0, 0) == RT_NULL) return ; 
 
@@ -388,13 +389,12 @@ void rtgui_dc_draw_aa_line(struct rtgui_dc * dst, int x1, int y1, int x2, int y2
         rt_kprintf("dc_draw_line(): Unsupported pixel format\n");
 		return;
     }
-
+	
 	/* perform clip */
 	if (dst->type == RTGUI_DC_CLIENT)
 	{
 		/* get owner */
 		owner = RTGUI_CONTAINER_OF(dst, struct rtgui_widget, dc_type);
-		if (!RTGUI_WIDGET_IS_DC_VISIBLE(owner)) return ;
 		
 		x1 = x1 + owner->extent.x1;
 		x2 = x2 + owner->extent.x1;
@@ -469,6 +469,7 @@ void rtgui_dc_draw_aa_lines(struct rtgui_dc * dst, const struct rtgui_point * po
 	rtgui_widget_t *owner = RT_NULL;
 
 	RT_ASSERT(dst);
+	if (!rtgui_dc_get_visible(dst)) return;
 	/* we do not support pixel DC */
 	if (_dc_get_pixel(dst, 0, 0) == RT_NULL) return ; 
 
@@ -486,7 +487,6 @@ void rtgui_dc_draw_aa_lines(struct rtgui_dc * dst, const struct rtgui_point * po
 	{
 		/* get owner */
 		owner = RTGUI_CONTAINER_OF(dst, struct rtgui_widget, dc_type);
-		if (!RTGUI_WIDGET_IS_DC_VISIBLE(owner)) return;
 	}
 	else if (dst->type == RTGUI_DC_HW)
 	{
@@ -668,6 +668,8 @@ rtgui_dc_blend_point(struct rtgui_dc * dst, int x, int y, enum RTGUI_BLENDMODE b
                rt_uint8_t g, rt_uint8_t b, rt_uint8_t a)
 {
 	RT_ASSERT(dst != RT_NULL);
+
+	if (!rtgui_dc_get_visible(dst)) return;
 	/* we do not support pixel DC */
 	if (_dc_get_pixel(dst, 0, 0) == RT_NULL) return ; 
 
@@ -679,7 +681,6 @@ rtgui_dc_blend_point(struct rtgui_dc * dst, int x, int y, enum RTGUI_BLENDMODE b
 
 		/* get owner */
 		owner = RTGUI_CONTAINER_OF(dst, struct rtgui_widget, dc_type);
-		if (!RTGUI_WIDGET_IS_DC_VISIBLE(owner)) return ;
 
 		x = x + owner->extent.x1;
 		y = y + owner->extent.y1;
@@ -722,6 +723,7 @@ rtgui_dc_blend_points(struct rtgui_dc * dst, const rtgui_point_t * points, int c
                 enum RTGUI_BLENDMODE blendMode, rt_uint8_t r, rt_uint8_t g, rt_uint8_t b, rt_uint8_t a) = NULL;
 
 	RT_ASSERT(dst != RT_NULL);
+	if (!rtgui_dc_get_visible(dst)) return;
 	/* we do not support pixel DC */
 	if (_dc_get_pixel(dst, 0, 0) == RT_NULL) return; 
 
@@ -754,7 +756,6 @@ rtgui_dc_blend_points(struct rtgui_dc * dst, const rtgui_point_t * points, int c
 		rtgui_rect_t rect;
 
 		owner = RTGUI_CONTAINER_OF(dst, struct rtgui_widget, dc_type);
-		if (!RTGUI_WIDGET_IS_DC_VISIBLE(owner)) return ;
 
 		for (i = 0; i < count; ++i) 
 		{
@@ -1181,6 +1182,7 @@ rtgui_dc_blend_line(struct rtgui_dc * dst, int x1, int y1, int x2, int y2,
 	rtgui_widget_t *owner;
 
 	RT_ASSERT(dst != RT_NULL);
+	if (!rtgui_dc_get_visible(dst)) return;
 	/* we do not support pixel DC */
 	if (_dc_get_pixel(dst, 0, 0) == RT_NULL) return; 
 
@@ -1202,7 +1204,6 @@ rtgui_dc_blend_line(struct rtgui_dc * dst, int x1, int y1, int x2, int y2,
 	{
 		/* get owner */
 		owner = RTGUI_CONTAINER_OF(dst, struct rtgui_widget, dc_type);
-		if (!RTGUI_WIDGET_IS_DC_VISIBLE(owner)) return;
 		
 		x1 = x1 + owner->extent.x1;
 		x2 = x2 + owner->extent.x1;
@@ -1279,6 +1280,7 @@ rtgui_dc_blend_lines(struct rtgui_dc * dst, const rtgui_point_t * points, int co
 	rtgui_widget_t *owner = RT_NULL;
 
 	RT_ASSERT(dst != RT_NULL);
+	if (!rtgui_dc_get_visible(dst)) return;
 	/* we do not support pixel DC */
 	if (_dc_get_pixel(dst, 0, 0) == RT_NULL) return ; 
 
@@ -1294,7 +1296,6 @@ rtgui_dc_blend_lines(struct rtgui_dc * dst, const rtgui_point_t * points, int co
 	{
 		/* get owner */
 		owner = RTGUI_CONTAINER_OF(dst, struct rtgui_widget, dc_type);
-		if (!RTGUI_WIDGET_IS_DC_VISIBLE(owner)) return ;
 	}
 	else if (dst->type == RTGUI_DC_HW)
 	{
@@ -1498,6 +1499,7 @@ rtgui_dc_blend_fill_rect(struct rtgui_dc* dst, const rtgui_rect_t *rect,
 
 	RT_ASSERT(dst != RT_NULL);
 
+	if (!rtgui_dc_get_visible(dst)) return;
     /* This function doesn't work on surfaces < 8 bpp */
     if (_dc_get_bits_per_pixel(dst) < 8) {
         rt_kprintf("dc_blend_fill_rect(): Unsupported pixel format\n");
@@ -1546,7 +1548,6 @@ rtgui_dc_blend_fill_rect(struct rtgui_dc* dst, const rtgui_rect_t *rect,
 	
 	    /* get owner */
 	    owner = RTGUI_CONTAINER_OF(dst, struct rtgui_widget, dc_type);
-	    if (!RTGUI_WIDGET_IS_DC_VISIBLE(owner)) return ;
 
 		if (owner->clip.data == RT_NULL)
 		{
@@ -1602,6 +1603,7 @@ rtgui_dc_blend_fill_rects(struct rtgui_dc * dst, const rtgui_rect_t *rects, int 
 
 	RT_ASSERT(dst != RT_NULL);
 
+	if (!rtgui_dc_get_visible(dst)) return;
     /* This function doesn't work on surfaces < 8 bpp */
     if (_dc_get_bits_per_pixel(dst)< 8) {
         rt_kprintf("dc_blend_fill_rects(): Unsupported pixel format\n");
@@ -1646,7 +1648,6 @@ rtgui_dc_blend_fill_rects(struct rtgui_dc * dst, const rtgui_rect_t *rects, int 
 	{
 		/* get owner */
 		owner = RTGUI_CONTAINER_OF(dst, struct rtgui_widget, dc_type);
-		if (!RTGUI_WIDGET_IS_DC_VISIBLE(owner)) return ;
 	}
 	
     for (i = 0; i < count; ++i) 
