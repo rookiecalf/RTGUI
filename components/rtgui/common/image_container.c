@@ -76,7 +76,7 @@ static void hash_table_needresize(rtgui_hash_table_t *hash_table);
 
 rt_inline unsigned int primes_closest(unsigned int num)
 {
-    int i;
+    unsigned int i;
 
     for (i = 0; i < nprimes; i++)
         if (primes[i] > num)

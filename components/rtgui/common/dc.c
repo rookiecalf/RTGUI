@@ -1303,6 +1303,7 @@ void rtgui_dc_fill_pie(struct rtgui_dc *dc, rt_int16_t x, rt_int16_t y, rt_int16
 	*/
 	start = start % 360;
 	end = end % 360;
+	if (start == end) return;
 
 	/*
 	* Special case for rad=0 - draw a point 
