@@ -465,8 +465,6 @@ static rt_bool_t rtgui_image_png_load(struct rtgui_image *image, struct rtgui_fi
 
     rtgui_filerw_seek(file, 0, SEEK_SET);
     rtgui_filerw_read(file, in, in_size, 1);
-    /* close file handler */
-    rtgui_filerw_close(file);
 
     error = lodepng_decode32(&pixel, &width, &height, in, in_size);    
     if(error) 
@@ -483,6 +481,9 @@ static rt_bool_t rtgui_image_png_load(struct rtgui_image *image, struct rtgui_fi
     image->h = height;
     image->engine = &rtgui_image_png_engine;
     image->data = pixel;
+
+    /* close file handler */
+    rtgui_filerw_close(file);
 
     return RT_TRUE;
 }
