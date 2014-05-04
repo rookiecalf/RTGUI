@@ -246,13 +246,13 @@ rt_bool_t rtgui_app_event_handler(struct rtgui_object *object, rtgui_event_t *ev
         timer = etimer->timer;
         timer->pending_cnt--;
         RT_ASSERT(timer->pending_cnt >= 0);
-        if (timer->destroy_pending)
+        if (timer->state == RTGUI_TIMER_ST_DESTROY_PENDING)
         {
             /* Truly destroy the timer when there is no pending event. */
             if (timer->pending_cnt == 0)
                 rtgui_timer_destory(timer);
         }
-        else if (timer->timeout != RT_NULL)
+        else if (timer->state == RTGUI_TIMER_ST_RUNNING && timer->timeout != RT_NULL)
         {
             /* call timeout function */
             timer->timeout(timer, timer->user_data);

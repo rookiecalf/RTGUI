@@ -24,6 +24,13 @@ struct rtgui_widget;
 struct rtgui_timer;
 typedef void (*rtgui_timeout_func)(struct rtgui_timer *timer, void *parameter);
 
+enum rtgui_timer_state
+{
+    RTGUI_TIMER_ST_INIT,
+    RTGUI_TIMER_ST_RUNNING,
+    RTGUI_TIMER_ST_DESTROY_PENDING,
+};
+
 struct rtgui_timer
 {
     /* the rtgui application it runs on */
@@ -32,7 +39,7 @@ struct rtgui_timer
     struct rt_timer timer;
     /* How many events are pending on the queue. */
     unsigned int pending_cnt;
-    int destroy_pending;
+    enum rtgui_timer_state state;
 
     /* timeout function and user data */
     rtgui_timeout_func timeout;

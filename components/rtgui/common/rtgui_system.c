@@ -60,6 +60,8 @@ static void rtgui_time_out(void *parameter)
     rtgui_event_timer_t event;
     timer = (rtgui_timer_t *)parameter;
 
+    if (!(timer->state == RTGUI_TIMER_ST_RUNNING))
+        return;
     /*
     * Note: event_timer can not use RTGUI_EVENT_TIMER_INIT to init, for there is no
     * thread context
@@ -81,7 +83,7 @@ rtgui_timer_t *rtgui_timer_create(rt_int32_t time, rt_int32_t flag, rtgui_timeou
     timer->app = rtgui_app_self();
     timer->timeout = timeout;
     timer->pending_cnt = 0;
-    timer->destroy_pending = 0;
+    timer->state = RTGUI_TIMER_ST_INIT;
     timer->user_data = parameter;
 
     /* init rt-thread timer */
@@ -99,7 +101,7 @@ void rtgui_timer_destory(rtgui_timer_t *timer)
     rtgui_timer_stop(timer);
     if (timer->pending_cnt != 0)
     {
-        timer->destroy_pending = 1;
+        timer->state = RTGUI_TIMER_ST_DESTROY_PENDING;
     }
     else
     {
@@ -115,6 +117,7 @@ void rtgui_timer_start(rtgui_timer_t *timer)
     RT_ASSERT(timer != RT_NULL);
 
     /* start rt-thread timer */
+    timer->state = RTGUI_TIMER_ST_RUNNING;
     rt_timer_start(&(timer->timer));
 }
 RTM_EXPORT(rtgui_timer_start);
@@ -124,6 +127,7 @@ void rtgui_timer_stop(rtgui_timer_t *timer)
     RT_ASSERT(timer != RT_NULL);
 
     /* stop rt-thread timer */
+    timer->state = RTGUI_TIMER_ST_INIT;
     rt_timer_stop(&(timer->timer));
 }
 RTM_EXPORT(rtgui_timer_stop);
