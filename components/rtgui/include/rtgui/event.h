@@ -54,6 +54,10 @@ enum _rtgui_event_type
     RTGUI_EVENT_TIMER,                 /* timer                 */
     RTGUI_EVENT_UPDATE_TOPLVL,         /* update the toplevel   */
 
+	/* virtual paint event */
+	RTGUI_EVENT_VPAINT_REQ, 		   /* virtual paint request (server -> client) */
+	RTGUI_EVENT_VPAINT_ACK,			   /* virtual paint ack (clint -> server) */
+
     /* clip rect information */
     RTGUI_EVENT_CLIP_INFO,             /* clip rect info        */
 
@@ -275,6 +279,26 @@ struct rtgui_event_update_toplvl
         (e)->toplvl = RT_NULL; \
     } while (0)
 
+#define rtgui_event_vpaint_req rtgui_event_win
+struct rtgui_event_vpaint_ack
+{
+	_RTGUI_EVENT_WIN_ELEMENTS
+
+	struct rtgui_dc* buffer;
+};
+
+#define RTGUI_EVENT_VPAINT_REQ_INIT(e, win)	\
+	do { \
+        RTGUI_EVENT_INIT(&((e)->parent), RTGUI_EVENT_VPAINT_REQ); \
+		(e)->wid = win; \
+	} while (0)
+
+#define RTGUI_EVENT_VPAINT_ACK_INIT(e, win)	\
+	do { \
+		RTGUI_EVENT_INIT(&((e)->parent), RTGUI_EVENT_VPAINT_ACK); \
+		(e)->wid = win; \
+	} while (0)
+
 /*
  * RTGUI Mouse and Keyboard Event
  */
@@ -472,6 +496,8 @@ union rtgui_event_generic
     struct rtgui_event_paint paint;
     struct rtgui_event_timer timer;
     struct rtgui_event_update_toplvl update_toplvl;
+	struct rtgui_event_vpaint_req vpaint_req;
+	struct rtgui_event_vpaint_ack vpaint_ack;
     struct rtgui_event_clip_info clip_info;
     struct rtgui_event_mouse mouse;
     struct rtgui_event_kbd kbd;

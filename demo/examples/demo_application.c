@@ -74,11 +74,11 @@ static void application_entry(void *parameter)
 #ifndef RTGUI_USING_SMALL_SIZE
     demo_view_dc_buffer();
 #endif
-    demo_view_animation();
+    //demo_view_animation();
 #ifndef RTGUI_USING_SMALL_SIZE
-    demo_view_buffer_animation();
     demo_view_instrument_panel();
 #endif
+    demo_view_buffer_animation();
     demo_view_window();
     demo_view_label();
     demo_view_button();
@@ -99,7 +99,7 @@ static void application_entry(void *parameter)
 
 #if defined(RTGUI_USING_DFS_FILERW)
 	demo_view_edit();
-	demo_view_bmp();
+	//demo_view_bmp();
 #endif
 #if defined(RTGUI_USING_DFS_FILERW)
     demo_fn_view();

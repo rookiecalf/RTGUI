@@ -22,6 +22,8 @@
 #include <rtgui/widgets/window.h>
 #include <rtgui/rtgui_theme.h>
 
+#define RTGUI_EVENT_DEBUG
+
 #ifdef _WIN32_NATIVE
 #define RTGUI_MEM_TRACE
 #endif
@@ -60,6 +62,8 @@ static void rtgui_time_out(void *parameter)
     rtgui_event_timer_t event;
     timer = (rtgui_timer_t *)parameter;
 
+    if (!(timer->state == RTGUI_TIMER_ST_RUNNING))
+        return;
     /*
     * Note: event_timer can not use RTGUI_EVENT_TIMER_INIT to init, for there is no
     * thread context
@@ -68,6 +72,7 @@ static void rtgui_time_out(void *parameter)
     event.parent.sender = RT_NULL;
 
     event.timer = timer;
+    timer->pending_cnt++;
 
     rtgui_send(timer->app, &(event.parent), sizeof(rtgui_event_timer_t));
 }
@@ -79,6 +84,8 @@ rtgui_timer_t *rtgui_timer_create(rt_int32_t time, rt_int32_t flag, rtgui_timeou
     timer = (rtgui_timer_t *) rtgui_malloc(sizeof(rtgui_timer_t));
     timer->app = rtgui_app_self();
     timer->timeout = timeout;
+    timer->pending_cnt = 0;
+    timer->state = RTGUI_TIMER_ST_INIT;
     timer->user_data = parameter;
 
     /* init rt-thread timer */
@@ -94,11 +101,16 @@ void rtgui_timer_destory(rtgui_timer_t *timer)
 
     /* stop timer firstly */
     rtgui_timer_stop(timer);
-
-    /* detach rt-thread timer */
-    rt_timer_detach(&(timer->timer));
-
-    rtgui_free(timer);
+    if (timer->pending_cnt != 0)
+    {
+        timer->state = RTGUI_TIMER_ST_DESTROY_PENDING;
+    }
+    else
+    {
+        /* detach rt-thread timer */
+        rt_timer_detach(&(timer->timer));
+        rtgui_free(timer);
+    }
 }
 RTM_EXPORT(rtgui_timer_destory);
 
@@ -107,6 +119,7 @@ void rtgui_timer_start(rtgui_timer_t *timer)
     RT_ASSERT(timer != RT_NULL);
 
     /* start rt-thread timer */
+    timer->state = RTGUI_TIMER_ST_RUNNING;
     rt_timer_start(&(timer->timer));
 }
 RTM_EXPORT(rtgui_timer_start);
@@ -116,6 +129,7 @@ void rtgui_timer_stop(rtgui_timer_t *timer)
     RT_ASSERT(timer != RT_NULL);
 
     /* stop rt-thread timer */
+    timer->state = RTGUI_TIMER_ST_INIT;
     rt_timer_stop(&(timer->timer));
 }
 RTM_EXPORT(rtgui_timer_stop);
@@ -347,6 +361,9 @@ const char *event_string[] =
     "TIMER",                /* timer                */
     "UPDATE_TOPLVL",        /* update toplevel      */
 
+	"VPAINT_REQ", 			/* virtual paint request */
+	"VPAINT_ACK", 			/* virtual paint ack    */
+	
     /* clip rect information */
     "CLIP_INFO",            /* clip rect info       */
 
@@ -675,8 +692,9 @@ RTM_EXPORT(rtgui_recv_nosuspend);
 
 rt_err_t rtgui_recv_filter(rt_uint32_t type, rtgui_event_t *event, rt_size_t event_size)
 {
+	rtgui_event_t *e;
     struct rtgui_app *app;
-
+	
     RT_ASSERT(event != RT_NULL);
     RT_ASSERT(event_size != 0);
 
@@ -684,17 +702,19 @@ rt_err_t rtgui_recv_filter(rt_uint32_t type, rtgui_event_t *event, rt_size_t eve
     if (app == RT_NULL)
         return -RT_ERROR;
 
-    while (rt_mq_recv(app->mq, event, event_size, RT_WAITING_FOREVER) == RT_EOK)
+	e = (rtgui_event_t*)&app->event_buffer[0];
+    while (rt_mq_recv(app->mq, e, sizeof(union rtgui_event_generic), RT_WAITING_FOREVER) == RT_EOK)
     {
-        if (event->type == type)
+        if (e->type == type)
         {
+        	memcpy(event, e, event_size);
             return RT_EOK;
         }
         else
         {
             if (RTGUI_OBJECT(app)->event_handler != RT_NULL)
             {
-                RTGUI_OBJECT(app)->event_handler(RTGUI_OBJECT(app), event);
+                RTGUI_OBJECT(app)->event_handler(RTGUI_OBJECT(app), e);
             }
         }
     }
@@ -732,4 +752,26 @@ void rtgui_screen_unlock(void)
     rt_mutex_release(&_screen_lock);
 }
 RTM_EXPORT(rtgui_screen_unlock);
+
+int rtgui_screen_lock_freeze(void)
+{
+	int hold = 0;
+
+	if (_screen_lock.owner == rt_thread_self())
+	{
+		int index;
+		
+		index = hold = _screen_lock.hold;
+		while (index --) rt_mutex_release(&_screen_lock);
+	}
+
+	return hold;
+}
+RTM_EXPORT(rtgui_screen_lock_freeze);
+
+void rtgui_screen_lock_thaw(int value)
+{
+	while (value--) rt_mutex_take(&_screen_lock, RT_WAITING_FOREVER);
+}
+RTM_EXPORT(rtgui_screen_lock_thaw);
 

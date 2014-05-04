@@ -704,9 +704,6 @@ void rtgui_widget_update(rtgui_widget_t *widget)
 
     RT_ASSERT(widget != RT_NULL);
 
-    if (RTGUI_WIDGET_IS_HIDE(widget))
-        return;
-
     if (RTGUI_OBJECT(widget)->event_handler != RT_NULL)
     {
         RTGUI_OBJECT(widget)->event_handler(
@@ -773,3 +770,4 @@ void rtgui_widget_dump(rtgui_widget_t *widget)
     // rtgui_region_dump(&(widget->clip));
 }
 #endif
+
