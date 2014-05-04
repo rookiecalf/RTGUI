@@ -43,7 +43,7 @@ extern "C" {
 #define RTGUI_WIDGET_FLAG_FOCUSABLE     0x0010
 #define RTGUI_WIDGET_FLAG_DC_VISIBLE    0x0100
 
-    /* rtgui widget attribute */
+/* rtgui widget attribute */
 #define RTGUI_WIDGET_FOREGROUND(w)      (RTGUI_WIDGET(w)->gc.foreground)
 #define RTGUI_WIDGET_BACKGROUND(w)      (RTGUI_WIDGET(w)->gc.background)
 #define RTGUI_WIDGET_TEXTALIGN(w)       (RTGUI_WIDGET(w)->gc.textalign)
@@ -211,3 +211,4 @@ void rtgui_widget_dump(rtgui_widget_t *widget);
 #endif
 
 #endif
+

@@ -25,7 +25,6 @@
 #include <rtgui/rtgui_server.h>
 #include <rtgui/widgets/container.h>
 #include <rtgui/widgets/window.h>
-#include <rtgui/widgets/title.h>
 
 static void rtgui_dc_client_draw_point(struct rtgui_dc *dc, int x, int y);
 static void rtgui_dc_client_draw_color_point(struct rtgui_dc *dc, int x, int y, rtgui_color_t color);
@@ -40,32 +39,6 @@ static rt_bool_t rtgui_dc_client_fini(struct rtgui_dc *dc);
 #define dc_set_foreground(c)    dc->gc.foreground = c
 #define dc_set_background(c)    dc->gc.background = c
 #define _int_swap(x, y)         do {x ^= y; y ^= x; x ^= y;} while (0)
-
-struct rtgui_dc *rtgui_dc_begin_drawing(rtgui_widget_t *owner)
-{
-    struct rtgui_dc *dc;
-    RT_ASSERT(owner != RT_NULL);
-
-    rtgui_screen_lock(RT_WAITING_FOREVER);
-
-    if ((rtgui_region_is_flat(&owner->clip) == RT_EOK) &&
-            rtgui_rect_is_equal(&(owner->extent), &(owner->clip.extents)) == RT_EOK)
-        dc = rtgui_dc_hw_create(owner);
-    else
-        dc = rtgui_dc_client_create(owner);
-
-    if (dc == RT_NULL) rtgui_screen_unlock();
-
-    return dc;
-}
-RTM_EXPORT(rtgui_dc_begin_drawing);
-
-void rtgui_dc_end_drawing(struct rtgui_dc *dc)
-{
-    dc->engine->fini(dc);
-    rtgui_screen_unlock();
-}
-RTM_EXPORT(rtgui_dc_end_drawing);
 
 const struct rtgui_dc_engine dc_client_engine =
 {
@@ -91,149 +64,17 @@ void rtgui_dc_client_init(rtgui_widget_t *owner)
     dc->engine = &dc_client_engine;
 }
 
-extern struct rt_mutex cursor_mutex;
-extern void rtgui_mouse_show_cursor(void);
-extern void rtgui_mouse_hide_cursor(void);
 struct rtgui_dc *rtgui_dc_client_create(rtgui_widget_t *owner)
 {
-    struct rtgui_dc *dc;
-    rtgui_widget_t *widget;
-
     /* adjudge owner */
     if (owner == RT_NULL || owner->toplevel == RT_NULL) return RT_NULL;
-    if (!RTGUI_IS_WIN(owner->toplevel)) return RT_NULL;
 
-    dc = RTGUI_WIDGET_DC(owner);
-    /* set init visible as true */
-    RTGUI_WIDGET_DC_SET_VISIBLE(owner);
-
-    /* check widget visible */
-    widget = owner;
-    while (widget != RT_NULL)
-    {
-        if (RTGUI_WIDGET_IS_HIDE(widget))
-        {
-            RTGUI_WIDGET_DC_SET_UNVISIBLE(owner);
-            return RT_NULL;
-        }
-
-        widget = widget->parent;
-    }
-
-    if (RTGUI_IS_WINTITLE(owner->toplevel))
-    {
-        struct rtgui_win *top = RTGUI_WIN(owner->toplevel);
-        top->drawing ++;
-
-        if (top->drawing == 1)
-        {
-#ifdef RTGUI_USING_MOUSE_CURSOR
-#ifdef _WIN32_NATIVE
-            rt_mutex_take(&cursor_mutex, RT_WAITING_FOREVER);
-            rt_kprintf("hide cursor\n");
-            rtgui_mouse_hide_cursor();
-#else
-            /* hide cursor */
-            rtgui_mouse_hide_cursor();
-#endif
-#endif
-        }
-    }
-    else if (RTGUI_IS_APP(owner->toplevel))
-    {
-        RT_ASSERT(0);
-    }
-    else if (RTGUI_IS_WIN(owner->toplevel))
-    {
-        struct rtgui_win *top = RTGUI_WIN(owner->toplevel);
-        top->drawing ++;
-
-        if (top->drawing == 1)
-        {
-#ifdef _WIN32_NATIVE
-#ifdef RTGUI_USING_MOUSE_CURSOR
-            rt_mutex_take(&cursor_mutex, RT_WAITING_FOREVER);
-            rt_kprintf("hide cursor\n");
-            rtgui_mouse_hide_cursor();
-#endif
-#else
-            /* send draw begin to server */
-            struct rtgui_event_update_begin eupdate;
-            RTGUI_EVENT_UPDATE_BEGIN_INIT(&(eupdate));
-            eupdate.rect = RTGUI_WIDGET(top)->extent;
-
-            rtgui_server_post_event((struct rtgui_event *)&eupdate, sizeof(eupdate));
-#endif
-        }
-    }
-
-    return dc;
+    return RTGUI_WIDGET_DC(owner);
 }
 
 static rt_bool_t rtgui_dc_client_fini(struct rtgui_dc *dc)
 {
-    rtgui_widget_t *owner;
-
     if (dc == RT_NULL || dc->type != RTGUI_DC_CLIENT) return RT_FALSE;
-
-    /* get owner */
-    owner = RTGUI_CONTAINER_OF(dc, struct rtgui_widget, dc_type);
-
-    if (RTGUI_IS_WINTITLE(owner->toplevel))
-    {
-        /* update title extent */
-        struct rtgui_win *top = RTGUI_WIN(owner->toplevel);
-
-        top->drawing --;
-        if ((top->drawing == 0) && RTGUI_WIDGET_IS_DC_VISIBLE(owner))
-        {
-#ifdef _WIN32_NATIVE
-#ifdef RTGUI_USING_MOUSE_CURSOR
-            rt_mutex_release(&cursor_mutex);
-            /* show cursor */
-            rtgui_mouse_show_cursor();
-            rt_kprintf("show cursor\n");
-#endif
-            /* update screen */
-            rtgui_graphic_driver_screen_update(hw_driver, &(owner->extent));
-#else
-#ifdef RTGUI_USING_MOUSE_CURSOR
-            /* show cursor */
-            rtgui_mouse_show_cursor();
-#endif
-
-            /* update screen */
-            rtgui_graphic_driver_screen_update(hw_driver, &(owner->extent));
-#endif
-        }
-    }
-    else if (RTGUI_IS_APP(owner->toplevel) ||
-             RTGUI_IS_WIN(owner->toplevel))
-    {
-        struct rtgui_win *top = RTGUI_WIN(owner->toplevel);
-        top->drawing --;
-
-        if ((top->drawing == 0) && RTGUI_WIDGET_IS_DC_VISIBLE(owner))
-        {
-#ifdef _WIN32_NATIVE
-#ifdef RTGUI_USING_MOUSE_CURSOR
-            rt_mutex_release(&cursor_mutex);
-            /* show cursor */
-            rtgui_mouse_show_cursor();
-            rt_kprintf("show cursor\n");
-#endif
-            /* update screen */
-            rtgui_graphic_driver_screen_update(hw_driver, &(owner->extent));
-#else
-            /* send to server to end drawing */
-            struct rtgui_event_update_end eupdate;
-            RTGUI_EVENT_UPDATE_END_INIT(&(eupdate));
-            eupdate.rect = owner->extent;
-
-            rtgui_server_post_event((struct rtgui_event *)&eupdate, sizeof(eupdate));
-#endif
-        }
-    }
 
     return RT_TRUE;
 }
@@ -247,10 +88,10 @@ static void rtgui_dc_client_draw_point(struct rtgui_dc *self, int x, int y)
     rtgui_widget_t *owner;
 
     if (self == RT_NULL) return;
+	if (!rtgui_dc_get_visible(self)) return;
 
     /* get owner */
     owner = RTGUI_CONTAINER_OF(self, struct rtgui_widget, dc_type);
-    if (!RTGUI_WIDGET_IS_DC_VISIBLE(owner)) return;
 
     x = x + owner->extent.x1;
     y = y + owner->extent.y1;
@@ -268,10 +109,10 @@ static void rtgui_dc_client_draw_color_point(struct rtgui_dc *self, int x, int y
     rtgui_widget_t *owner;
 
     if (self == RT_NULL) return;
+	if (!rtgui_dc_get_visible(self)) return;
 
     /* get owner */
     owner = RTGUI_CONTAINER_OF(self, struct rtgui_widget, dc_type);
-    if (!RTGUI_WIDGET_IS_DC_VISIBLE(owner)) return;
 
     x = x + owner->extent.x1;
     y = y + owner->extent.y1;
@@ -292,10 +133,10 @@ static void rtgui_dc_client_draw_vline(struct rtgui_dc *self, int x, int y1, int
     rtgui_widget_t *owner;
 
     if (self == RT_NULL) return;
+	if (!rtgui_dc_get_visible(self)) return;
 
     /* get owner */
     owner = RTGUI_CONTAINER_OF(self, struct rtgui_widget, dc_type);
-    if (!RTGUI_WIDGET_IS_DC_VISIBLE(owner)) return;
 
     x  = x + owner->extent.x1;
     y1 = y1 + owner->extent.y1;
@@ -318,7 +159,7 @@ static void rtgui_dc_client_draw_vline(struct rtgui_dc *self, int x, int y1, int
         /* draw vline */
         hw_driver->ops->draw_vline(&(owner->gc.foreground), x, y1, y2);
     }
-    else 
+    else
 	{
 		for (index = 0; index < rtgui_region_num_rects(&(owner->clip)); index ++)
     	{
@@ -351,10 +192,10 @@ static void rtgui_dc_client_draw_hline(struct rtgui_dc *self, int x1, int x2, in
     rtgui_widget_t *owner;
 
     if (self == RT_NULL) return;
+	if (!rtgui_dc_get_visible(self)) return;
 
     /* get owner */
     owner = RTGUI_CONTAINER_OF(self, struct rtgui_widget, dc_type);
-    if (!RTGUI_WIDGET_IS_DC_VISIBLE(owner)) return;
 
     /* convert logic to device */
     x1 = x1 + owner->extent.x1;
@@ -409,10 +250,10 @@ static void rtgui_dc_client_fill_rect(struct rtgui_dc *self, struct rtgui_rect *
     rtgui_widget_t *owner;
 
     if (self == RT_NULL) return;
+	if (!rtgui_dc_get_visible(self)) return;
 
     /* get owner */
     owner = RTGUI_CONTAINER_OF(self, struct rtgui_widget, dc_type);
-    if (!RTGUI_WIDGET_IS_DC_VISIBLE(owner)) return;
 
     /* save foreground color */
     foreground = owner->gc.foreground;
@@ -436,10 +277,10 @@ static void rtgui_dc_client_blit_line(struct rtgui_dc *self, int x1, int x2, int
     rtgui_widget_t *owner;
 
     if (self == RT_NULL) return;
+	if (!rtgui_dc_get_visible(self)) return;
 
     /* get owner */
     owner = RTGUI_CONTAINER_OF(self, struct rtgui_widget, dc_type);
-    if (!RTGUI_WIDGET_IS_DC_VISIBLE(owner)) return;
 
     /* convert logic to device */
     x1 = x1 + owner->extent.x1;

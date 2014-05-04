@@ -35,7 +35,7 @@ void win_thread_entry(void *parameter)
         rtgui_filedialog_set_mode(dialog, mode);
         if (RT_TRUE == rtgui_filedialog_show(dialog))
         {
-            full_file_name = rtgui_filedialog_get_full_filename(filedialog);
+            full_file_name = rtgui_filedialog_get_full_filename(dialog);
             rt_kprintf("filename:%s\n", full_file_name);
         }
         rtgui_app_destroy(application);

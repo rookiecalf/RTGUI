@@ -25,6 +25,7 @@
 
 static struct rtgui_app *rtgui_server_app = RT_NULL;
 static struct rtgui_app *rtgui_wm_application = RT_NULL;
+static struct rtgui_topwin *last_monitor_topwin = RT_NULL;
 
 void rtgui_server_handle_update(struct rtgui_event_update_end *event)
 {
@@ -124,8 +125,6 @@ void rtgui_server_handle_mouse_btn(struct rtgui_event_mouse *event)
     return;
 }
 
-static struct rtgui_topwin *last_monitor_topwin = RT_NULL;
-
 void rtgui_server_handle_mouse_motion(struct rtgui_event_mouse *event)
 {
     /* the topwin contains current mouse */
@@ -224,7 +223,6 @@ void rtgui_server_handle_touch(struct rtgui_event_touch *event)
 		}
 	}
 }
-
 
 #ifdef _WIN32_NATIVE
 #include <windows.h>
@@ -371,6 +369,7 @@ static rt_bool_t rtgui_server_event_handler(struct rtgui_object *object,
         /* handle mouse monitor */
         rtgui_server_handle_monitor_add((struct rtgui_event_monitor *)event);
         break;
+
     default:
         rt_kprintf("RTGUI: wrong event sent to server: %d\n", event->type);
         return RT_FALSE;
@@ -455,3 +454,4 @@ void rtgui_server_init(void)
     if (tid != RT_NULL)
         rt_thread_startup(tid);
 }
+

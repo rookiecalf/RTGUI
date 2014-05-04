@@ -193,6 +193,7 @@ static void updir_btn_onbutton(struct rtgui_object *object, struct rtgui_event *
     rtgui_widget_update(RTGUI_WIDGET(filedialog->path_textbox));
     rtgui_free(new_path);
 }
+
 static rt_bool_t filelist_onchaned(struct rtgui_object *object, struct rtgui_event *event)
 {
     rtgui_filelist_view_t *view;
@@ -225,7 +226,10 @@ static rt_bool_t filelist_onchaned(struct rtgui_object *object, struct rtgui_eve
             rtgui_widget_update(RTGUI_WIDGET(filedialog->open_btn));
         }
     }
+
+	return RT_TRUE;
 }
+
 rtgui_filedialog_t *rtgui_filedialog_create(rtgui_win_t *parent, const char *tile, rtgui_rect_t *rect)
 {
     rtgui_label_t *path_label, *filename_label;
@@ -338,6 +342,7 @@ void rtgui_filedialog_set_directory(rtgui_filedialog_t *dialog, const char *dir)
     rtgui_textbox_set_value(dialog->path_textbox, dir);
     rtgui_filelist_view_set_directory(dialog->file_list, dir);
 }
+
 void rtgui_filedialog_set_mode(rtgui_filedialog_t *dialog, rtgui_filedialog_mode_t mode)
 {
     dialog->mode = mode;
@@ -351,10 +356,12 @@ void rtgui_filedialog_set_mode(rtgui_filedialog_t *dialog, rtgui_filedialog_mode
         rtgui_widget_update(RTGUI_WIDGET(filedialog->open_btn));
     }
 }
-void rtgui_filedialog_set_filename(rtgui_filedialog_t *dialog, char *filename)
+
+void rtgui_filedialog_set_filename(rtgui_filedialog_t *dialog, const char *filename)
 {
     rtgui_textbox_set_value(dialog->filename_textbox, filename);
 }
+
 rt_bool_t rtgui_filedialog_show(rtgui_filedialog_t *dialog)
 {
 

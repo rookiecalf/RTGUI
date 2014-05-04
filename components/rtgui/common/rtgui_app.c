@@ -216,6 +216,7 @@ rt_bool_t rtgui_app_event_handler(struct rtgui_object *object, rtgui_event_t *ev
     switch (event->type)
     {
     case RTGUI_EVENT_PAINT:
+	case RTGUI_EVENT_VPAINT_REQ:
     case RTGUI_EVENT_MOUSE_BUTTON:
     case RTGUI_EVENT_MOUSE_MOTION:
     case RTGUI_EVENT_CLIP_INFO:
