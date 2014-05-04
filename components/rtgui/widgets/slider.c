@@ -154,15 +154,7 @@ rt_bool_t rtgui_slider_event_handler(struct rtgui_object *object, struct rtgui_e
     switch (event->type)
     {
     case RTGUI_EVENT_PAINT:
-#ifndef RTGUI_USING_SMALL_SIZE
-        if (widget->on_draw != RT_NULL)
-            widget->on_draw(RTGUI_OBJECT(widget), event);
-        else
-#endif
-        {
-            rtgui_theme_draw_slider(slider);
-        }
-
+        rtgui_theme_draw_slider(slider);
         break;
 
     case RTGUI_EVENT_KBD:
@@ -178,14 +170,7 @@ rt_bool_t rtgui_slider_event_handler(struct rtgui_object *object, struct rtgui_e
     case RTGUI_EVENT_MOUSE_BUTTON:
         if (!RTGUI_WIDGET_IS_ENABLE(widget) || RTGUI_WIDGET_IS_HIDE(widget)) return RT_FALSE;
 
-#ifndef RTGUI_USING_SMALL_SIZE
-        if (widget->on_mouseclick != RT_NULL)
-            widget->on_mouseclick(RTGUI_OBJECT(widget), event);
-        else
-#endif
-        {
-            rtgui_slider_onmouse(slider, (struct rtgui_event_mouse *)event);
-        }
+        rtgui_slider_onmouse(slider, (struct rtgui_event_mouse *)event);
         break;
 
     default:

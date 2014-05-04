@@ -85,15 +85,7 @@ rt_bool_t rtgui_radiobox_event_handler(struct rtgui_object *object, struct rtgui
     switch (event->type)
     {
     case RTGUI_EVENT_PAINT:
-#ifndef RTGUI_USING_SMALL_SIZE
-        if (widget->on_draw != RT_NULL)
-            widget->on_draw(RTGUI_OBJECT(widget), event);
-        else
-#endif
-        {
-            rtgui_theme_draw_radiobox(radiobox);
-        }
-
+        rtgui_theme_draw_radiobox(radiobox);
         break;
 
     case RTGUI_EVENT_KBD:
@@ -153,14 +145,7 @@ rt_bool_t rtgui_radiobox_event_handler(struct rtgui_object *object, struct rtgui
         break;
 
     case RTGUI_EVENT_MOUSE_BUTTON:
-#ifndef RTGUI_USING_SMALL_SIZE
-        if (widget->on_mouseclick != RT_NULL)
-            widget->on_mouseclick(RTGUI_OBJECT(widget), event);
-        else
-#endif
-        {
-            rtgui_radiobox_onmouse(radiobox, (struct rtgui_event_mouse *)event);
-        }
+        rtgui_radiobox_onmouse(radiobox, (struct rtgui_event_mouse *)event);
         break;
     default:
         return rtgui_widget_event_handler(object, event);

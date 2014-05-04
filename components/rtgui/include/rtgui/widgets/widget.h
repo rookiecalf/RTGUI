@@ -123,8 +123,6 @@ struct rtgui_widget
     rt_bool_t (*on_focus_in)(struct rtgui_object *widget, struct rtgui_event *event);
     rt_bool_t (*on_focus_out)(struct rtgui_object *widget, struct rtgui_event *event);
 #ifndef RTGUI_USING_SMALL_SIZE
-    rt_bool_t (*on_draw)(struct rtgui_object *widget, struct rtgui_event *event);
-    rt_bool_t (*on_mouseclick)(struct rtgui_object *widget, struct rtgui_event *event);
     rt_bool_t (*on_key)(struct rtgui_object *widget, struct rtgui_event *event);
     rt_bool_t (*on_size)(struct rtgui_object *widget, struct rtgui_event *event);
     rt_bool_t (*on_command)(struct rtgui_object *widget, struct rtgui_event *event);

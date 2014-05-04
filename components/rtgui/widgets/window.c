@@ -525,12 +525,7 @@ rt_bool_t rtgui_win_event_handler(struct rtgui_object *object, struct rtgui_even
         break;
 
     case RTGUI_EVENT_PAINT:
-#ifndef RTGUI_USING_SMALL_SIZE
-        if (RTGUI_WIDGET(object)->on_draw != RT_NULL)
-            RTGUI_WIDGET(object)->on_draw(object, event);
-        else
-#endif
-            rtgui_win_ondraw(win);
+        rtgui_win_ondraw(win);
         break;
 
     case RTGUI_EVENT_MOUSE_BUTTON:
@@ -568,12 +563,6 @@ rt_bool_t rtgui_win_event_handler(struct rtgui_object *object, struct rtgui_even
              */
             res = rtgui_container_dispatch_mouse_event(RTGUI_CONTAINER(win),
                                         (struct rtgui_event_mouse *)event);
-#ifndef RTGUI_USING_SMALL_SIZE
-            if (!res && RTGUI_WIDGET(object)->on_mouseclick != RT_NULL)
-            {
-                res = RTGUI_WIDGET(object)->on_mouseclick(object, event);
-            }
-#endif
             return res;
         }
 
