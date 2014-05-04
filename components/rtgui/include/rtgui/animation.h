@@ -14,6 +14,7 @@ struct rtgui_animation;
 typedef int (*rtgui_anim_motion)(unsigned int tick, unsigned int max_tick);
 /* @progress is from 0 to RTGUI_ANIM_TICK_RANGE. */
 typedef void (*rtgui_anim_engine)(struct rtgui_dc *background,
+                                  struct rtgui_dc_buffer *background_buffer,
                                   struct rtgui_dc_buffer *items,
                                   int item_cnt,
                                   int progress,
@@ -55,6 +56,7 @@ struct rtgui_anim_engine_move_ctx
     struct rtgui_point start, end;
 };
 void rtgui_anim_engine_move(struct rtgui_dc *background,
+                            struct rtgui_dc_buffer *background_buffer,
                             struct rtgui_dc_buffer *items,
                             int item_cnt,
                             int progress,
@@ -73,12 +75,14 @@ struct rtgui_animation* rtgui_anim_create(struct rtgui_widget *parent,
                                           int interval);
 void rtgui_anim_destroy(struct rtgui_animation *anim);
 
+void rtgui_anim_set_bg_buffer(struct rtgui_animation *anim,
+                              struct rtgui_dc_buffer *dc);
 /** Set the animation buffer to an animation.
  *
  * The dc buffer could be an array and @cnt should be set to the length of the
  * array.
  */
-void rtgui_anim_set_dc_buffer(struct rtgui_animation *anim,
+void rtgui_anim_set_fg_buffer(struct rtgui_animation *anim,
                               struct rtgui_dc_buffer *dc,
                               int cnt);
 

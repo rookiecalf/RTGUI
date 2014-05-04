@@ -14,7 +14,8 @@ struct rtgui_animation
     struct rtgui_timer  *timer;
     enum _anim_state state;
 
-    struct rtgui_dc_buffer *dc;
+    struct rtgui_dc_buffer *bg_buf;
+    struct rtgui_dc_buffer *fg_buf;
     int dc_cnt;
 
     unsigned int tick, max_tick;
@@ -46,6 +47,7 @@ int rtgui_anim_motion_outsquare(unsigned int tick, unsigned int max_tick)
 }
 
 void rtgui_anim_engine_move(struct rtgui_dc *background,
+                            struct rtgui_dc_buffer *background_buffer,
                             struct rtgui_dc_buffer *items,
                             int item_cnt,
                             int progress,
@@ -54,6 +56,14 @@ void rtgui_anim_engine_move(struct rtgui_dc *background,
     int cx, cy;
     struct rtgui_anim_engine_move_ctx *ctx = param;
     struct rtgui_rect dc_rect;
+    struct rtgui_dc *tmp_buf;
+
+    if (!(background && background_buffer && items))
+        return;
+
+    tmp_buf = rtgui_dc_buffer_create_from_dc((struct rtgui_dc*)background_buffer);
+    if (!tmp_buf)
+        return;
 
     rtgui_dc_get_rect(background, &dc_rect);
 
@@ -64,7 +74,9 @@ void rtgui_anim_engine_move(struct rtgui_dc *background,
     dc_rect.y1 = cy + ctx->start.y;
     /* To prevent overlapping, only one item can be drawn by
      * rtgui_anim_engine_move. */
-    rtgui_dc_blit((struct rtgui_dc*)(items), NULL, background, &dc_rect);
+    rtgui_dc_blit((struct rtgui_dc*)(items), NULL, tmp_buf, &dc_rect);
+    rtgui_dc_blit((struct rtgui_dc*)(tmp_buf), NULL, background, NULL);
+    rtgui_dc_destory(tmp_buf);
 }
 
 static void _anim_timeout(struct rtgui_timer *timer, void *parameter)
@@ -88,7 +100,7 @@ static void _anim_timeout(struct rtgui_timer *timer, void *parameter)
 
         RT_ASSERT(anim->motion);
         RT_ASSERT(anim->engine);
-        anim->engine(dc, anim->dc, anim->dc_cnt,
+        anim->engine(dc, anim->bg_buf, anim->fg_buf, anim->dc_cnt,
                      anim->motion(anim->tick, anim->max_tick),
                      anim->eng_ctx);
 
@@ -121,7 +133,7 @@ struct rtgui_animation* rtgui_anim_create(struct rtgui_widget *parent,
 
     anim->parent = parent;
 
-    anim->dc = RT_NULL;
+    anim->fg_buf = RT_NULL;
     anim->dc_cnt = 0;
 
     anim->tick = 0;
@@ -145,14 +157,22 @@ void rtgui_anim_destroy(struct rtgui_animation *anim)
     rtgui_free(anim);
 }
 
-void rtgui_anim_set_dc_buffer(struct rtgui_animation *anim,
+void rtgui_anim_set_fg_buffer(struct rtgui_animation *anim,
                               struct rtgui_dc_buffer *dc,
                               int cnt)
 {
     RT_ASSERT(anim);
 
-    anim->dc = dc;
+    anim->fg_buf = dc;
     anim->dc_cnt = cnt;
+}
+
+void rtgui_anim_set_bg_buffer(struct rtgui_animation *anim,
+                              struct rtgui_dc_buffer *dc)
+{
+    RT_ASSERT(anim);
+
+    anim->bg_buf = dc;
 }
 
 void rtgui_anim_set_engine(struct rtgui_animation *anim,
@@ -214,7 +234,7 @@ void rtgui_anim_start(struct rtgui_animation *anim)
 {
     RT_ASSERT(anim);
 
-    if (anim->dc && anim->max_tick && anim->state == _ANIM_STOPPED)
+    if (anim->fg_buf && anim->max_tick && anim->state == _ANIM_STOPPED)
     {
         anim->state = _ANIM_RUNNING;
         rtgui_timer_start(anim->timer);

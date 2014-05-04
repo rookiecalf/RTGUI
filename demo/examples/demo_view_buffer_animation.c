@@ -2,6 +2,7 @@
 #include <rtgui/rtgui_system.h>
 #include <rtgui/animation.h>
 #include <rtgui/widgets/container.h>
+#include <rtgui/widgets/label.h>
 #include "demo_view.h"
 
 /*
@@ -71,6 +72,9 @@ struct rtgui_container *demo_view_buffer_animation(void)
     struct rtgui_container *container;
     static rtgui_rect_t text_rect;
     rtgui_rect_t bufrect;
+    struct rtgui_rect rect, rect1;
+    struct rtgui_dc *bg_buf;
+    struct rtgui_label *lbl;
 
     /*
      *int i = 1;
@@ -78,8 +82,25 @@ struct rtgui_container *demo_view_buffer_animation(void)
      */
 
     container = demo_view("DC »º³åÇø¶¯»­");
-    if (container != RT_NULL)
-        rtgui_object_set_event_handler(RTGUI_OBJECT(container), animation_event_handler);
+    if (container == RT_NULL)
+        return RT_NULL;
+
+    rtgui_object_set_event_handler(RTGUI_OBJECT(container), animation_event_handler);
+    demo_view_get_logic_rect(container, &rect);
+
+    lbl = rtgui_label_create("");
+    /* The demos are always run in full screen. So the logic rect is device
+     * rect. */
+    rtgui_widget_set_rect(RTGUI_WIDGET(lbl), &rect);
+    rtgui_container_add_child(container, RTGUI_WIDGET(lbl));
+
+    bg_buf = rtgui_dc_buffer_create(rtgui_rect_width(rect), rtgui_rect_height(rect));
+    RT_ASSERT(bg_buf);
+    RTGUI_DC_FC(bg_buf) = RTGUI_WIDGET_BACKGROUND(container);
+    rect1 = rect;
+    rtgui_rect_moveto(&rect1, -rect1.x1, -rect1.y1);
+    rtgui_dc_fill_rect(bg_buf, &rect1);
+    RTGUI_DC_FC(bg_buf) = black;
 
     rtgui_font_get_metrics(RTGUI_WIDGET_FONT(container), "»º³å¶¯»­", &text_rect);
     if (dc_buffer == RT_NULL)
@@ -101,24 +122,21 @@ struct rtgui_container *demo_view_buffer_animation(void)
 
     if (anim == RT_NULL)
     {
-        struct rtgui_rect rect;
-
-        demo_view_get_logic_rect(container, &rect);
-
         /* 25 frames per second should be reasonable. */
-        anim = rtgui_anim_create(RTGUI_WIDGET(container), RT_TICK_PER_SECOND/25);
+        anim = rtgui_anim_create(RTGUI_WIDGET(lbl), RT_TICK_PER_SECOND/25);
         RT_ASSERT(anim);
 
-        rtgui_anim_set_dc_buffer(anim, (struct rtgui_dc_buffer*)dc_buffer, 1);
+        rtgui_anim_set_bg_buffer(anim, (struct rtgui_dc_buffer*)bg_buf);
+        rtgui_anim_set_fg_buffer(anim, (struct rtgui_dc_buffer*)dc_buffer, 1);
         rtgui_anim_set_onfinish(anim, _update_engctx);
         rtgui_anim_set_duration(anim, 1 * RT_TICK_PER_SECOND);
         rtgui_anim_set_motion(anim, rtgui_anim_motion_insquare);
         rtgui_anim_set_engine(anim, rtgui_anim_engine_move, &engctx);
 
-        engctx.start.x = rect.x1 + 2;
-        engctx.start.y = rect.y1 + 2;
-        engctx.end.x = rect.x2 - bufrect.x2 - 2;
-        engctx.end.y = rect.y2 - bufrect.y2 - 2;
+        engctx.start.x = 2;
+        engctx.start.y = 2;
+        engctx.end.x = rtgui_rect_width(rect) - bufrect.x2 - 2;
+        engctx.end.y = rtgui_rect_height(rect) - bufrect.y2 - 2;
     }
 
     return container;
