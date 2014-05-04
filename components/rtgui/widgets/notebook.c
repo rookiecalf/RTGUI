@@ -564,9 +564,10 @@ void rtgui_notebook_set_current_by_index(struct rtgui_notebook *notebook, rt_uin
         notebook->current = index;
         widget = notebook->childs[notebook->current].widget;
 
+        /* update_clip only works on shown widgets. */
+        rtgui_widget_show(widget);
         rtgui_widget_update_clip(widget);
         rtgui_widget_focus(notebook->childs[notebook->current].focused_widget);
-        rtgui_widget_show(widget);
 
         /* the whole notebook need an update */
         rtgui_widget_update(RTGUI_WIDGET(notebook));
