@@ -63,8 +63,6 @@ static void _rtgui_widget_constructor(rtgui_widget_t *widget)
     widget->on_focus_out  = RT_NULL;
 
 #ifndef RTGUI_USING_SMALL_SIZE
-    widget->on_draw       = RT_NULL;
-    widget->on_mouseclick = RT_NULL;
     widget->on_key        = RT_NULL;
     widget->on_size       = RT_NULL;
     widget->on_command    = RT_NULL;
@@ -306,22 +304,6 @@ void rtgui_widget_set_onunfocus(rtgui_widget_t *widget, rtgui_event_handler_ptr 
 RTM_EXPORT(rtgui_widget_set_onunfocus);
 
 #ifndef RTGUI_USING_SMALL_SIZE
-void rtgui_widget_set_ondraw(rtgui_widget_t *widget, rtgui_event_handler_ptr handler)
-{
-    RT_ASSERT(widget != RT_NULL);
-
-    widget->on_draw = handler;
-}
-RTM_EXPORT(rtgui_widget_set_ondraw);
-
-void rtgui_widget_set_onmouseclick(rtgui_widget_t *widget, rtgui_event_handler_ptr handler)
-{
-    RT_ASSERT(widget != RT_NULL);
-
-    widget->on_mouseclick = handler;
-}
-RTM_EXPORT(rtgui_widget_set_onmouseclick);
-
 void rtgui_widget_set_onkey(rtgui_widget_t *widget, rtgui_event_handler_ptr handler)
 {
     RT_ASSERT(widget != RT_NULL);
@@ -518,19 +500,9 @@ rt_bool_t rtgui_widget_event_handler(struct rtgui_object *object, rtgui_event_t 
     case RTGUI_EVENT_UPDATE_TOPLVL:
         return rtgui_widget_onupdate_toplvl(object, event);
 #ifndef RTGUI_USING_SMALL_SIZE
-    case RTGUI_EVENT_PAINT:
-        if (widget->on_draw != RT_NULL)
-            return widget->on_draw(RTGUI_OBJECT(widget), event);
-        break;
-
     case RTGUI_EVENT_KBD:
         if (widget->on_key != RT_NULL)
             return widget->on_key(RTGUI_OBJECT(widget), event);
-        break;
-
-    case RTGUI_EVENT_MOUSE_BUTTON:
-        if (widget->on_mouseclick != RT_NULL)
-            return widget->on_mouseclick(RTGUI_OBJECT(widget), event);
         break;
 
     case RTGUI_EVENT_COMMAND:
@@ -732,9 +704,6 @@ void rtgui_widget_update(rtgui_widget_t *widget)
 
     RT_ASSERT(widget != RT_NULL);
 
-    if (RTGUI_WIDGET_IS_HIDE(widget))
-        return;
-
     if (RTGUI_OBJECT(widget)->event_handler != RT_NULL)
     {
         RTGUI_OBJECT(widget)->event_handler(
@@ -801,3 +770,4 @@ void rtgui_widget_dump(rtgui_widget_t *widget)
     // rtgui_region_dump(&(widget->clip));
 }
 #endif
+

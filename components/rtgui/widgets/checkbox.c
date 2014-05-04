@@ -40,14 +40,7 @@ rt_bool_t rtgui_checkbox_event_handler(struct rtgui_object *object, struct rtgui
     switch (event->type)
     {
     case RTGUI_EVENT_PAINT:
-#ifndef RTGUI_USING_SMALL_SIZE
-        if (widget->on_draw != RT_NULL)
-        {
-            return widget->on_draw(RTGUI_OBJECT(widget), event);
-        }
-        else
-#endif
-            rtgui_theme_draw_checkbox(box);
+        rtgui_theme_draw_checkbox(box);
         break;
 
     case RTGUI_EVENT_MOUSE_BUTTON:
@@ -76,13 +69,6 @@ rt_bool_t rtgui_checkbox_event_handler(struct rtgui_object *object, struct rtgui
             /* draw checkbox */
             rtgui_theme_draw_checkbox(box);
 
-#ifndef RTGUI_USING_SMALL_SIZE
-            /* call user callback */
-            if (widget->on_mouseclick != RT_NULL)
-            {
-                return widget->on_mouseclick(RTGUI_OBJECT(widget), event);
-            }
-#endif
             if (box->on_button != RT_NULL)
             {
                 box->on_button(RTGUI_OBJECT(widget), event);

@@ -52,4 +52,7 @@
 
 #define RTGUI_USING_CALIBRATION
 
+#define RTGUI_USING_VFRAMEBUFFER
+
 #endif
+

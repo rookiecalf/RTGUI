@@ -275,10 +275,10 @@ static void rtgui_dc_buffer_fill_rect(struct rtgui_dc *self, struct rtgui_rect *
     if (_r.y2 > dst->height) _r.y2 = dst->height;
 	rect = &_r;
 
-	r = RTGUI_RGB_R(dst->gc.foreground);
-	g = RTGUI_RGB_G(dst->gc.foreground);
-	b = RTGUI_RGB_B(dst->gc.foreground);
-	a = RTGUI_RGB_A(dst->gc.foreground);
+	r = RTGUI_RGB_R(dst->gc.background);
+	g = RTGUI_RGB_G(dst->gc.background);
+	b = RTGUI_RGB_B(dst->gc.background);
+	a = RTGUI_RGB_A(dst->gc.background);
 
 	switch (dst->pixel_format)
 	{
@@ -500,4 +500,3 @@ static void rtgui_dc_buffer_blit_line(struct rtgui_dc *self, int x1, int x2, int
 	pixel = _dc_get_pixel(dc,x1,y);
     rt_memcpy(pixel, line_data, (x2 - x1) * rtgui_color_get_bpp(dc->pixel_format));
 }
-
