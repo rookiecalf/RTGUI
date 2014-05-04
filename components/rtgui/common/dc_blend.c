@@ -285,9 +285,16 @@ _dc_draw_line1(struct rtgui_dc * dst, int x1, int y1, int x2, int y2, rtgui_colo
 }
 
 static void
-_dc_draw_line2(struct rtgui_dc * dst, int x1, int y1, int x2, int y2, rtgui_color_t color,
+_dc_draw_line2(struct rtgui_dc * dst, int x1, int y1, int x2, int y2, rtgui_color_t c,
               rt_bool_t draw_end)
 {
+	rt_uint16_t color;
+
+	if (rtgui_dc_get_pixel_format(dst) == RTGRAPHIC_PIXEL_FORMAT_RGB565)
+		color = rtgui_color_to_565(c);
+	else 
+		color = rtgui_color_to_565p(c);
+
     if (y1 == y2) {
         HLINE(rt_uint16_t, DRAW_FASTSETPIXEL2, draw_end);
     } else if (x1 == x2) {
@@ -297,10 +304,10 @@ _dc_draw_line2(struct rtgui_dc * dst, int x1, int y1, int x2, int y2, rtgui_colo
     } else {
         rt_uint8_t _r, _g, _b, _a;
 
-		_r = RTGUI_RGB_R(color);
-		_g = RTGUI_RGB_G(color);
-		_b = RTGUI_RGB_B(color);
-		_a = RTGUI_RGB_A(color);
+		_r = RTGUI_RGB_R(c);
+		_g = RTGUI_RGB_G(c);
+		_b = RTGUI_RGB_B(c);
+		_a = RTGUI_RGB_A(c);
 		
 		if (rtgui_dc_get_pixel_format(dst) == RTGRAPHIC_PIXEL_FORMAT_RGB565)
 		{
