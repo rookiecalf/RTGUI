@@ -154,6 +154,8 @@ void rtgui_dc_blend_fill_rects(struct rtgui_dc * dst,const rtgui_rect_t * rects,
 void rtgui_dc_draw_aa_circle(struct rtgui_dc *dc, rt_int16_t x, rt_int16_t y, rt_int16_t r);
 void rtgui_dc_draw_aa_ellipse(struct rtgui_dc *dc, rt_int16_t  x, rt_int16_t y, rt_int16_t rx, rt_int16_t ry);
 
+int rtgui_dc_draw_thick_line(struct rtgui_dc * dst, rt_int16_t x1, rt_int16_t y1, rt_int16_t x2, rt_int16_t y2, rt_uint8_t width);
+
 /*
  * dc inline function
  *
