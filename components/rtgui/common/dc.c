@@ -66,10 +66,9 @@ void rtgui_dc_draw_line(struct rtgui_dc *dc, int x1, int y1, int x2, int y2)
         dy = y2 - y1;       /* the vertical distance of the line */
 
 #define rtgui_sgn(x) ((x<0)?-1:((x>0)?1:0)) /* macro to return the sign of a number */
-#define rtgui_abs(x) ((x)>=0? (x):-(x))     /* macro to return the absolute value */
 
-        dxabs = rtgui_abs(dx);
-        dyabs = rtgui_abs(dy);
+        dxabs = _UI_ABS(dx);
+        dyabs = _UI_ABS(dy);
         sdx = rtgui_sgn(dx);
         sdy = rtgui_sgn(dy);
         x = dyabs >> 1;
