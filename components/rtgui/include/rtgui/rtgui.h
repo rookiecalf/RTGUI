@@ -39,6 +39,7 @@
 #define _UI_MIN(x, y)			(((x)<(y))?(x):(y))
 #define _UI_MAX(x, y)			(((x)>(y))?(x):(y))
 #define _UI_BITBYTES(bits)		((bits + 7)/8)
+#define _UI_ABS(x)				((x)>=0? (x):-(x))
 
 struct rtgui_event;
 
