@@ -258,6 +258,31 @@ void rtgui_dc_draw_shaded_rect(struct rtgui_dc *dc, rtgui_rect_t *rect,
 }
 RTM_EXPORT(rtgui_dc_draw_shaded_rect);
 
+void rtgui_dc_fill_gradient_rectv(struct rtgui_dc *dc, rtgui_rect_t *rect,
+                                  rtgui_color_t c1, rtgui_color_t c2)
+{
+    int y, step;
+    rtgui_color_t fc;
+
+    RT_ASSERT(dc != RT_NULL);
+    RT_ASSERT(rect != RT_NULL);
+
+    step = rtgui_rect_height(*rect);
+    fc = RTGUI_DC_FC(dc);
+
+    for (y = rect->y1; y < rect->y2; y++)
+    {
+        RTGUI_DC_FC(dc) = RTGUI_ARGB((int)(RTGUI_RGB_A(c2)-RTGUI_RGB_A(c1)) * (y-rect->y1) / step + RTGUI_RGB_A(c1),
+                                     (int)(RTGUI_RGB_R(c2)-RTGUI_RGB_R(c1)) * (y-rect->y1) / step + RTGUI_RGB_R(c1),
+                                     (int)(RTGUI_RGB_G(c2)-RTGUI_RGB_G(c1)) * (y-rect->y1) / step + RTGUI_RGB_G(c1),
+                                     (int)(RTGUI_RGB_B(c2)-RTGUI_RGB_B(c1)) * (y-rect->y1) / step + RTGUI_RGB_B(c1));
+        rtgui_dc_draw_hline(dc, rect->x1, rect->x2, y);
+    }
+
+    RTGUI_DC_FC(dc) = fc;
+}
+RTM_EXPORT(rtgui_dc_fill_gradient_rectv);
+
 void rtgui_dc_draw_focus_rect(struct rtgui_dc *dc, rtgui_rect_t *rect)
 {
     int x, y;

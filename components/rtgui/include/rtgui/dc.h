@@ -111,6 +111,9 @@ void rtgui_dc_draw_rect(struct rtgui_dc *dc, struct rtgui_rect *rect);
 void rtgui_dc_fill_rect_forecolor(struct rtgui_dc *dc, struct rtgui_rect *rect);
 void rtgui_dc_draw_round_rect(struct rtgui_dc *dc, struct rtgui_rect *rect, int r);
 void rtgui_dc_fill_round_rect(struct rtgui_dc *dc, struct rtgui_rect *rect, int r);
+/** Fill a vertical gradient rect from @c1 to @c2 */
+void rtgui_dc_fill_gradient_rectv(struct rtgui_dc *dc, rtgui_rect_t *rect,
+                                  rtgui_color_t c1, rtgui_color_t c2);
 void rtgui_dc_draw_annulus(struct rtgui_dc *dc, rt_int16_t x, rt_int16_t y, rt_int16_t r1, rt_int16_t r2, rt_int16_t start, rt_int16_t end);
 void rtgui_dc_draw_pie(struct rtgui_dc *dc, rt_int16_t x, rt_int16_t y, rt_int16_t r, rt_int16_t start, rt_int16_t end);
 void rtgui_dc_fill_pie(struct rtgui_dc *dc, rt_int16_t x, rt_int16_t y, rt_int16_t r, rt_int16_t start, rt_int16_t end);
