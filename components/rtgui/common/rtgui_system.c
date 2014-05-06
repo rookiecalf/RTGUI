@@ -372,6 +372,7 @@ const char *event_string[] =
     "MOUSE_BUTTON",         /* mouse button info    */
     "KBD",                  /* keyboard info        */
     "TOUCH",                /* touch info           */
+	"GESTURE", 				/* gesture              */
 
     "FOCUSED",              /* widget got focuse    */
     "SCROLLED",             /* scroll bar scrolled  */

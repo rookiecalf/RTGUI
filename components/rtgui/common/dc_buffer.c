@@ -439,7 +439,7 @@ static void rtgui_dc_buffer_blit(struct rtgui_dc *self, struct rtgui_point *dc_p
 	{
 		struct rtgui_dc_buffer *dest_dc = (struct rtgui_dc_buffer*)dest;
 
-		if (dest_dc->pixel_format == dc->pixel_format)
+		if (dest_dc->pixel_format == dc->pixel_format && dest_dc->pixel_format == RTGRAPHIC_PIXEL_FORMAT_RGB565)
 		{
 			int index;
 			rt_uint8_t *pixels, *dest_pixels;
@@ -457,8 +457,7 @@ static void rtgui_dc_buffer_blit(struct rtgui_dc *self, struct rtgui_point *dc_p
 				dest_pixels += dest_dc->pitch;
 			}
 		}
-		else if ((dc->pixel_format == RTGRAPHIC_PIXEL_FORMAT_ARGB888) &&
-				(dest_dc->pixel_format == RTGRAPHIC_PIXEL_FORMAT_RGB565))
+		else /* use rtgui_blit to handle buffer blit */
 		{
 			/* do the fast ARGB to RGB565 blit */
 			struct rtgui_blit_info info;
