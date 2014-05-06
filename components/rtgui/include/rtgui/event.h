@@ -66,6 +66,7 @@ enum _rtgui_event_type
     RTGUI_EVENT_MOUSE_BUTTON,          /* mouse button info     */
     RTGUI_EVENT_KBD,                   /* keyboard info         */
     RTGUI_EVENT_TOUCH,                 /* touch event to server */
+	RTGUI_EVENT_GESTURE, 			   /* gesture event         */
 
     /* widget event */
     RTGUI_EVENT_FOCUSED,               /* widget focused        */
@@ -354,6 +355,30 @@ struct rtgui_event_touch
 #define RTGUI_TOUCH_MOTION				0x03
 #define RTGUI_EVENT_TOUCH_INIT(e)       RTGUI_EVENT_INIT(&((e)->parent), RTGUI_EVENT_TOUCH)
 
+/**
+ * RTGUI Gesture Event
+ */
+struct rtgui_event_gesture
+{
+	_RTGUI_EVENT_WIN_ELEMENTS
+
+	rt_uint16_t type;
+	rt_uint16_t resv;
+
+	rt_uint16_t start_x, start_y;
+	rt_uint16_t end_x, end_y;
+};
+#define RTGUI_GESTURE_NONE				0x00
+#define RTGUI_GESTURE_UP				0x01
+#define RTGUI_GESTURE_DOWN				0x02
+#define RTGUI_GESTURE_LEFT				0x03
+#define RTGUI_GESTURE_RIGHT				0x04
+#define RTGUI_EVENT_GESTURE_INIT(e, gtype) \
+	do { \
+		RTGUI_EVENT_INIT(&((e)->parent), RTGUI_EVENT_GESTURE); \
+		(e)->type = gtype; \
+	} while (0)
+
 struct rtgui_event_command
 {
     _RTGUI_EVENT_WIN_ELEMENTS
@@ -501,6 +526,8 @@ union rtgui_event_generic
     struct rtgui_event_clip_info clip_info;
     struct rtgui_event_mouse mouse;
     struct rtgui_event_kbd kbd;
+	struct rtgui_event_touch touch;
+	struct rtgui_event_gesture gesture;
     struct rtgui_event_scrollbar scrollbar;
     struct rtgui_event_focused focused;
     struct rtgui_event_resize resize;
@@ -508,3 +535,4 @@ union rtgui_event_generic
     struct rtgui_event_command command;
 };
 #endif
+
