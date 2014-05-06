@@ -69,7 +69,7 @@ rt_bool_t rtgui_graphic_driver_is_vmode(void)
 
 	return RT_FALSE;
 }
-RTM_EXPORT(rtgui_graphic_driver_vmode_enable);
+RTM_EXPORT(rtgui_graphic_driver_is_vmode);
 
 struct rtgui_dc* rtgui_graphic_driver_get_rect_buffer(const struct rtgui_graphic_driver *driver, struct rtgui_rect *r)
 {
