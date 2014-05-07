@@ -1988,7 +1988,7 @@ typedef struct {
 	rt_int16_t x, y;
 	int dx, dy, s1, s2, swapdir, error;
 	rt_uint32_t count;
-} SDL_gfxBresenhamIterator;
+} _BresenhamIterator;
 
 /*!
 \brief The structure passed to the internal Murphy iterator.
@@ -2001,13 +2001,13 @@ typedef struct {
 	int oct2;
 	int quad4;
 	rt_int16_t last1x, last1y, last2x, last2y, first1x, first1y, first2x, first2y, tempx, tempy;
-} SDL_gfxMurphyIterator;
+} _MurphyIterator;
 
 /*!
 \brief Internal function to initialize the Bresenham line iterator.
 
 Example of use:
-SDL_gfxBresenhamIterator b;
+_BresenhamIterator b;
 _bresenhamInitialize (&b, x1, y1, x2, y2);
 do { 
 plot(b.x, b.y); 
@@ -2021,7 +2021,7 @@ plot(b.x, b.y);
 
 \returns Returns 0 on success, -1 on failure.
 */
-int _bresenhamInitialize(SDL_gfxBresenhamIterator *b, rt_int16_t x1, rt_int16_t y1, rt_int16_t x2, rt_int16_t y2)
+int _bresenhamInitialize(_BresenhamIterator *b, rt_int16_t x1, rt_int16_t y1, rt_int16_t x2, rt_int16_t y2)
 {
 	int temp;
 
@@ -2083,7 +2083,7 @@ Maybe updates the x and y coordinates of the iterator struct.
 
 \returns Returns 0 on success, 1 if last point was reached, 2 if moving past end-of-line, -1 on failure.
 */
-int _bresenhamIterate(SDL_gfxBresenhamIterator *b)
+int _bresenhamIterate(_BresenhamIterator *b)
 {	
 	if (b==NULL) {
 		return (-1);
@@ -2126,7 +2126,7 @@ int _bresenhamIterate(SDL_gfxBresenhamIterator *b)
 \param y Y coordinate of point.
 \param d1 Direction square/diagonal.
 */
-void _murphyParaline(SDL_gfxMurphyIterator *m, rt_int16_t x, rt_int16_t y, int d1)
+void _murphyParaline(_MurphyIterator *m, rt_int16_t x, rt_int16_t y, int d1)
 {
 	int p;
 	d1 = -d1;
@@ -2175,7 +2175,7 @@ void _murphyParaline(SDL_gfxMurphyIterator *m, rt_int16_t x, rt_int16_t y, int d
 \param ml2y Y coordinate of a point.
 
 */
-void _murphyIteration(SDL_gfxMurphyIterator *m, rt_uint8_t miter, 
+void _murphyIteration(_MurphyIterator *m, rt_uint8_t miter, 
 	rt_uint16_t ml1bx, rt_uint16_t ml1by, rt_uint16_t ml2bx, rt_uint16_t ml2by, 
 	rt_uint16_t ml1x, rt_uint16_t ml1y, rt_uint16_t ml2x, rt_uint16_t ml2y)
 {
@@ -2184,7 +2184,7 @@ void _murphyIteration(SDL_gfxMurphyIterator *m, rt_uint8_t miter,
 	rt_uint16_t m1x, m1y, m2x, m2y;	
 	rt_uint16_t fix, fiy, lax, lay, curx, cury;
 	int px[4], py[4];
-	SDL_gfxBresenhamIterator b;
+	_BresenhamIterator b;
 
 	if (miter > 1) {
 		if (m->first1x != -32768) {
@@ -2294,7 +2294,7 @@ Draws lines parallel to ideal line.
 \param miter Iteration count.
 
 */
-void _murphyWideline(SDL_gfxMurphyIterator *m, rt_int16_t x1, rt_int16_t y1, rt_int16_t x2, rt_int16_t y2, rt_uint8_t width, rt_uint8_t miter)
+void _murphyWideline(_MurphyIterator *m, rt_int16_t x1, rt_int16_t y1, rt_int16_t x2, rt_int16_t y2, rt_uint8_t width, rt_uint8_t miter)
 {
 	float offset = (float)width / 2.f;
 
@@ -2483,7 +2483,7 @@ void _murphyWideline(SDL_gfxMurphyIterator *m, rt_int16_t x1, rt_int16_t y1, rt_
 int rtgui_dc_draw_thick_line(struct rtgui_dc * dst, rt_int16_t x1, rt_int16_t y1, rt_int16_t x2, rt_int16_t y2, rt_uint8_t width)
 {
 	int wh;
-	SDL_gfxMurphyIterator m;
+	_MurphyIterator m;
 
 	if (dst == NULL) return -1;
 	if (width < 1) return -1;
