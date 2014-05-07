@@ -344,6 +344,7 @@ static void _rtgui_filelist_view_constructor(struct rtgui_filelist_view *view)
     view->items_count = 0;
     view->page_items = 0;
 
+    view->on_changed = RT_NULL;
     view->current_directory = RT_NULL;
     view->pattern = RT_NULL;
     RTGUI_WIDGET_BACKGROUND(view) = white;
@@ -530,9 +531,12 @@ void rtgui_filelist_view_update_current(struct rtgui_filelist_view *view, rt_uin
    }
     rtgui_dc_end_drawing(dc);
 }
-void rtgui_filelist_view_set_onchanged(rtgui_filelist_view_t *view, rtgui_event_handler_ptr func){
-view->on_changed=func;
+
+void rtgui_filelist_view_set_onchanged(rtgui_filelist_view_t *view, rtgui_event_handler_ptr func)
+{
+    view->on_changed=func;
 }
+
 static void rtgui_filelist_view_onenturn(struct rtgui_filelist_view *view)
 {
     if (view->items[view->current_item].type == RTGUI_FITEM_DIR)
