@@ -64,6 +64,7 @@ rt_bool_t rtgui_panel_event_handler(struct rtgui_object *object, struct rtgui_ev
 
     return RT_FALSE;
 }
+RTM_EXPORT(rtgui_panel_event_handler);
 
 rtgui_panel_t *rtgui_panel_create(int border_style)
 {
@@ -80,9 +81,11 @@ rtgui_panel_t *rtgui_panel_create(int border_style)
 
     return panel;
 }
+RTM_EXPORT(rtgui_panel_create);
 
 void rtgui_panel_destroy(rtgui_panel_t *panel)
 {
     rtgui_object_destroy(RTGUI_OBJECT(panel));
 }
+RTM_EXPORT(rtgui_panel_destroy);
 

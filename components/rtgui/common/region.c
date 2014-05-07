@@ -2156,6 +2156,7 @@ void rtgui_rect_moveto(rtgui_rect_t *rect, int x, int y)
     rect->y1 += y;
     rect->y2 += y;
 }
+RTM_EXPORT(rtgui_rect_moveto);
 
 void rtgui_rect_moveto_align(const rtgui_rect_t *rect, rtgui_rect_t *to, int align)
 {
@@ -2212,6 +2213,7 @@ void rtgui_rect_inflate(rtgui_rect_t *rect, int d)
     rect->y1 -= d;
     rect->y2 += d;
 }
+RTM_EXPORT(rtgui_rect_inflate);
 
 /* put the intersect of src rect and dest rect to dest */
 void rtgui_rect_intersect(rtgui_rect_t *src, rtgui_rect_t *dest)

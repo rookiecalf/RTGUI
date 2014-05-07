@@ -656,11 +656,13 @@ rtgui_textbox_t *rtgui_textbox_create(const char *text, rt_uint32_t flag)
 
 	return box;
 }
+RTM_EXPORT(rtgui_textbox_create);
 
 void rtgui_textbox_destroy(rtgui_textbox_t *box)
 {
 	rtgui_widget_destroy(RTGUI_WIDGET(box));
 }
+RTM_EXPORT(rtgui_textbox_destroy);
 
 void rtgui_textbox_ondraw(rtgui_textbox_t *box)
 {
@@ -753,11 +755,13 @@ void rtgui_textbox_set_value(rtgui_textbox_t *box, const char *text)
     box->flag |= RTGUI_TEXTBOX_CARET_SHOW;
     rtgui_textbox_draw_caret(box, box->position);
 }
+RTM_EXPORT(rtgui_textbox_set_value);
 
 const char *rtgui_textbox_get_value(rtgui_textbox_t *box)
 {
 	return (const char *)box->text;
 }
+RTM_EXPORT(rtgui_textbox_get_value);
 
 void rtgui_textbox_set_mask_char(rtgui_textbox_t *box, const char ch)
 {
@@ -829,4 +833,5 @@ rt_bool_t rtgui_textbox_event_handler(struct rtgui_object *object, rtgui_event_t
 
 	return RT_FALSE;
 }
+RTM_EXPORT(rtgui_textbox_event_handler);
 
