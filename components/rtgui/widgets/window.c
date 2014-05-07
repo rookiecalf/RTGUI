@@ -256,6 +256,8 @@ rt_base_t rtgui_win_show(struct rtgui_win *win, rt_bool_t is_modal)
     if (win == RT_NULL)
         return exit_code;
 
+    win->flag &= ~RTGUI_WIN_FLAG_CLOSED;
+
     /* if it does not register into server, create it in server */
     if (!(win->flag & RTGUI_WIN_FLAG_CONNECTED))
     {
