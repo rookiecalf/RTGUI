@@ -121,7 +121,7 @@ rt_inline rt_uint8_t* _dc_get_pixel(struct rtgui_dc* dc, int x, int y)
 	if ((dc->type == RTGUI_DC_HW) || (dc->type == RTGUI_DC_CLIENT))
 	{
 		pixel = (rt_uint8_t*)(hw_driver->framebuffer);
-		RT_ASSERT(pixel != RT_NULL);
+		if (pixel == RT_NULL) return RT_NULL;
 
 		pixel = pixel + y * hw_driver->pitch + x * (_UI_BITBYTES(hw_driver->bits_per_pixel));
 	}
@@ -724,6 +724,15 @@ rtgui_dc_blend_point(struct rtgui_dc * dst, int x, int y, enum RTGUI_BLENDMODE b
 		if (rtgui_region_contains_point(&(owner->clip), x, y, &rect) != RT_EOK)
 			return ;
 	}
+	else if (dst->type == RTGUI_DC_HW)
+	{
+		struct rtgui_dc_hw *dc = (struct rtgui_dc_hw *) dst;
+
+		x = x + dc->owner->extent.x1;
+		y = y + dc->owner->extent.y1;
+		if (x > dc->owner->extent.x2) return;
+		if (y > dc->owner->extent.y2) return;
+	}
 
     if (blendMode == RTGUI_BLENDMODE_BLEND || blendMode == RTGUI_BLENDMODE_ADD) {
         r = DRAW_MUL(r, a);
@@ -750,7 +759,7 @@ rtgui_dc_blend_point(struct rtgui_dc * dst, int x, int y, enum RTGUI_BLENDMODE b
 }
 
 void 
-rtgui_dc_blend_points(struct rtgui_dc * dst, const rtgui_point_t * points, int count,
+rtgui_dc_blend_points(struct rtgui_dc *dst, const rtgui_point_t *points, int count,
                 enum RTGUI_BLENDMODE blendMode, rt_uint8_t r, rt_uint8_t g, rt_uint8_t b, rt_uint8_t a)
 {
     int i;
@@ -804,6 +813,23 @@ rtgui_dc_blend_points(struct rtgui_dc * dst, const rtgui_point_t * points, int c
 
 			if (rtgui_region_contains_point(&(owner->clip), x, y, &rect) != RT_EOK)
 				continue;
+
+			func(dst, x, y, blendMode, r, g, b, a);
+		}
+	}
+	else if (dst->type == RTGUI_DC_HW)
+	{
+		struct rtgui_dc_hw *dc = (struct rtgui_dc_hw *) dst;
+
+		for (i = 0; i < count; ++i)
+		{
+			x = points[i].x;
+			y = points[i].y;
+			
+			x = x + dc->owner->extent.x1;
+			y = y + dc->owner->extent.y1;
+			if (x > dc->owner->extent.x2) return;
+			if (y > dc->owner->extent.y2) return;
 
 			func(dst, x, y, blendMode, r, g, b, a);
 		}
