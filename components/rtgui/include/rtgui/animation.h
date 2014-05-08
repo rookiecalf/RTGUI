@@ -106,6 +106,7 @@ void rtgui_anim_set_duration(struct rtgui_animation *anim,
                              unsigned int tick);
 unsigned int rtgui_anim_get_duration(struct rtgui_animation *anim);
 unsigned int rtgui_anim_get_cur_tick(struct rtgui_animation *anim);
+void rtgui_anim_set_cur_tick(struct rtgui_animation *anim, unsigned int tick);
 
 /** Start an animation.
  *

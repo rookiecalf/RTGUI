@@ -200,6 +200,16 @@ unsigned int rtgui_anim_get_cur_tick(struct rtgui_animation *anim)
     return anim->tick;
 }
 
+void rtgui_anim_set_cur_tick(struct rtgui_animation *anim, unsigned int tick)
+{
+    RT_ASSERT(anim);
+
+    if (tick > RTGUI_ANIM_TICK_RANGE)
+        anim->tick = RTGUI_ANIM_TICK_RANGE;
+    else
+        anim->tick = tick;
+}
+
 void rtgui_anim_set_onfinish(struct rtgui_animation *anim,
                              rtgui_anim_onfinish on_finish)
 {
