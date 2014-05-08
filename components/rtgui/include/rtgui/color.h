@@ -17,16 +17,30 @@
 
 #include <rtgui/rtgui.h>
 
+/*
+ * The color used in the GUI:
+ *
+ *         bit        bit
+ * RGB565  15 R,G,B   0
+ * BGR565  15 B,G,R   0
+ * RGB888  23 R,G,B   0
+ * ARGB888 31 A,R,G,B 0
+ * RGBA888 31 R,G,B,A 0
+ * ABGR888 31 A,B,G,R 0
+ *
+ * The rtgui_color is defined as ARGB888.
+ *        bit31 A,R,G,B bit0
+ */
 #define RTGUI_ARGB(a, r, g, b)  \
-        ((rtgui_color_t)(((rt_uint8_t)(r)|\
+        ((rtgui_color_t)(((rt_uint8_t)(b)|\
         (((unsigned long)(rt_uint8_t)(g))<<8))|\
-        (((unsigned long)(rt_uint8_t)(b))<<16)|\
+        (((unsigned long)(rt_uint8_t)(r))<<16)|\
         (((unsigned long)(rt_uint8_t)(a))<<24)))
 #define RTGUI_RGB(r, g, b)  RTGUI_ARGB(255, (r), (g), (b))
 
-#define RTGUI_RGB_R(c)  ((c) & 0xff)
+#define RTGUI_RGB_B(c)  ((c) & 0xff)
 #define RTGUI_RGB_G(c)  (((c) >> 8)  & 0xff)
-#define RTGUI_RGB_B(c)  (((c) >> 16) & 0xff)
+#define RTGUI_RGB_R(c)  (((c) >> 16) & 0xff)
 #define RTGUI_RGB_A(c)  (((c) >> 24) & 0xff)
 
 extern const rtgui_color_t default_foreground;
@@ -42,8 +56,8 @@ extern const rtgui_color_t dark_grey;
 extern const rtgui_color_t light_grey;
 
 /*
- * RTGUI default color format: ABGR
- * AAAA AAAA BBBB BBBB GGGG GGGG RRRR RRRR
+ * RTGUI default color format: ARGB
+ * AAAA AAAA RRRR RRRR GGGG GGGG BBBB BBBB
  * 31                                    0
  */
 
@@ -90,7 +104,7 @@ rt_inline rtgui_color_t rtgui_color_from_565(rt_uint16_t pixel)
     g = (pixel >> 5)  & 0x3f;
     b = pixel & 0x1f;
 
-    color = r * 255 / 31 + ((g * 255 / 63) << 8) + ((b * 255 / 31) << 16);
+    color = b * 255 / 31 + ((g * 255 / 63) << 8) + ((r * 255 / 31) << 16);
 
     return color;
 }
@@ -113,7 +127,7 @@ rt_inline rtgui_color_t rtgui_color_from_565p(rt_uint16_t pixel)
     g = (pixel >> 5) & 0x3f;
     b = (pixel >> 11) & 0x1f;
 
-    color = r * 255 / 31 + ((g * 255 / 63) << 8) + ((b * 255 / 31) << 16);
+    color = b * 255 / 31 + ((g * 255 / 63) << 8) + ((r * 255 / 31) << 16);
 
     return color;
 }
