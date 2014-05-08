@@ -871,8 +871,6 @@ static void rtgui_image_jpeg_blit(struct rtgui_image *image,
 				struct rtgui_blit_info info;
 				struct rtgui_dc_buffer *buffer;
 
-				struct rtgui_rect r;
-
 				buffer = (struct rtgui_dc_buffer*)dc;
 
 				info.src = jpeg->pixels;

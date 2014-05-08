@@ -39,9 +39,9 @@ struct rtgui_image_engine rtgui_image_xpm_engine =
 struct rgb_item
 {
     char *name;
-    int r;
-    int g;
-    int b;
+    rt_uint8_t r;
+    rt_uint8_t g;
+    rt_uint8_t b;
 };
 
 const struct rgb_item rgbRecord[234] =
