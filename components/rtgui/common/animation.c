@@ -53,7 +53,7 @@ void rtgui_anim_engine_move(struct rtgui_dc *background,
                             int progress,
                             void *param)
 {
-    int cx, cy;
+    int cx, cy, w, h;
     struct rtgui_anim_engine_move_ctx *ctx = param;
     struct rtgui_rect dc_rect;
 
@@ -64,17 +64,27 @@ void rtgui_anim_engine_move(struct rtgui_dc *background,
 
     cx = progress * (ctx->end.x - ctx->start.x) / RTGUI_ANIM_TICK_RANGE;
     cy = progress * (ctx->end.y - ctx->start.y) / RTGUI_ANIM_TICK_RANGE;
+    w = rtgui_rect_width(dc_rect);
+    h = rtgui_rect_height(dc_rect);
 
     dc_rect.x1 = cx + ctx->start.x;
     dc_rect.y1 = cy + ctx->start.y;
+    dc_rect.x2 = dc_rect.x1 + w;
+    dc_rect.y2 = dc_rect.y1 + h;
+    /* DC buffer is buggy on negative rect.{x1,y1}. */
+    if (dc_rect.x1 < 0)
+        dc_rect.x1 = 0;
+    if (dc_rect.y1 < 0)
+        dc_rect.y1 = 0;
+    rtgui_dc_blit((struct rtgui_dc*)background_buffer, NULL, background, NULL);
     /* To prevent overlapping, only one item can be drawn by
      * rtgui_anim_engine_move. */
-    rtgui_dc_blit((struct rtgui_dc*)background_buffer, NULL, background, NULL);
     rtgui_dc_blit((struct rtgui_dc*)(items), NULL, background, &dc_rect);
 }
 
 static void _anim_timeout(struct rtgui_timer *timer, void *parameter)
 {
+    struct rtgui_dc *dc;
     struct rtgui_animation *anim = parameter;
 
     /* There maybe timeout event pending in the queue even if the timer has
