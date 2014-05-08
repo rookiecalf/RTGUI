@@ -18,7 +18,7 @@ struct rtgui_animation
     struct rtgui_dc_buffer *fg_buf;
     int dc_cnt;
 
-    unsigned int tick, max_tick;
+    unsigned int tick, tick_interval, max_tick;
     rtgui_anim_motion motion;
 
     rtgui_anim_engine engine;
@@ -82,25 +82,26 @@ static void _anim_timeout(struct rtgui_timer *timer, void *parameter)
     if (anim->state != _ANIM_RUNNING)
         return;
 
-    anim->tick++;
-    if(anim->tick < anim->max_tick)
+    anim->tick += anim->tick_interval;
+    if(anim->tick > anim->max_tick)
     {
-        struct rtgui_dc *dc;
-
-        RT_ASSERT(anim->parent);
-        dc = rtgui_dc_begin_drawing(anim->parent);
-        if (dc == RT_NULL)
-            return;
-
-        RT_ASSERT(anim->motion);
-        RT_ASSERT(anim->engine);
-        anim->engine(dc, anim->bg_buf, anim->fg_buf, anim->dc_cnt,
-                     anim->motion(anim->tick, anim->max_tick),
-                     anim->eng_ctx);
-
-        rtgui_dc_end_drawing(dc);
+        anim->tick = anim->max_tick;
     }
-    else
+
+    RT_ASSERT(anim->parent);
+    dc = rtgui_dc_begin_drawing(anim->parent);
+    if (dc == RT_NULL)
+        return;
+
+    RT_ASSERT(anim->motion);
+    RT_ASSERT(anim->engine);
+    anim->engine(dc, anim->bg_buf, anim->fg_buf, anim->dc_cnt,
+                 anim->motion(anim->tick, anim->max_tick),
+                 anim->eng_ctx);
+
+    rtgui_dc_end_drawing(dc);
+
+    if (anim->tick == anim->max_tick)
     {
         rtgui_anim_stop(anim);
         anim->tick = 0;
@@ -131,6 +132,7 @@ struct rtgui_animation* rtgui_anim_create(struct rtgui_widget *parent,
     anim->dc_cnt = 0;
 
     anim->tick = 0;
+    anim->tick_interval = interval;
     anim->max_tick = 0;
 
     /* Set default handlers. */
