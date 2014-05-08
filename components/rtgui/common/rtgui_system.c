@@ -22,8 +22,6 @@
 #include <rtgui/widgets/window.h>
 #include <rtgui/rtgui_theme.h>
 
-#define RTGUI_EVENT_DEBUG
-
 #ifdef _WIN32_NATIVE
 #define RTGUI_MEM_TRACE
 #endif
