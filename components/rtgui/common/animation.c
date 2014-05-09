@@ -71,11 +71,7 @@ void rtgui_anim_engine_move(struct rtgui_dc *background,
     dc_rect.y1 = cy + ctx->start.y;
     dc_rect.x2 = dc_rect.x1 + w;
     dc_rect.y2 = dc_rect.y1 + h;
-    /* DC buffer is buggy on negative rect.{x1,y1}. */
-    if (dc_rect.x1 < 0)
-        dc_rect.x1 = 0;
-    if (dc_rect.y1 < 0)
-        dc_rect.y1 = 0;
+
     rtgui_dc_blit((struct rtgui_dc*)background_buffer, NULL, background, NULL);
     /* To prevent overlapping, only one item can be drawn by
      * rtgui_anim_engine_move. */
