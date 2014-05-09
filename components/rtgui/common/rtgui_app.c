@@ -216,7 +216,7 @@ rt_bool_t rtgui_app_event_handler(struct rtgui_object *object, rtgui_event_t *ev
     switch (event->type)
     {
     case RTGUI_EVENT_PAINT:
-	case RTGUI_EVENT_VPAINT_REQ:
+    case RTGUI_EVENT_VPAINT_REQ:
     case RTGUI_EVENT_MOUSE_BUTTON:
     case RTGUI_EVENT_MOUSE_MOTION:
     case RTGUI_EVENT_CLIP_INFO:
@@ -225,6 +225,7 @@ rt_bool_t rtgui_app_event_handler(struct rtgui_object *object, rtgui_event_t *ev
     case RTGUI_EVENT_WIN_CLOSE:
     case RTGUI_EVENT_WIN_MOVE:
     case RTGUI_EVENT_KBD:
+    case RTGUI_EVENT_GESTURE:
         _rtgui_application_dest_handle(app, event);
         break;
 
@@ -395,7 +396,7 @@ void rtgui_app_set_main_win(struct rtgui_app *app, struct rtgui_win *win)
 }
 RTM_EXPORT(rtgui_app_set_main_win);
 
-struct rtgui_win* rtgui_app_get_main_win(struct rtgui_app *app)
+struct rtgui_win *rtgui_app_get_main_win(struct rtgui_app *app)
 {
     return RTGUI_WIN(app->main_object);
 }
