@@ -389,7 +389,9 @@ static void _rtgui_topwin_deactivate(struct rtgui_topwin *topwin)
     }
 }
 
-static void _rtgui_topwin_move_whole_tree2top(struct rtgui_topwin *topwin)
+/* Return 1 on the tree is truely moved. If the tree is already in position,
+ * return 0. */
+static int _rtgui_topwin_move_whole_tree2top(struct rtgui_topwin *topwin)
 {
     struct rtgui_topwin *topparent;
 
@@ -399,11 +401,12 @@ static void _rtgui_topwin_move_whole_tree2top(struct rtgui_topwin *topwin)
     topparent = _rtgui_topwin_get_root_win(topwin);
     RT_ASSERT(topparent != RT_NULL);
 
-    /* remove node from hidden list */
-    rt_list_remove(&topparent->list);
     /* add node to show list */
     if (topwin->flag & WINTITLE_ONTOP)
     {
+        if (get_topwin_from_list(_rtgui_topwin_list.next) == topwin)
+            return 0;
+        rt_list_remove(&topparent->list);
         rt_list_insert_after(&_rtgui_topwin_list, &(topparent->list));
     }
     else if (topwin->flag & WINTITLE_ONBTM)
@@ -419,6 +422,9 @@ static void _rtgui_topwin_move_whole_tree2top(struct rtgui_topwin *topwin)
                     || !(ntopwin->flag & WINTITLE_SHOWN))
                 break;
         }
+        if (get_topwin_from_list(node) == topparent)
+            return 0;
+        rt_list_remove(&topparent->list);
         rt_list_insert_before(node, &(topparent->list));
     }
     else
@@ -434,8 +440,12 @@ static void _rtgui_topwin_move_whole_tree2top(struct rtgui_topwin *topwin)
                     && (ntopwin->flag & WINTITLE_SHOWN)))
                 break;
         }
+        if (get_topwin_from_list(node) == topparent)
+            return 0;
+        rt_list_remove(&topparent->list);
         rt_list_insert_before(node, &(topparent->list));
     }
+    return 1;
 }
 
 static void _rtgui_topwin_raise_in_sibling(struct rtgui_topwin *topwin)
@@ -454,14 +464,18 @@ static void _rtgui_topwin_raise_in_sibling(struct rtgui_topwin *topwin)
 
 /* it will do 2 things. One is moving the whole tree(the root of the tree) to
  * the front and the other is moving topwin to the front of it's siblings. */
-static void _rtgui_topwin_raise_tree_from_root(struct rtgui_topwin *topwin)
+static int _rtgui_topwin_raise_tree_from_root(struct rtgui_topwin *topwin)
 {
+    int moved;
+
     RT_ASSERT(topwin != RT_NULL);
 
-    _rtgui_topwin_move_whole_tree2top(topwin);
+    moved = _rtgui_topwin_move_whole_tree2top(topwin);
     /* root win is aleady moved by _rtgui_topwin_move_whole_tree2top */
     if (!IS_ROOT_WIN(topwin))
         _rtgui_topwin_raise_in_sibling(topwin);
+
+    return moved;
 }
 
 /* activate a win means:
@@ -504,6 +518,7 @@ static void _rtgui_topwin_draw_tree(struct rtgui_topwin *topwin, struct rtgui_ev
 
 rt_err_t rtgui_topwin_activate_topwin(struct rtgui_topwin *topwin)
 {
+    int tpmoved;
     struct rtgui_topwin *old_focus_topwin;
     struct rtgui_event_paint epaint;
 
@@ -520,15 +535,14 @@ rt_err_t rtgui_topwin_activate_topwin(struct rtgui_topwin *topwin)
          * which will receive kbd events. So a no-focus window can only be
          * "raised" but not "activated".
          */
-        _rtgui_topwin_raise_tree_from_root(topwin);
+        tpmoved = _rtgui_topwin_raise_tree_from_root(topwin);
         rtgui_topwin_update_clip();
-        _rtgui_topwin_draw_tree(
-#ifdef RTGUI_ONLY_ONE_WINDOW_TREE
-                topwin,
-#else
-                _rtgui_topwin_get_root_win(topwin),
-#endif
-                &epaint);
+        if (tpmoved)
+            _rtgui_topwin_draw_tree(_rtgui_topwin_get_root_win(topwin),
+                                    &epaint);
+        else
+            _rtgui_topwin_draw_tree(topwin, &epaint);
+
         return RT_EOK;
     }
 
@@ -540,7 +554,7 @@ rt_err_t rtgui_topwin_activate_topwin(struct rtgui_topwin *topwin)
      * returned above. */
     RT_ASSERT(old_focus_topwin != topwin);
 
-    _rtgui_topwin_raise_tree_from_root(topwin);
+    tpmoved = _rtgui_topwin_raise_tree_from_root(topwin);
     /* clip before active the window, so we could get right boarder region. */
     rtgui_topwin_update_clip();
 
@@ -553,13 +567,11 @@ rt_err_t rtgui_topwin_activate_topwin(struct rtgui_topwin *topwin)
 
     _rtgui_topwin_only_activate(topwin);
 
-    _rtgui_topwin_draw_tree(
-#ifdef RTGUI_ONLY_ONE_WINDOW_TREE
-                topwin,
-#else
-                _rtgui_topwin_get_root_win(topwin),
-#endif
-                &epaint);
+    if (tpmoved)
+        _rtgui_topwin_draw_tree(_rtgui_topwin_get_root_win(topwin),
+                                &epaint);
+    else
+        _rtgui_topwin_draw_tree(topwin, &epaint);
 
     return RT_EOK;
 }
