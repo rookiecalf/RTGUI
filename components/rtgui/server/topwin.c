@@ -419,12 +419,7 @@ static void _rtgui_topwin_move_whole_tree2top(struct rtgui_topwin *topwin)
                     || !(ntopwin->flag & WINTITLE_SHOWN))
                 break;
         }
-        /* all other windows are shown top/normal layer windows. Insert it as
-         * the last window. */
-        if (node == &_rtgui_topwin_list)
-            rt_list_insert_before(&_rtgui_topwin_list, &(topparent->list));
-        else
-            rt_list_insert_before(&ntopwin->list, &(topparent->list));
+        rt_list_insert_before(node, &(topparent->list));
     }
     else
     {
@@ -439,12 +434,7 @@ static void _rtgui_topwin_move_whole_tree2top(struct rtgui_topwin *topwin)
                     && (ntopwin->flag & WINTITLE_SHOWN)))
                 break;
         }
-        /* all other windows are shown top layer windows. Insert it as
-         * the last window. */
-        if (node == &_rtgui_topwin_list)
-            rt_list_insert_before(&_rtgui_topwin_list, &(topparent->list));
-        else
-            rt_list_insert_before(&ntopwin->list, &(topparent->list));
+        rt_list_insert_before(node, &(topparent->list));
     }
 }
 
