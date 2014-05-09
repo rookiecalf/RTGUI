@@ -305,18 +305,34 @@ static void rtgui_dc_buffer_blit(struct rtgui_dc *self, struct rtgui_point *dc_p
 	struct rtgui_rect _rect, *dest_rect;
     struct rtgui_dc_buffer *dc = (struct rtgui_dc_buffer *)self;
 
-    if (rtgui_dc_get_visible(dest) == RT_FALSE) return;
+    if (rtgui_dc_get_visible(dest) == RT_FALSE)
+        return;
 
 	/* use the (0,0) origin point */
-    if (dc_point == RT_NULL) dc_point = &rtgui_empty_point; 
+    if (dc_point == RT_NULL)
+        dc_point = &rtgui_empty_point;
+
+    rtgui_dc_get_rect(dest, &_rect);
 	/* use the rect of dest dc */
-	if (rect == RT_NULL) 
+	if (rect == RT_NULL)
 	{
-		rtgui_dc_get_rect(dest, &_rect);
 		dest_rect = &_rect;
 	}
-	else dest_rect = rect;
-	
+	else
+    {
+        dest_rect = rect;
+        if (dest_rect->x1 > _rect.x2 || dest_rect->y1 > _rect.y2)
+            return;
+        if (dest_rect->x1 < 0)
+            dest_rect->x1 = 0;
+        if (dest_rect->y1 < 0)
+            dest_rect->y1 = 0;
+        if (dest_rect->x2 > _rect.x2)
+            dest_rect->x2 = _rect.x2;
+        if (dest_rect->y2 > _rect.y2)
+            dest_rect->y2 = _rect.y2;
+    }
+
 	/* get the minimal width and height */
 	rect_width  = _UI_MIN(rtgui_rect_width(*dest_rect), dc->width - dc_point->x);
 	rect_height = _UI_MIN(rtgui_rect_height(*dest_rect), dc->height - dc_point->y);
@@ -340,7 +356,7 @@ static void rtgui_dc_buffer_blit(struct rtgui_dc *self, struct rtgui_point *dc_p
 				struct rtgui_dc_hw *hw;
 
 				hw = (struct rtgui_dc_hw*)dest;
-				
+
 				/* NOTES: the rect of DC is the logic coordination. 
 				 * It should be converted to client 
 				 */
@@ -353,7 +369,7 @@ static void rtgui_dc_buffer_blit(struct rtgui_dc *self, struct rtgui_point *dc_p
 				rtgui_rect_moveto(dest_rect, hw->owner->extent.x1, hw->owner->extent.y1);
 
 				pitch = rtgui_color_get_bpp(hw_driver->pixel_format) * rect_width;
-				hw_pixels = (rt_uint8_t*)(hw_driver->framebuffer + dest_rect->y1 * hw_driver->pitch + 
+				hw_pixels = (rt_uint8_t*)(hw_driver->framebuffer + dest_rect->y1 * hw_driver->pitch +
 					dest_rect->x1 * rtgui_color_get_bpp(hw_driver->pixel_format));
 
 				/* do the blit with memory copy */
