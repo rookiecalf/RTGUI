@@ -2325,7 +2325,7 @@ void _murphyWideline(_MurphyIterator *m, rt_int16_t x1, rt_int16_t y1, rt_int16_
 	float offset = (float)width / 2.f;
 
 	rt_int16_t temp;
-	rt_int16_t ptx, pty, ptxx, ptxy, ml1x, ml1y, ml2x, ml2y, ml1bx, ml1by, ml2bx, ml2by;
+	rt_int16_t ptx, pty, ml1x, ml1y, ml2x, ml2y, ml1bx, ml1by, ml2bx, ml2by;
 
 	int d0, d1;		/* difference terms d0=perpendicular to line, d1=along line */
 
@@ -2410,8 +2410,6 @@ void _murphyWideline(_MurphyIterator *m, rt_int16_t x1, rt_int16_t y1, rt_int16_
 		m->last2x = -32768;
 		m->last2y = -32768;
 	}
-	ptxx = ptx;
-	ptxy = pty;
 
 	for (q = 0; dd <= tk; q++) {	/* outer loop, stepping perpendicular to line */
 
