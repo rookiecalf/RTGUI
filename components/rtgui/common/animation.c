@@ -246,7 +246,7 @@ void rtgui_anim_start(struct rtgui_animation *anim)
 {
     RT_ASSERT(anim);
 
-    if (anim->fg_buf && anim->max_tick && anim->state == _ANIM_STOPPED)
+    if (anim->state == _ANIM_STOPPED)
     {
         anim->state = _ANIM_RUNNING;
         rtgui_timer_start(anim->timer);
@@ -260,4 +260,3 @@ void rtgui_anim_stop(struct rtgui_animation *anim)
     anim->state = _ANIM_STOPPED;
     rtgui_timer_stop(anim->timer);
 }
-
