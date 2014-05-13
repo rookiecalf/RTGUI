@@ -57,8 +57,11 @@ void rtgui_anim_engine_move(struct rtgui_dc *background,
     struct rtgui_anim_engine_move_ctx *ctx = param;
     struct rtgui_rect dc_rect;
 
-    if (!(background && background_buffer && items))
+    if (!background)
         return;
+
+    if (background_buffer)
+        rtgui_dc_blit((struct rtgui_dc*)background_buffer, NULL, background, NULL);
 
     rtgui_dc_get_rect(background, &dc_rect);
 
@@ -72,10 +75,10 @@ void rtgui_anim_engine_move(struct rtgui_dc *background,
     dc_rect.x2 = dc_rect.x1 + w;
     dc_rect.y2 = dc_rect.y1 + h;
 
-    rtgui_dc_blit((struct rtgui_dc*)background_buffer, NULL, background, NULL);
     /* To prevent overlapping, only one item can be drawn by
      * rtgui_anim_engine_move. */
-    rtgui_dc_blit((struct rtgui_dc*)(items), NULL, background, &dc_rect);
+    if (items)
+        rtgui_dc_blit((struct rtgui_dc*)(items), NULL, background, &dc_rect);
 }
 
 static void _anim_timeout(struct rtgui_timer *timer, void *parameter)
