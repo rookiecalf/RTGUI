@@ -733,7 +733,15 @@ Blit565to565PixelAlpha(struct rtgui_blit_info * info)
         int srcskip = info->src_skip >> 1;
         rt_uint16_t *dstp = (rt_uint16_t *) info->dst;
         int dstskip = info->dst_skip >> 1;
-        alpha >>= 3;            /* downscale alpha to 5 bits */
+
+        /* R and B only have 5 bits. So 5 bits of alpha is enough.
+         * But if the alpha is 255, it should be populated to 32. Otherwise, it
+         * will leave ghost shadow on the screen. TODO: deal with 255 and 0
+         * specially. */
+        if (alpha == 255)
+            alpha = 32;
+        else
+            alpha >>= 3;
 
         while (height--) {
 			/* *INDENT-OFF* */
@@ -747,7 +755,7 @@ Blit565to565PixelAlpha(struct rtgui_blit_info * info)
 				 */
 				s = (s | s << 16) & 0x07e0f81f;
 				d = (d | d << 16) & 0x07e0f81f;
-				d += (s - d) * alpha >> 5;
+				d += (s - d) * alpha / 32;
 				d &= 0x07e0f81f;
 				*dstp++ = (rt_uint16_t)(d | d >> 16);
 			}, width);
