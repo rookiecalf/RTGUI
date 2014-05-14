@@ -64,7 +64,7 @@ struct rtgui_dc *rtgui_dc_buffer_create(int w, int h)
 struct rtgui_dc *rtgui_dc_buffer_create_pixformat(rt_uint8_t pixel_format, int w, int h)
 {
 	struct rtgui_dc_buffer *dc;
-	
+
     dc = (struct rtgui_dc_buffer *)rtgui_malloc(sizeof(struct rtgui_dc_buffer));
     dc->parent.type   = RTGUI_DC_BUFFER;
     dc->parent.engine = &dc_buffer_engine;
@@ -79,6 +79,11 @@ struct rtgui_dc *rtgui_dc_buffer_create_pixformat(rt_uint8_t pixel_format, int w
     dc->pitch   = w * rtgui_color_get_bpp(pixel_format);
 
     dc->pixel = rtgui_malloc(h * dc->pitch);
+    if (!dc->pixel)
+    {
+        rtgui_free(dc);
+        return RT_NULL;
+    }
     rt_memset(dc->pixel, 0, h * dc->pitch);
 
     return &(dc->parent);
@@ -89,13 +94,13 @@ struct rtgui_dc *rtgui_dc_buffer_create_from_dc(struct rtgui_dc* dc)
 	struct rtgui_dc_buffer *buffer;
 
 	if (dc == RT_NULL) return RT_NULL;
-	
+
 	if (dc->type == RTGUI_DC_BUFFER)
 	{
  		struct rtgui_dc_buffer *d = (struct rtgui_dc_buffer*) dc;
 
 		/* buffer clone */
-		buffer = (struct rtgui_dc_buffer*) rtgui_dc_buffer_create_pixformat(d->pixel_format, 
+		buffer = (struct rtgui_dc_buffer*) rtgui_dc_buffer_create_pixformat(d->pixel_format,
             d->width, d->height);
 		if (buffer != RT_NULL)
 		{
@@ -264,7 +269,7 @@ static void rtgui_dc_buffer_fill_rect(struct rtgui_dc *self, struct rtgui_rect *
     struct rtgui_dc_buffer *dst;
 	unsigned r, g, b, a;
 	rtgui_rect_t _r, *rect;
-	
+
     dst = (struct rtgui_dc_buffer *)self;
 
 	_r = *dst_rect;
@@ -375,8 +380,8 @@ static void rtgui_dc_buffer_blit(struct rtgui_dc *self, struct rtgui_point *dc_p
 
 				hw = (struct rtgui_dc_hw*)dest;
 
-				/* NOTES: the rect of DC is the logic coordination. 
-				 * It should be converted to client 
+				/* NOTES: the rect of DC is the logic coordination.
+				 * It should be converted to client
 				 */
 				if (dest_rect != &_rect)
 				{
