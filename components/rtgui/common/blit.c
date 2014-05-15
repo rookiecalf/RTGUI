@@ -724,44 +724,74 @@ static void
 Blit565to565PixelAlpha(struct rtgui_blit_info * info)
 {
     unsigned alpha = info->a;
-    if (alpha == 128) {
+    if (alpha == 128)
+    {
         Blit16to16SurfaceAlpha128(info, 0xf7de);
-    } else {
-        int width = info->dst_w;
+        return;
+    }
+    else if (alpha == 255)
+    {
+        int len = info->dst_w * 2;
         int height = info->dst_h;
-        rt_uint16_t *srcp = (rt_uint16_t *) info->src;
-        int srcskip = info->src_skip >> 1;
-        rt_uint16_t *dstp = (rt_uint16_t *) info->dst;
-        int dstskip = info->dst_skip >> 1;
+        rt_uint8_t *srcp = info->src;
+        rt_uint8_t *dstp = info->dst;
 
-        /* R and B only have 5 bits. So 5 bits of alpha is enough.
-         * But if the alpha is 255, it should be populated to 32. Otherwise, it
-         * will leave ghost shadow on the screen. TODO: deal with 255 and 0
-         * specially. */
-        if (alpha == 255)
-            alpha = 32;
-        else
-            alpha >>= 3;
+        while (height--)
+        {
+            rt_memcpy(dstp, srcp, len);
+            dstp += info->dst_skip + len;
+            srcp += info->src_skip + len;
+        }
+        return;
+    }
+    else
+    {
+        /* R and B only have 5 bits. So 5 bits of alpha is enough. */
+        alpha >>= 3;
+    }
+
+    if (alpha == 0)
+        return;
+
+    {
+        int width = info->dst_w / 2;
+        int height = info->dst_h;
+        rt_uint32_t *srcp = (rt_uint32_t *) info->src;
+        rt_uint32_t *dstp = (rt_uint32_t *) info->dst;
 
         while (height--) {
-			/* *INDENT-OFF* */
-			DUFFS_LOOP4({
-				rt_uint32_t s = *srcp++;
-				rt_uint32_t d = *dstp;
-				/*
-				 * shift out the middle component (green) to
-				 * the high 16 bits, and process all three RGB
-				 * components at the same time.
-				 */
-				s = (s | s << 16) & 0x07e0f81f;
-				d = (d | d << 16) & 0x07e0f81f;
-				d += (s - d) * alpha / 32;
-				d &= 0x07e0f81f;
-				*dstp++ = (rt_uint16_t)(d | d >> 16);
-			}, width);
-			/* *INDENT-ON* */
-            srcp += srcskip;
-            dstp += dstskip;
+            DUFFS_LOOP4(
+            {
+                rt_uint32_t s = *srcp++;
+                rt_uint32_t d = *dstp;
+                rt_uint32_t su = (s << 16) | (s >> 16);
+                rt_uint32_t du = (d << 16) | (d >> 16);
+
+                s &= 0x07e0f81f;
+                d &= 0x07e0f81f;
+                su &= 0x07e0f81f;
+                du &= 0x07e0f81f;
+
+                du = ((su - du) * alpha / 32 + du) & 0x07e0f81f;
+                d = ((s - d) * alpha / 32 + d) & 0x07e0f81f;
+                *dstp++ = (du << 16) | (du >> 16) | d;
+            }, width);
+            /* Deal with the last pixel. */
+            if (info->dst_w % 2)
+            {
+                rt_uint32_t s = *(rt_uint16_t*)srcp;
+                rt_uint32_t d = *(rt_uint16_t*)dstp;
+
+                s = (s | s << 16) & 0x07e0f81f;
+                d = (d | d << 16) & 0x07e0f81f;
+                d += (s - d) * alpha / 32;
+                d &= 0x07e0f81f;
+                *(rt_uint16_t*)dstp = (rt_uint16_t)(d | d >> 16);
+                srcp = (rt_uint32_t*)((unsigned int)srcp + 2);
+                dstp = (rt_uint32_t*)((unsigned int)dstp + 2);
+            }
+            srcp = (rt_uint32_t*)((unsigned int)srcp + info->src_skip);
+            dstp = (rt_uint32_t*)((unsigned int)dstp + info->dst_skip);
         }
     }
 }
