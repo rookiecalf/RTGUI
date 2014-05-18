@@ -189,6 +189,16 @@ rt_inline rt_bool_t _rtgui_application_dest_handle(
     if (wevent->wid != RT_NULL && wevent->wid->flag & RTGUI_WIN_FLAG_CLOSED)
         return RT_TRUE;
 
+    /* The dest window may have been destroyed when this event arrived. Check
+     * against this condition. NOTE: we cannot use the RTGUI_OBJECT because it
+     * may be invalid already. */
+    dest_object = (struct rtgui_object*)wevent->wid;
+    if ((dest_object->flag & RTGUI_OBJECT_FLAG_VALID) !=
+            RTGUI_OBJECT_FLAG_VALID || dest_object->type != RTGUI_WIN_TYPE)
+    {
+        return RT_TRUE;
+    }
+
     dest_object = RTGUI_OBJECT(wevent->wid);
     if (dest_object != RT_NULL)
     {
