@@ -32,7 +32,7 @@ struct rtgui_container* demo_plot(void)
     struct rtgui_plot *plot;
     struct rtgui_rect rect;
 
-    cnt = demo_view("ÇúÏß»æÍ¼");
+    cnt = demo_view("ï¿½ï¿½ï¿½ß»ï¿½Í¼");
 
     plot = rtgui_plot_create();
 
@@ -69,7 +69,7 @@ struct rtgui_container* demo_plot(void)
 
     rtgui_widget_get_rect(RTGUI_WIDGET(cnt), &rect);
     rtgui_widget_set_rect(RTGUI_WIDGET(plot), &rect);
-    rtgui_plot_set_base(plot, -100, -300);
+    rtgui_plot_set_base(plot, -100, (0-rect.y2/2));
 
     rtgui_container_add_child(cnt, RTGUI_WIDGET(plot));
 
