@@ -30,9 +30,20 @@
 
 struct rtgui_matrix
 {
-    /* | m[0] m[2] m[4] |
-     * | m[1] m[3] m[5] |
-     * |  0    0    1   |
+    /* The matrix format is :
+     *
+     * | m[0] m[1] 0 |
+     * | m[2] m[3] 0 |
+     * | m[4] m[5] 1 |
+     *
+     * The format of the coordinate of a point is:
+     *
+     * | x y 1 |
+     *
+     * So, if you want to transform a point p with a matrix m, do:
+     *
+     * p * m
+     *
      */
 	int m[6];
 };
@@ -46,34 +57,34 @@ rt_inline void rtgui_matrix_mul(struct rtgui_matrix *mm,
 	const int *m1 = mm1->m;
 	const int *m2 = mm2->m;
 
-	m[0] = (m1[0] * m2[0] + m1[2] * m2[1]) /1024;
-	m[1] = (m1[1] * m2[0] + m1[3] * m2[1]) /1024;
-	m[2] = (m1[0] * m2[2] + m1[2] * m2[3]) /1024;
-	m[3] = (m1[1] * m2[2] + m1[3] * m2[3]) /1024;
-	m[4] = (m1[0] * m2[4] + m1[2] * m2[5]) /1024 + m1[4];
-	m[5] = (m1[1] * m2[4] + m1[3] * m2[5]) /1024 + m1[5];
+	m[0] = (m1[0] * m2[0] + m1[1] * m2[2]) /1024;
+	m[1] = (m1[0] * m2[1] + m1[1] * m2[3]) /1024;
+	m[2] = (m1[2] * m2[0] + m1[3] * m2[2]) /1024;
+	m[3] = (m1[2] * m2[1] + m1[3] * m2[3]) /1024;
+	m[4] = (m1[4] * m2[0] + m1[5] * m2[2]) /1024 + m2[4];
+	m[5] = (m1[4] * m2[1] + m1[5] * m2[3]) /1024 + m2[5];
 }
 
-/* Matrix multiply point[(p) = m * (x, y)], ignore the movement components. */
-rt_inline void rtgui_matrix_mul_point_nomove(struct rtgui_matrix *m,
-                                             struct rtgui_point *p,
-                                             int x, int y)
+/* Matrix multiply point[(p) = (x, y) * m], ignore the movement components. */
+rt_inline void rtgui_matrix_mul_point_nomove(struct rtgui_point *p,
+                                             int x, int y,
+                                             struct rtgui_matrix *m)
 {
     int *mm = m->m;
 
-    p->x = x * mm[0] / 1024 + y * mm[2] / 1024 ;
-    p->y = x * mm[1] / 1024 + y * mm[3] / 1024;
+    p->x = (x * mm[0] + y * mm[2]) / 1024;
+    p->y = (x * mm[1] + y * mm[3]) / 1024;
 }
 
-/* Matrix multiply point[(p) = m * (x, y)]. */
-rt_inline void rtgui_matrix_mul_point(struct rtgui_matrix *m,
-                                      struct rtgui_point *p,
-                                      int x, int y)
+/* Matrix multiply point[(p) = (x, y) * m]. */
+rt_inline void rtgui_matrix_mul_point(struct rtgui_point *p,
+                                      int x, int y,
+                                      struct rtgui_matrix *m)
 {
     int *mm = m->m;
 
-    p->x = x * mm[0] / 1024 + y * mm[2] / 1024 + mm[4];
-    p->y = x * mm[1] / 1024 + y * mm[3] / 1024 + mm[5];
+    p->x = (x * mm[0] + y * mm[2]) / 1024 + mm[4];
+    p->y = (x * mm[1] + y * mm[3]) / 1024 + mm[5];
 }
 
 /** Set @mm to an identity matrix. */

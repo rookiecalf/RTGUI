@@ -63,14 +63,14 @@ void rtgui_dc_trans_get_new_wh(struct rtgui_dc_trans *dct,
 
     /* We ignore the movement components in the matrix. */
     /* Transform result of (0, h). */
-    rtgui_matrix_mul_point_nomove(&dct->m,
-                                  &topleft, 0, rect.y2);
+    rtgui_matrix_mul_point_nomove(&topleft, 0, rect.y2,
+                                  &dct->m);
     /* Transform result of (w, h). */
-    rtgui_matrix_mul_point_nomove(&dct->m,
-                                  &topright, rect.x2, rect.y2);
+    rtgui_matrix_mul_point_nomove(&topright, rect.x2, rect.y2,
+                                  &dct->m);
     /* Transform result of (w, 0). */
-    rtgui_matrix_mul_point_nomove(&dct->m,
-                                  &bottomright, rect.x2, 0);
+    rtgui_matrix_mul_point_nomove(&bottomright,
+                                   rect.x2, 0, &dct->m);
     /* Transform result of (0, 0) is always (0, 0). */
 
     if (new_wp)
@@ -103,7 +103,7 @@ void rtgui_dc_trans_blit(struct rtgui_dc_trans *dct,
         return;
 
     rtgui_dc_trans_get_new_wh(dct, &neww, &newh);
-    rtgui_matrix_mul_point_nomove(&invm, &pscale, 1, 1);
+    rtgui_matrix_mul_point_nomove(&pscale, 1, 1, &invm);
 
     rtgui_dc_get_rect(dct->owner, &orirect);
     oriw = orirect.x2;
@@ -115,7 +115,7 @@ void rtgui_dc_trans_blit(struct rtgui_dc_trans *dct,
         {
             struct rtgui_point orip;
 
-            rtgui_matrix_mul_point(&invm, &orip, nx, ny);
+            rtgui_matrix_mul_point(&orip, nx, ny, &invm);
             if (oriw < orip.x || orip.x < 0 || orih < orip.y || orip.y < 0)
                 continue;
         }
