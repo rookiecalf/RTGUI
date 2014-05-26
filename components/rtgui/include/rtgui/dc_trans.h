@@ -6,21 +6,29 @@
 
 struct rtgui_dc_trans;
 
-struct rtgui_dc_trans* rtgui_trans_create(struct rtgui_dc *owner);
+/** Create a dc translator on the dc @owner
+ *
+ * @return RT_NULL is there is no memory.
+ */
+struct rtgui_dc_trans* rtgui_dc_trans_create(struct rtgui_dc *owner);
 
-void rtgui_dc_trans_rotate(struct rtgui_dc_trans *dct, int degree);
+/** Rotate the dc clockwise.
+ *
+ * @param degree the degree to rotate.
+ */
+void rtgui_dc_trans_rotate(struct rtgui_dc_trans *dct, double degree);
 
-void rtgui_dc_trans_scale(struct rtgui_dc_trans *dct,
-                          int sx,
-                          int xy);
+void rtgui_dc_trans_set_aa(struct rtgui_dc_trans *dct, int use_aa);
 
-void rtgui_dc_trans_move(struct rtgui_dc_trans *dct,
-                         int dx,
-                         int dy);
+void rtgui_dc_trans_scale(struct rtgui_dc_trans *dct, double sx, double sy);
 
-void rtgui_dc_trans_get_new_wh(struct rtgui_dc_trans *dct,
-                               int *new_w,
-                               int *new_h);
+/** Move the dc
+ *
+ * The unit of @dx and @dy is pixel.
+ */
+void rtgui_dc_trans_move(struct rtgui_dc_trans *dct, int dx, int dy);
+
+void rtgui_dc_trans_get_new_wh(struct rtgui_dc_trans *dct, int *new_w, int *new_h);
 
 void rtgui_dc_trans_blit(struct rtgui_dc_trans *dct,
                          struct rtgui_point *dc_point,

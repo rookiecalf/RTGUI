@@ -7,6 +7,7 @@ struct rtgui_dc_trans
 {
     struct rtgui_matrix m;
     struct rtgui_dc *owner;
+    int use_aa;
 };
 
 struct rtgui_dc_trans* rtgui_dc_trans_create(struct rtgui_dc *owner)
@@ -17,8 +18,9 @@ struct rtgui_dc_trans* rtgui_dc_trans_create(struct rtgui_dc *owner)
     if (!dct)
         return RT_NULL;
 
-    dct->owner = owner;
     rtgu_matrix_identity(&dct->m);
+    dct->owner  = owner;
+    dct->use_aa = 0;
 
     return dct;
 }
@@ -28,22 +30,35 @@ void rtgui_dc_trans_destroy(struct rtgui_dc_trans *dct)
     rtgui_free(dct);
 }
 
-void rtgui_dc_trans_rotate(struct rtgui_dc_trans *dct, int degree)
+void rtgui_dc_trans_set_aa(struct rtgui_dc_trans *dct, int use_aa)
 {
-    rtgui_matrix_rotate(&dct->m, degree);
+    RT_ASSERT(dct);
+
+    dct->use_aa = use_aa;
+}
+
+void rtgui_dc_trans_rotate(struct rtgui_dc_trans *dct, double degree)
+{
+    RT_ASSERT(dct);
+
+    rtgui_matrix_rotate(&dct->m, degree * (1024 / 360.0));
 }
 
 void rtgui_dc_trans_scale(struct rtgui_dc_trans *dct,
-                          int sx,
-                          int sy)
+                          double sx,
+                          double sy)
 {
-    rtgui_matrix_scale(&dct->m, sx, sy);
+    RT_ASSERT(dct);
+
+    rtgui_matrix_scale(&dct->m, sx * 1024, sy * 1024);
 }
 
 void rtgui_dc_trans_move(struct rtgui_dc_trans *dct,
                          int dx,
                          int dy)
 {
+    RT_ASSERT(dct);
+
     rtgui_matrix_move(&dct->m, dx, dy);
 }
 
@@ -73,15 +88,613 @@ void rtgui_dc_trans_get_new_wh(struct rtgui_dc_trans *dct,
                                    rect.x2, 0, &dct->m);
     /* Transform result of (0, 0) is always (0, 0). */
 
+#define NORMALIZE(x) do { if (x < 0) x = 0; } while (0)
     if (new_wp)
     {
-        *new_wp = _UI_MAX(_UI_ABS(topright.x),
-                          _UI_ABS(topleft.x - bottomright.x));
+        int neww;
+
+        /* Ignore the nagtive parts. */
+        NORMALIZE(topright.x);
+        NORMALIZE(topleft.x);
+        NORMALIZE(bottomright.x);
+
+        neww = _UI_MAX(topright.x, _UI_ABS(topleft.x - bottomright.x))
+            + dct->m.m[4] + 1;
+        NORMALIZE(neww);
+
+        *new_wp = neww;
     }
     if (new_hp)
     {
-        *new_hp = _UI_MAX(_UI_ABS(topright.y),
-                          _UI_ABS(topleft.y - bottomright.y));
+        int newh;
+
+        NORMALIZE(topright.y);
+        NORMALIZE(topleft.y);
+        NORMALIZE(bottomright.y);
+
+        newh = _UI_MAX(topright.y, _UI_ABS(topleft.y - bottomright.y))
+            + dct->m.m[5] + 1;
+        NORMALIZE(newh);
+
+        *new_hp = newh;
+    }
+#undef NORMALIZE
+}
+
+struct _fb_rect
+{
+    void *fb;
+    /* unit: pixel */
+    rt_uint16_t width, height;
+    /* unit: pixel */
+    rt_uint16_t skip;
+};
+
+/* FrameRect to FrameRect, same format, 2 Bytes/pixel. */
+static void _blit_rotate_FR2FR_SF2B(struct _fb_rect* RTGUI_RESTRICT src,
+                                    struct rtgui_point *dc_point,
+                                    struct _fb_rect* RTGUI_RESTRICT dst,
+                                    struct rtgui_matrix *invm)
+{
+    int nx, ny;
+    rt_uint16_t* RTGUI_RESTRICT srcp = (rt_uint16_t*)src->fb;
+    rt_uint16_t* RTGUI_RESTRICT dstp = (rt_uint16_t*)dst->fb;
+    int neww = dst->width;
+    int newh = dst->height;
+    int oriw = src->width;
+    int orih = src->height;
+
+    for (ny = dc_point->y; ny < newh; ny++)
+    {
+        /* Base x, y. */
+        int bx, by;
+
+        bx = dc_point->x * invm->m[0] + ny * invm->m[2] + 1024 * invm->m[4];
+        by = dc_point->x * invm->m[1] + ny * invm->m[3] + 1024 * invm->m[5];
+
+        for (nx = dc_point->x; nx < neww; nx++)
+        {
+            int rx, ry;
+
+            bx += invm->m[0];
+            by += invm->m[1];
+
+            rx = bx / 1024;
+            ry = by / 1024;
+
+            if (oriw <= rx || rx < 0 || orih <= ry || ry < 0)
+                continue;
+
+            /* We take the source as a whole and ignore the src->skip. */
+            dstp[ny * dst->skip + nx] = srcp[ry * oriw + rx];
+        }
+    }
+}
+
+/* FrameRect to FrameRect, same format, 2 Bytes/pixel, with AA. */
+static void _blit_rotate_FR2FR_SF2B_AA(struct _fb_rect* RTGUI_RESTRICT src,
+                                       struct rtgui_point *dc_point,
+                                       struct _fb_rect* RTGUI_RESTRICT dst,
+                                       struct rtgui_matrix *invm)
+{
+    int nx, ny;
+    rt_uint16_t* RTGUI_RESTRICT srcp = (rt_uint16_t*)src->fb;
+    rt_uint16_t* RTGUI_RESTRICT dstp = (rt_uint16_t*)dst->fb;
+    int neww = dst->width;
+    int newh = dst->height;
+    int oriw = src->width;
+    int orih = src->height;
+
+    for (ny = dc_point->y; ny < newh; ny++)
+    {
+        /* Base x, y. */
+        int bx, by;
+
+        bx = dc_point->x * invm->m[0] + ny * invm->m[2] + 1024 * invm->m[4];
+        by = dc_point->x * invm->m[1] + ny * invm->m[3] + 1024 * invm->m[5];
+
+        for (nx = dc_point->x; nx < neww; nx++)
+        {
+            rt_uint32_t c00, c01, c10, c11, coo;
+            int rx, ry, sx, sy;
+
+            bx += invm->m[0];
+            by += invm->m[1];
+
+            rx = bx / 1024;
+            ry = by / 1024;
+
+            if (oriw - 1 <= rx || rx < 0 || orih - 1 <= ry || ry < 0)
+                continue;
+
+            c00 = srcp[ry * oriw + rx];
+            c01 = srcp[ry * oriw + rx + 1];
+            c10 = srcp[(ry + 1) * oriw + rx];
+            c11 = srcp[(ry + 1) * oriw + rx + 1];
+
+            c00 = (c00 | c00 << 16) & 0x07e0f81f;
+            c01 = (c01 | c01 << 16) & 0x07e0f81f;
+            c10 = (c10 | c10 << 16) & 0x07e0f81f;
+            c11 = (c11 | c11 << 16) & 0x07e0f81f;
+
+            /* We down scale the interpolate factor to 5 bits to avoid color
+             * corruption. */
+            sx = ((unsigned int)bx % 1024) >> 5;
+            sy = ((unsigned int)by % 1024) >> 5;
+
+            coo = c00;
+
+            c00 = ((c01 - c00) * sx / 32 + c00) & 0x07e0f81f;
+            c10 = ((c11 - c10) * sx / 32 + c10) & 0x07e0f81f;
+            c00 = ((c10 - c00) * sy / 32 + c00) & 0x07e0f81f;
+
+            /* We take the source as a whole and ignore the src->skip. */
+            dstp[ny * dst->skip + nx] = c00 | (c00 >> 16);
+        }
+    }
+}
+
+union _rgba
+{
+    rt_uint32_t blk;
+    struct
+    {
+        rt_uint8_t r, g, b, a;
+    } d;
+};
+
+/* FrameRect to FrameRect, same format, 4 Bytes/pixel. */
+static void _blit_rotate_FR2FR_SF4B(struct _fb_rect* RTGUI_RESTRICT src,
+                                    struct rtgui_point *dc_point,
+                                    struct _fb_rect* RTGUI_RESTRICT dst,
+                                    struct rtgui_matrix *invm)
+{
+    int nx, ny;
+    rt_uint32_t* RTGUI_RESTRICT srcp = (rt_uint32_t*)src->fb;
+    rt_uint32_t* RTGUI_RESTRICT dstp = (rt_uint32_t*)dst->fb;
+    int neww = dst->width;
+    int newh = dst->height;
+    int oriw = src->width;
+    int orih = src->height;
+
+    for (ny = dc_point->y; ny < newh; ny++)
+    {
+        /* Base x, y. */
+        int bx, by;
+
+        bx = dc_point->x * invm->m[0] + ny * invm->m[2] + 1024 * invm->m[4];
+        by = dc_point->x * invm->m[1] + ny * invm->m[3] + 1024 * invm->m[5];
+
+        for (nx = dc_point->x; nx < neww; nx++)
+        {
+            union _rgba spix, dpix;
+            int rx, ry, a;
+
+            bx += invm->m[0];
+            by += invm->m[1];
+
+            rx = bx / 1024;
+            ry = by / 1024;
+
+            if (oriw <= rx || rx < 0 || orih <= ry || ry < 0)
+                continue;
+
+            spix.blk = srcp[ry * oriw + rx];
+            /* Down scale the alpha to 5 bits. */
+            a = spix.d.a >> 3;
+
+            if (a == 0)
+                continue;
+
+            if (a == 31)
+            {
+                dstp[ny * dst->skip + nx] = spix.blk;
+                continue;
+            }
+
+            dpix.blk = dstp[ny * dst->skip + nx];
+            dpix.d.r = (dpix.d.r - spix.d.r) * a / 32 + dpix.d.r;
+            dpix.d.g = (dpix.d.g - spix.d.g) * a / 32 + dpix.d.g;
+            dpix.d.b = (dpix.d.b - spix.d.b) * a / 32 + dpix.d.b;
+            dstp[ny * dst->skip + nx] = dpix.blk;
+        }
+    }
+}
+
+/* FrameRect to FrameRect, same format, 4 Bytes/pixel, with AA. */
+static void _blit_rotate_FR2FR_SF4B_AA(struct _fb_rect* RTGUI_RESTRICT src,
+                                       struct rtgui_point *dc_point,
+                                       struct _fb_rect* RTGUI_RESTRICT dst,
+                                       struct rtgui_matrix *invm)
+{
+    int nx, ny;
+    rt_uint32_t* RTGUI_RESTRICT srcp = (rt_uint32_t*)src->fb;
+    rt_uint32_t* RTGUI_RESTRICT dstp = (rt_uint32_t*)dst->fb;
+    int neww = dst->width;
+    int newh = dst->height;
+    int oriw = src->width;
+    int orih = src->height;
+
+    for (ny = dc_point->y; ny < newh; ny++)
+    {
+        /* Base x, y. */
+        int bx, by;
+
+        bx = dc_point->x * invm->m[0] + ny * invm->m[2] + 1024 * invm->m[4];
+        by = dc_point->x * invm->m[1] + ny * invm->m[3] + 1024 * invm->m[5];
+
+        for (nx = dc_point->x; nx < neww; nx++)
+        {
+            union _rgba spix00, spix01, spix10, spix11, dpix;
+            int rx, ry, a, sx, sy;
+
+            bx += invm->m[0];
+            by += invm->m[1];
+
+            rx = bx / 1024;
+            ry = by / 1024;
+
+            if (oriw - 1 <= rx || rx < 0 || orih - 1 <= ry || ry < 0)
+                continue;
+
+            spix00.blk = srcp[ry * oriw + rx];
+
+            /* Down scale the interpolate factor to 5 bits. */
+            sx = ((unsigned int)bx % 1024) >> 5;
+            sy = ((unsigned int)by % 1024) >> 5;
+
+            spix01.blk = srcp[ry * oriw + rx + 1];
+            spix10.blk = srcp[(ry + 1) * oriw + rx];
+            spix11.blk = srcp[(ry + 1) * oriw + rx + 1];
+
+            if (sx)
+            {
+                spix00.d.r = (spix01.d.r - spix00.d.r) * sx / 32 + spix00.d.r;
+                spix00.d.g = (spix01.d.g - spix00.d.g) * sx / 32 + spix00.d.g;
+                spix00.d.b = (spix01.d.b - spix00.d.b) * sx / 32 + spix00.d.b;
+                spix00.d.a = (spix01.d.a - spix00.d.a) * sx / 32 + spix00.d.a;
+            }
+
+            if (sx && sy)
+            {
+                spix10.d.r = (spix11.d.r - spix10.d.r) * sx / 32 + spix10.d.r;
+                spix10.d.g = (spix11.d.g - spix10.d.g) * sx / 32 + spix10.d.g;
+                spix10.d.b = (spix11.d.b - spix10.d.b) * sx / 32 + spix10.d.b;
+                spix10.d.a = (spix11.d.a - spix10.d.a) * sx / 32 + spix10.d.a;
+            }
+
+            if (sy)
+            {
+                spix00.d.r = (spix10.d.r - spix00.d.r) * sy / 32 + spix00.d.r;
+                spix00.d.g = (spix10.d.g - spix00.d.g) * sy / 32 + spix00.d.g;
+                spix00.d.b = (spix10.d.b - spix00.d.b) * sy / 32 + spix00.d.b;
+                spix00.d.a = (spix10.d.a - spix00.d.a) * sy / 32 + spix00.d.a;
+            }
+
+            a = spix00.d.a >> 3;
+
+            if (a == 0)
+                continue;
+
+            if (a == (255 >> 3))
+            {
+                dstp[ny * dst->skip + nx] = spix00.blk;
+                continue;
+            }
+
+            dpix.blk = dstp[ny * dst->skip + nx];
+            dpix.d.r = (spix00.d.r - dpix.d.r) * a / 32 + dpix.d.r;
+            dpix.d.g = (spix00.d.g - dpix.d.g) * a / 32 + dpix.d.g;
+            dpix.d.b = (spix00.d.b - dpix.d.b) * a / 32 + dpix.d.b;
+            dstp[ny * dst->skip + nx] = dpix.blk;
+        }
+    }
+}
+
+/* FrameRect to FrameRect, from ARGB8888 to RGB565. */
+static void _blit_rotate_FR2FR_ARGB2RGB565(struct _fb_rect* RTGUI_RESTRICT src,
+                                           struct rtgui_point *dc_point,
+                                           struct _fb_rect* RTGUI_RESTRICT dst,
+                                           struct rtgui_matrix *invm)
+{
+    int nx, ny;
+    rt_uint32_t* RTGUI_RESTRICT srcp = (rt_uint32_t*)src->fb;
+    rt_uint16_t* RTGUI_RESTRICT dstp = (rt_uint16_t*)dst->fb;
+    int neww = dst->width;
+    int newh = dst->height;
+    int oriw = src->width;
+    int orih = src->height;
+
+    for (ny = dc_point->y; ny < newh; ny++)
+    {
+        /* Base x, y. */
+        int bx, by;
+
+        bx = dc_point->x * invm->m[0] + ny * invm->m[2] + 1024 * invm->m[4];
+        by = dc_point->x * invm->m[1] + ny * invm->m[3] + 1024 * invm->m[5];
+
+        for (nx = dc_point->x; nx < neww; nx++)
+        {
+            int rx, ry;
+            rt_uint32_t op;
+
+            bx += invm->m[0];
+            by += invm->m[1];
+
+            rx = bx / 1024;
+            ry = by / 1024;
+
+            if (oriw <= rx || rx < 0 || orih <= ry || ry < 0)
+                continue;
+
+            /* We take the source as a whole and ignore the src->skip. */
+            op = srcp[ry * oriw + rx];
+            /* downscale alpha to 5 bits */
+            if ((op >> 27) == (255 >> 3))
+            {
+                dstp[ny * dst->skip + nx] = (rt_uint16_t)((op >> 8 & 0xf800) +
+                                                          (op >> 5 & 0x7e0) +
+                                                          (op >> 3 & 0x1f));
+            }
+            else if ((op >> 27) != 0)
+            {
+                /* We take the source as a whole and ignore the src->skip. */
+                rt_uint32_t op = srcp[ry * oriw + rx];
+                rt_uint32_t d = dstp[ny * dst->skip + nx];
+                /*
+                 * convert source and destination to G0RAB65565
+                 * and blend all components at the same time
+                 */
+                op = ((op & 0xfc00) << 11) + (op >> 8 & 0xf800)
+                    + (op >> 3 & 0x1f);
+                d = (d | d << 16) & 0x07e0f81f;
+                d += (op - d) * (op >> 27) >> 5;
+                d &= 0x07e0f81f;
+                dstp[ny * dst->skip + nx] = (rt_uint16_t)(d | d >> 16);
+            }
+        }
+    }
+}
+
+/* FrameRect to FrameRect, from ARGB8888 to RGB565. */
+static void _blit_rotate_FR2FR_ARGB2RGB565_AA(struct _fb_rect* RTGUI_RESTRICT src,
+                                              struct rtgui_point *dc_point,
+                                              struct _fb_rect* RTGUI_RESTRICT dst,
+                                              struct rtgui_matrix *invm)
+{
+    int nx, ny;
+    rt_uint32_t* RTGUI_RESTRICT srcp = (rt_uint32_t*)src->fb;
+    rt_uint16_t* RTGUI_RESTRICT dstp = (rt_uint16_t*)dst->fb;
+    int neww = dst->width;
+    int newh = dst->height;
+    int oriw = src->width;
+    int orih = src->height;
+
+    for (ny = dc_point->y; ny < newh; ny++)
+    {
+        /* Base x, y. */
+        int bx, by;
+
+        bx = dc_point->x * invm->m[0] + ny * invm->m[2] + 1024 * invm->m[4];
+        by = dc_point->x * invm->m[1] + ny * invm->m[3] + 1024 * invm->m[5];
+
+        for (nx = dc_point->x; nx < neww; nx++)
+        {
+            union _rgba spix00, spix01, spix10, spix11;
+            int rx, ry, a, sx, sy;
+
+            bx += invm->m[0];
+            by += invm->m[1];
+
+            rx = bx / 1024;
+            ry = by / 1024;
+
+            if (oriw - 1 <= rx || rx < 0 || orih - 1 <= ry || ry < 0)
+                continue;
+
+            spix00.blk = srcp[ry * oriw + rx];
+
+            /* Down scale the interpolate factor to 5 bits. */
+            sx = ((unsigned int)bx % 1024) >> 5;
+            sy = ((unsigned int)by % 1024) >> 5;
+
+            spix01.blk = srcp[ry * oriw + rx + 1];
+            spix10.blk = srcp[(ry + 1) * oriw + rx];
+            spix11.blk = srcp[(ry + 1) * oriw + rx + 1];
+
+            if (sx)
+            {
+                spix00.d.r = (spix01.d.r - spix00.d.r) * sx / 32 + spix00.d.r;
+                spix00.d.g = (spix01.d.g - spix00.d.g) * sx / 32 + spix00.d.g;
+                spix00.d.b = (spix01.d.b - spix00.d.b) * sx / 32 + spix00.d.b;
+                spix00.d.a = (spix01.d.a - spix00.d.a) * sx / 32 + spix00.d.a;
+            }
+
+            if (sx && sy)
+            {
+                spix10.d.r = (spix11.d.r - spix10.d.r) * sx / 32 + spix10.d.r;
+                spix10.d.g = (spix11.d.g - spix10.d.g) * sx / 32 + spix10.d.g;
+                spix10.d.b = (spix11.d.b - spix10.d.b) * sx / 32 + spix10.d.b;
+                spix10.d.a = (spix11.d.a - spix10.d.a) * sx / 32 + spix10.d.a;
+            }
+
+            if (sy)
+            {
+                spix00.d.r = (spix10.d.r - spix00.d.r) * sy / 32 + spix00.d.r;
+                spix00.d.g = (spix10.d.g - spix00.d.g) * sy / 32 + spix00.d.g;
+                spix00.d.b = (spix10.d.b - spix00.d.b) * sy / 32 + spix00.d.b;
+                spix00.d.a = (spix10.d.a - spix00.d.a) * sy / 32 + spix00.d.a;
+            }
+
+            a = spix00.d.a >> 3;
+
+            if (a == (255 >> 3))
+            {
+                dstp[ny * dst->skip + nx] = (rt_uint16_t)((spix00.blk >> 8 & 0xf800) +
+                                                          (spix00.blk >> 5 & 0x7e0) +
+                                                          (spix00.blk >> 3 & 0x1f));
+                continue;
+            }
+            else if (a != 0)
+            {
+                /* We take the source as a whole and ignore the src->skip. */
+                rt_uint32_t op;
+                rt_uint32_t d = dstp[ny * dst->skip + nx];
+                /*
+                 * convert source and destination to G0RAB65565
+                 * and blend all components at the same time
+                 */
+                op = ((spix00.blk & 0xfc00) << 11) + (spix00.blk >> 8 & 0xf800)
+                    + (spix00.blk >> 3 & 0x1f);
+                d = (d | d << 16) & 0x07e0f81f;
+                d += (op - d) * a >> 5;
+                d &= 0x07e0f81f;
+                dstp[ny * dst->skip + nx] = (rt_uint16_t)(d | d >> 16);
+            }
+        }
+    }
+}
+
+static void _blit_rotate_B2B(struct rtgui_dc_trans *dct,
+                             struct rtgui_point *dc_point,
+                             struct rtgui_dc_buffer* RTGUI_RESTRICT dest,
+                             struct rtgui_rect *rect,
+                             struct rtgui_matrix *invm,
+                             int neww, int newh)
+{
+    struct rtgui_rect srcrect;
+    struct rtgui_dc_buffer *dc = (struct rtgui_dc_buffer*)dct->owner;
+    struct _fb_rect srcfb, dstfb;
+
+    rtgui_dc_get_rect(dct->owner, &srcrect);
+
+    srcfb.fb     = ((struct rtgui_dc_buffer*)dct->owner)->pixel;
+    srcfb.width  = srcrect.x2;
+    srcfb.height = srcrect.y2;
+    srcfb.skip   = 0;
+
+    dstfb.fb     = dest->pixel + rtgui_color_get_bpp(dest->pixel_format) * (rect->x1 + rect->y1 * dest->width);
+    dstfb.width  = neww;
+    dstfb.height = newh;
+    dstfb.skip   = dest->width;
+
+    if (dc->pixel_format == dest->pixel_format)
+    {
+        switch (rtgui_color_get_bpp(dest->pixel_format)) {
+        case 2:
+            if (dct->use_aa)
+                _blit_rotate_FR2FR_SF2B_AA(&srcfb, dc_point,
+                                           &dstfb, invm);
+            else
+                _blit_rotate_FR2FR_SF2B(&srcfb, dc_point,
+                                        &dstfb, invm);
+            break;
+        case 4:
+            if (dct->use_aa)
+                _blit_rotate_FR2FR_SF4B_AA(&srcfb, dc_point,
+                                           &dstfb, invm);
+            else
+                _blit_rotate_FR2FR_SF4B(&srcfb, dc_point,
+                                        &dstfb, invm);
+            break;
+        default:
+            rt_kprintf("could not handle bpp: %d\n",
+                       rtgui_color_get_bpp(dest->pixel_format));
+            return;
+        }
+    }
+    else if (dc->pixel_format == RTGRAPHIC_PIXEL_FORMAT_ARGB888 &&
+             dest->pixel_format == RTGRAPHIC_PIXEL_FORMAT_RGB565)
+    {
+        if (dct->use_aa)
+            _blit_rotate_FR2FR_ARGB2RGB565_AA(&srcfb, dc_point,
+                                              &dstfb, invm);
+        else
+            _blit_rotate_FR2FR_ARGB2RGB565(&srcfb, dc_point,
+                                           &dstfb, invm);
+    }
+    else
+    {
+        rt_kprintf("not implemented yet\n");
+        return;
+    }
+}
+
+static void _blit_rotate_B2H(struct rtgui_dc_trans *dct,
+                             struct rtgui_point *dc_point,
+                             struct rtgui_dc_hw* dest,
+                             struct rtgui_rect *rect,
+                             struct rtgui_matrix *invm,
+                             int neww, int newh)
+{
+    struct rtgui_rect srcrect;
+    int start_pix;
+    struct _fb_rect srcfb, dstfb;
+    struct rtgui_dc_buffer *dc = (struct rtgui_dc_buffer*)dct->owner;
+
+    if (dest->hw_driver->framebuffer == RT_NULL)
+    {
+        rt_kprintf("Only support framebuffer hw dc\n");
+        return;
+    }
+
+    rtgui_dc_get_rect(dct->owner, &srcrect);
+
+    srcfb.fb     = ((struct rtgui_dc_buffer*)dct->owner)->pixel;
+    srcfb.width  = srcrect.x2;
+    srcfb.height = srcrect.y2;
+    srcfb.skip   = 0;
+
+    /* Start point of the widget. */
+    start_pix = dest->owner->extent.x1 + dest->owner->extent.y1 * dest->hw_driver->width;
+    /* Start point of the inner rect. */
+    start_pix += rect->x1 + rect->y1 * dest->hw_driver->width;
+
+    dstfb.fb     = (void*)(dest->hw_driver->framebuffer
+                           + rtgui_color_get_bpp(dest->hw_driver->pixel_format) * start_pix);
+    dstfb.width  = neww;
+    dstfb.height = newh;
+    dstfb.skip   = dest->hw_driver->width;
+
+    if (dc->pixel_format == dest->hw_driver->pixel_format)
+    {
+        switch (rtgui_color_get_bpp(dest->hw_driver->pixel_format)) {
+        case 2:
+            if (dct->use_aa)
+                _blit_rotate_FR2FR_SF2B_AA(&srcfb, dc_point,
+                                           &dstfb, invm);
+            else
+                _blit_rotate_FR2FR_SF2B(&srcfb, dc_point,
+                                        &dstfb, invm);
+            break;
+        case 4:
+            if (dct->use_aa)
+                _blit_rotate_FR2FR_SF4B_AA(&srcfb, dc_point,
+                                           &dstfb, invm);
+            else
+                _blit_rotate_FR2FR_SF4B(&srcfb, dc_point,
+                                        &dstfb, invm);
+            break;
+        default:
+            rt_kprintf("could not handle bpp: %d\n",
+                       rtgui_color_get_bpp(dest->hw_driver->pixel_format));
+            return;
+        }
+    }
+    else if (dc->pixel_format == RTGRAPHIC_PIXEL_FORMAT_ARGB888 &&
+             dest->hw_driver->pixel_format == RTGRAPHIC_PIXEL_FORMAT_RGB565)
+    {
+        if (dct->use_aa)
+            _blit_rotate_FR2FR_ARGB2RGB565_AA(&srcfb, dc_point,
+                                              &dstfb, invm);
+        else
+            _blit_rotate_FR2FR_ARGB2RGB565(&srcfb, dc_point,
+                                           &dstfb, invm);
+    }
+    else
+    {
+        rt_kprintf("not implemented yet\n");
+        return;
     }
 }
 
@@ -90,34 +703,64 @@ void rtgui_dc_trans_blit(struct rtgui_dc_trans *dct,
                          struct rtgui_dc *dest,
                          struct rtgui_rect *rect)
 {
+    struct rtgui_rect bkrect;
     struct rtgui_matrix invm;
-    struct rtgui_point pscale;
-    struct rtgui_rect orirect;
-    int neww, newh, oriw, orih;
-    int nx, ny;
+    int neww, newh;
 
     RT_ASSERT(dct);
     RT_ASSERT(dest);
 
+    if (dc_point == RT_NULL)
+        dc_point = &rtgui_empty_point;
+    if (rect == RT_NULL)
+    {
+        rtgui_dc_get_rect(dest, &bkrect);
+        rect = &bkrect;
+    }
+
+    rtgui_dc_trans_get_new_wh(dct, &neww, &newh);
+    if (dc_point->x < 0)
+    {
+        neww -= dc_point->x;
+        if (neww < 0)
+            return;
+        dc_point->x = 0;
+    }
+    else if (dc_point->x > neww)
+        return;
+    if (dc_point->y < 0)
+    {
+        newh -= dc_point->y;
+        if (newh < 0)
+            return;
+        dc_point->y = 0;
+    }
+    else if (dc_point->y > newh)
+        return;
+
     if (rtgui_matrix_inverse(&dct->m, &invm))
         return;
 
-    rtgui_dc_trans_get_new_wh(dct, &neww, &newh);
-    rtgui_matrix_mul_point_nomove(&pscale, 1, 1, &invm);
+    if (rtgui_rect_width(*rect) < neww - dc_point->x)
+        neww = dc_point->x + rtgui_rect_width(*rect);
+    if (rtgui_rect_height(*rect) < newh - dc_point->y)
+        newh = dc_point->y + rtgui_rect_height(*rect);
 
-    rtgui_dc_get_rect(dct->owner, &orirect);
-    oriw = orirect.x2;
-    orih = orirect.y2;
-
-    for (nx = dc_point->x; nx < neww; nx++)
+    /* Route to different optimized routines. */
+    if (dct->owner->type == RTGUI_DC_BUFFER)
     {
-        for (ny = dc_point->y; ny < newh; ny++)
-        {
-            struct rtgui_point orip;
-
-            rtgui_matrix_mul_point(&orip, nx, ny, &invm);
-            if (oriw < orip.x || orip.x < 0 || orih < orip.y || orip.y < 0)
-                continue;
-        }
+        if (dest->type == RTGUI_DC_BUFFER)
+                _blit_rotate_B2B(dct, dc_point,
+                                 (struct rtgui_dc_buffer*)dest,
+                                 rect, &invm, neww, newh);
+        else if (dest->type == RTGUI_DC_HW)
+                _blit_rotate_B2H(dct, dc_point,
+                                 (struct rtgui_dc_hw*)dest,
+                                 rect, &invm, neww, newh);
+        else
+            rt_kprintf("not implemented yet\n");
     }
+    else
+        rt_kprintf("not implemented yet\n");
 }
+

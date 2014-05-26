@@ -59,7 +59,7 @@ rt_inline int _inverse_rot(const int *m, int *o)
     return 0;
 }
 
-int matrix_inverse(const struct rtgui_matrix *mm, struct rtgui_matrix *mo)
+int rtgui_matrix_inverse(const struct rtgui_matrix *mm, struct rtgui_matrix *mo)
 {
     const int *m = mm->m;
     int *o = mo->m;
@@ -170,7 +170,7 @@ rt_inline void scale_mat(int *m, int sx, int sy)
 	}
 }
 
-void rtgui_matrix_rot(struct rtgui_matrix *m, int rot)
+void rtgui_matrix_rotate(struct rtgui_matrix *m, int rot)
 {
     if (rot)
         rot_mat(m->m, rot);
