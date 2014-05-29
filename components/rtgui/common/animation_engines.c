@@ -2,6 +2,7 @@
 #include <rtgui/dc.h>
 #include <rtgui/blit.h>
 #include <rtgui/animation.h>
+#include <rtgui/dc_trans.h>
 
 void rtgui_anim_engine_move(struct rtgui_dc *background,
                             struct rtgui_dc_buffer *background_buffer,
@@ -77,7 +78,7 @@ void rtgui_anim_engine_fade(struct rtgui_dc *background,
     ctx->plvl = cur_lvl;
 
     buf = (struct rtgui_dc_buffer*)rtgui_dc_buffer_create_from_dc(
-                                       (struct rtgui_dc*)background_buffer);
+              (struct rtgui_dc*)background_buffer);
     if (!buf)
         return;
 
@@ -89,7 +90,7 @@ void rtgui_anim_engine_fade(struct rtgui_dc *background,
     info.src_w     = items->width;
     info.src_pitch = items->pitch;
     info.src_skip  = info.src_pitch - info.src_w *
-                    rtgui_color_get_bpp(items->pixel_format);
+                     rtgui_color_get_bpp(items->pixel_format);
 
     info.dst       = buf->pixel;
     info.dst_fmt   = buf->pixel_format;
@@ -97,9 +98,47 @@ void rtgui_anim_engine_fade(struct rtgui_dc *background,
     info.dst_w     = buf->width;
     info.dst_pitch = buf->pitch;
     info.dst_skip  = info.dst_pitch - info.dst_w *
-                    rtgui_color_get_bpp(buf->pixel_format);
+                     rtgui_color_get_bpp(buf->pixel_format);
 
     rtgui_blit(&info);
     rtgui_dc_blit((struct rtgui_dc*)buf, NULL, background, NULL);
     rtgui_dc_destory((struct rtgui_dc*)buf);
+}
+
+void rtgui_anim_engine_roto(struct rtgui_dc *background,
+                            struct rtgui_dc_buffer *background_buffer,
+                            struct rtgui_dc_buffer *items,
+                            int item_cnt,
+                            int progress,
+                            void *param)
+{
+    struct rtgui_dc_trans *trans;
+    struct rtgui_anim_engine_roto_ctx *ctx = param;
+
+    if (!background)
+        return;
+
+    if (background_buffer)
+        rtgui_dc_blit((struct rtgui_dc*)background_buffer, NULL, background, NULL);
+
+    if (!param)
+        return;
+
+    trans = rtgui_dc_trans_create((struct rtgui_dc*)items);
+    if (!trans)
+    {
+        rt_kprintf("OOM\n");
+        return;
+    }
+
+    rtgui_dc_trans_move(trans, ctx->pre_move.x, ctx->pre_move.y);
+    rtgui_dc_trans_rotate(trans,
+                          progress * (ctx->to_degree - ctx->from_degree)
+                          / RTGUI_ANIM_TICK_RANGE + ctx->from_degree);
+    rtgui_dc_trans_move(trans, ctx->post_move.x, ctx->post_move.y);
+    rtgui_dc_trans_set_aa(trans, ctx->use_aa);
+
+    rtgui_dc_trans_blit(trans, RT_NULL, background, RT_NULL);
+
+    rtgui_dc_trans_destroy(trans);
 }
