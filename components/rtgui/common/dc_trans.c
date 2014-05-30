@@ -195,7 +195,7 @@ static void _blit_rotate_FR2FR_SF2B_AA(struct _fb_rect* RTGUI_RESTRICT src,
 
         for (nx = dc_point->x; nx < neww; nx++)
         {
-            rt_uint32_t c00, c01, c10, c11, coo;
+            rt_uint32_t c00, c01, c10, c11;
             int rx, ry, sx, sy;
 
             bx += invm->m[0];
@@ -221,8 +221,6 @@ static void _blit_rotate_FR2FR_SF2B_AA(struct _fb_rect* RTGUI_RESTRICT src,
              * corruption. */
             sx = ((unsigned int)bx % 1024) >> 5;
             sy = ((unsigned int)by % 1024) >> 5;
-
-            coo = c00;
 
             c00 = ((c01 - c00) * sx / 32 + c00) & 0x07e0f81f;
             c10 = ((c11 - c10) * sx / 32 + c10) & 0x07e0f81f;
@@ -416,6 +414,7 @@ static void _blit_rotate_FR2FR_ARGB2RGB565(struct _fb_rect* RTGUI_RESTRICT src,
         for (nx = dc_point->x; nx < neww; nx++)
         {
             int rx, ry;
+            int alpha;
             rt_uint32_t op;
 
             bx += invm->m[0];
@@ -429,17 +428,17 @@ static void _blit_rotate_FR2FR_ARGB2RGB565(struct _fb_rect* RTGUI_RESTRICT src,
 
             /* We take the source as a whole and ignore the src->skip. */
             op = srcp[ry * oriw + rx];
+            alpha = op >> 27;
             /* downscale alpha to 5 bits */
-            if ((op >> 27) == (255 >> 3))
+            if (alpha == (255 >> 3))
             {
                 dstp[ny * dst->skip + nx] = (rt_uint16_t)((op >> 8 & 0xf800) +
                                                           (op >> 5 & 0x7e0) +
                                                           (op >> 3 & 0x1f));
             }
-            else if ((op >> 27) != 0)
+            else if (alpha != 0)
             {
                 /* We take the source as a whole and ignore the src->skip. */
-                rt_uint32_t op = srcp[ry * oriw + rx];
                 rt_uint32_t d = dstp[ny * dst->skip + nx];
                 /*
                  * convert source and destination to G0RAB65565
