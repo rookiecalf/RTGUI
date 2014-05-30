@@ -152,7 +152,7 @@ static void _blit_rotate_FR2FR_SF2B(struct _fb_rect* RTGUI_RESTRICT src,
         bx = dc_point->x * invm->m[0] + ny * invm->m[2] + 1024 * invm->m[4];
         by = dc_point->x * invm->m[1] + ny * invm->m[3] + 1024 * invm->m[5];
 
-        for (nx = dc_point->x; nx < neww; nx++)
+        for (nx = dc_point->x; nx < neww; nx++, dstp++)
         {
             int rx, ry;
 
@@ -166,8 +166,9 @@ static void _blit_rotate_FR2FR_SF2B(struct _fb_rect* RTGUI_RESTRICT src,
                 continue;
 
             /* We take the source as a whole and ignore the src->skip. */
-            dstp[ny * dst->skip + nx] = srcp[ry * oriw + rx];
+            *dstp = srcp[ry * oriw + rx];
         }
+        dstp += dst->skip - neww;
     }
 }
 
@@ -193,7 +194,7 @@ static void _blit_rotate_FR2FR_SF2B_AA(struct _fb_rect* RTGUI_RESTRICT src,
         bx = dc_point->x * invm->m[0] + ny * invm->m[2] + 1024 * invm->m[4];
         by = dc_point->x * invm->m[1] + ny * invm->m[3] + 1024 * invm->m[5];
 
-        for (nx = dc_point->x; nx < neww; nx++)
+        for (nx = dc_point->x; nx < neww; nx++, dstp++)
         {
             rt_uint32_t c00, c01, c10, c11;
             int rx, ry, sx, sy;
@@ -227,8 +228,9 @@ static void _blit_rotate_FR2FR_SF2B_AA(struct _fb_rect* RTGUI_RESTRICT src,
             c00 = ((c10 - c00) * sy / 32 + c00) & 0x07e0f81f;
 
             /* We take the source as a whole and ignore the src->skip. */
-            dstp[ny * dst->skip + nx] = c00 | (c00 >> 16);
+            *dstp = c00 | (c00 >> 16);
         }
+        dstp += dst->skip - neww;
     }
 }
 
@@ -263,7 +265,7 @@ static void _blit_rotate_FR2FR_SF4B(struct _fb_rect* RTGUI_RESTRICT src,
         bx = dc_point->x * invm->m[0] + ny * invm->m[2] + 1024 * invm->m[4];
         by = dc_point->x * invm->m[1] + ny * invm->m[3] + 1024 * invm->m[5];
 
-        for (nx = dc_point->x; nx < neww; nx++)
+        for (nx = dc_point->x; nx < neww; nx++, dstp++)
         {
             union _rgba spix, dpix;
             int rx, ry, a;
@@ -286,16 +288,17 @@ static void _blit_rotate_FR2FR_SF4B(struct _fb_rect* RTGUI_RESTRICT src,
 
             if (a == 31)
             {
-                dstp[ny * dst->skip + nx] = spix.blk;
+                *dstp = spix.blk;
                 continue;
             }
 
-            dpix.blk = dstp[ny * dst->skip + nx];
+            dpix.blk = *dstp;
             dpix.d.r = (dpix.d.r - spix.d.r) * a / 32 + dpix.d.r;
             dpix.d.g = (dpix.d.g - spix.d.g) * a / 32 + dpix.d.g;
             dpix.d.b = (dpix.d.b - spix.d.b) * a / 32 + dpix.d.b;
-            dstp[ny * dst->skip + nx] = dpix.blk;
+            *dstp = dpix.blk;
         }
+        dstp += dst->skip - neww;
     }
 }
 
@@ -321,7 +324,7 @@ static void _blit_rotate_FR2FR_SF4B_AA(struct _fb_rect* RTGUI_RESTRICT src,
         bx = dc_point->x * invm->m[0] + ny * invm->m[2] + 1024 * invm->m[4];
         by = dc_point->x * invm->m[1] + ny * invm->m[3] + 1024 * invm->m[5];
 
-        for (nx = dc_point->x; nx < neww; nx++)
+        for (nx = dc_point->x; nx < neww; nx++, dstp++)
         {
             union _rgba spix00, spix01, spix10, spix11, dpix;
             int rx, ry, a, sx, sy;
@@ -376,16 +379,17 @@ static void _blit_rotate_FR2FR_SF4B_AA(struct _fb_rect* RTGUI_RESTRICT src,
 
             if (a == (255 >> 3))
             {
-                dstp[ny * dst->skip + nx] = spix00.blk;
+                *dstp = spix00.blk;
                 continue;
             }
 
-            dpix.blk = dstp[ny * dst->skip + nx];
+            dpix.blk = *dstp;
             dpix.d.r = (spix00.d.r - dpix.d.r) * a / 32 + dpix.d.r;
             dpix.d.g = (spix00.d.g - dpix.d.g) * a / 32 + dpix.d.g;
             dpix.d.b = (spix00.d.b - dpix.d.b) * a / 32 + dpix.d.b;
-            dstp[ny * dst->skip + nx] = dpix.blk;
+            *dstp = dpix.blk;
         }
+        dstp += dst->skip - neww;
     }
 }
 
@@ -411,7 +415,7 @@ static void _blit_rotate_FR2FR_ARGB2RGB565(struct _fb_rect* RTGUI_RESTRICT src,
         bx = dc_point->x * invm->m[0] + ny * invm->m[2] + 1024 * invm->m[4];
         by = dc_point->x * invm->m[1] + ny * invm->m[3] + 1024 * invm->m[5];
 
-        for (nx = dc_point->x; nx < neww; nx++)
+        for (nx = dc_point->x; nx < neww; nx++, dstp++)
         {
             int rx, ry;
             int alpha;
@@ -432,14 +436,14 @@ static void _blit_rotate_FR2FR_ARGB2RGB565(struct _fb_rect* RTGUI_RESTRICT src,
             /* downscale alpha to 5 bits */
             if (alpha == (255 >> 3))
             {
-                dstp[ny * dst->skip + nx] = (rt_uint16_t)((op >> 8 & 0xf800) +
-                                                          (op >> 5 & 0x7e0) +
-                                                          (op >> 3 & 0x1f));
+                *dstp = (rt_uint16_t)((op >> 8 & 0xf800) +
+                                      (op >> 5 & 0x7e0) +
+                                      (op >> 3 & 0x1f));
             }
             else if (alpha != 0)
             {
                 /* We take the source as a whole and ignore the src->skip. */
-                rt_uint32_t d = dstp[ny * dst->skip + nx];
+                rt_uint32_t d = *dstp;
                 /*
                  * convert source and destination to G0RAB65565
                  * and blend all components at the same time
@@ -449,9 +453,10 @@ static void _blit_rotate_FR2FR_ARGB2RGB565(struct _fb_rect* RTGUI_RESTRICT src,
                 d = (d | d << 16) & 0x07e0f81f;
                 d += (op - d) * (op >> 27) >> 5;
                 d &= 0x07e0f81f;
-                dstp[ny * dst->skip + nx] = (rt_uint16_t)(d | d >> 16);
+                *dstp = (rt_uint16_t)(d | d >> 16);
             }
         }
+        dstp += dst->skip - neww;
     }
 }
 
@@ -477,7 +482,7 @@ static void _blit_rotate_FR2FR_ARGB2RGB565_AA(struct _fb_rect* RTGUI_RESTRICT sr
         bx = dc_point->x * invm->m[0] + ny * invm->m[2] + 1024 * invm->m[4];
         by = dc_point->x * invm->m[1] + ny * invm->m[3] + 1024 * invm->m[5];
 
-        for (nx = dc_point->x; nx < neww; nx++)
+        for (nx = dc_point->x; nx < neww; nx++, dstp++)
         {
             rt_uint32_t op00, op01, op10, op11;
             int rx, ry, sx, sy;
@@ -527,13 +532,13 @@ static void _blit_rotate_FR2FR_ARGB2RGB565_AA(struct _fb_rect* RTGUI_RESTRICT sr
 
             if (a == (255 >> 3))
             {
-                dstp[ny * dst->skip + nx] = op00 | (op00 >> 16);
+                *dstp = op00 | (op00 >> 16);
                 continue;
             }
             else if (a != 0)
             {
                 /* We take the source as a whole and ignore the src->skip. */
-                rt_uint32_t d = dstp[ny * dst->skip + nx];
+                rt_uint32_t d = *dstp;
                 /*
                  * convert source and destination to G0RAB65565
                  * and blend all components at the same time
@@ -541,9 +546,10 @@ static void _blit_rotate_FR2FR_ARGB2RGB565_AA(struct _fb_rect* RTGUI_RESTRICT sr
                 d = (d | d << 16) & 0x07e0f81f;
                 d += (op00 - d) * a >> 5;
                 d &= 0x07e0f81f;
-                dstp[ny * dst->skip + nx] = (rt_uint16_t)(d | d >> 16);
+                *dstp = (rt_uint16_t)(d | d >> 16);
             }
         }
+        dstp += dst->skip - neww;
     }
 }
 
