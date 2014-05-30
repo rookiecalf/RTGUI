@@ -223,9 +223,12 @@ static void _blit_rotate_FR2FR_SF2B_AA(struct _fb_rect* RTGUI_RESTRICT src,
             sx = ((unsigned int)bx % 1024) >> 5;
             sy = ((unsigned int)by % 1024) >> 5;
 
-            c00 = ((c01 - c00) * sx / 32 + c00) & 0x07e0f81f;
-            c10 = ((c11 - c10) * sx / 32 + c10) & 0x07e0f81f;
-            c00 = ((c10 - c00) * sy / 32 + c00) & 0x07e0f81f;
+            if (sx)
+                c00 = ((c01 - c00) * sx / 32 + c00) & 0x07e0f81f;
+            if (sx && sy)
+                c10 = ((c11 - c10) * sx / 32 + c10) & 0x07e0f81f;
+            if (sy)
+                c00 = ((c10 - c00) * sy / 32 + c00) & 0x07e0f81f;
 
             /* We take the source as a whole and ignore the src->skip. */
             *dstp = c00 | (c00 >> 16);
