@@ -488,8 +488,8 @@ static void _blit_rotate_FR2FR_ARGB2RGB565_AA(struct _fb_rect* RTGUI_RESTRICT sr
         for (nx = dc_point->x; nx < neww; nx++, dstp++)
         {
             rt_uint32_t op00, op01, op10, op11;
+            rt_uint8_t a00, a01, a10, a11;
             int rx, ry, sx, sy;
-            unsigned int a;
 
             bx += invm->m[0];
             by += invm->m[1];
@@ -505,13 +505,20 @@ static void _blit_rotate_FR2FR_ARGB2RGB565_AA(struct _fb_rect* RTGUI_RESTRICT sr
             op10 = srcp[(ry + 1) * oriw + rx];
             op11 = srcp[(ry + 1) * oriw + rx + 1];
 
-            a = (((op00 >> 24) + (op01 >> 24) + (op10 >> 24) + (op11 >> 24)) / 4) >> 3;
-            if (a == 0)
-                continue;
-
             /* Down scale the interpolate factor to 5 bits. */
             sx = ((unsigned int)bx % 1024) >> 5;
             sy = ((unsigned int)by % 1024) >> 5;
+
+            a00 = op00 >> 27;
+            a01 = op01 >> 27;
+            a11 = op11 >> 27;
+            a10 = op10 >> 27;
+
+            a00 = (a01 - a00) * sx / 32 + a00;
+            a10 = (a11 - a10) * sx / 32 + a10;
+            a00 = (a10 - a00) * sy / 32 + a00;
+            if (a00 == 0)
+                continue;
 
             op00 = ((op00 & 0xfc00) << 11) + (op00 >> 8 & 0xf800) + (op00 >> 3 & 0x1f);
             op10 = ((op10 & 0xfc00) << 11) + (op10 >> 8 & 0xf800) + (op10 >> 3 & 0x1f);
@@ -533,21 +540,16 @@ static void _blit_rotate_FR2FR_ARGB2RGB565_AA(struct _fb_rect* RTGUI_RESTRICT sr
                 op00 = ((op10 - op00) * sy / 32 + op00) & 0x07e0f81f;
             }
 
-            if (a == (255 >> 3))
+            if (a00 == (255 >> 3))
             {
                 *dstp = op00 | (op00 >> 16);
-                continue;
             }
-            else if (a != 0)
+            else if (a00 != 0)
             {
-                /* We take the source as a whole and ignore the src->skip. */
                 rt_uint32_t d = *dstp;
-                /*
-                 * convert source and destination to G0RAB65565
-                 * and blend all components at the same time
-                 */
+
                 d = (d | d << 16) & 0x07e0f81f;
-                d += (op00 - d) * a >> 5;
+                d += (op00 - d) * a00 >> 5;
                 d &= 0x07e0f81f;
                 *dstp = (rt_uint16_t)(d | d >> 16);
             }
