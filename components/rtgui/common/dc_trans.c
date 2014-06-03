@@ -520,10 +520,10 @@ static void _blit_rotate_FR2FR_ARGB2RGB565_AA(struct _fb_rect* RTGUI_RESTRICT sr
             if (a00 == 0)
                 continue;
 
-            op00 = ((op00 & 0xfc00) << 11) + (op00 >> 8 & 0xf800) + (op00 >> 3 & 0x1f);
-            op10 = ((op10 & 0xfc00) << 11) + (op10 >> 8 & 0xf800) + (op10 >> 3 & 0x1f);
-            op01 = ((op01 & 0xfc00) << 11) + (op01 >> 8 & 0xf800) + (op01 >> 3 & 0x1f);
-            op11 = ((op11 & 0xfc00) << 11) + (op11 >> 8 & 0xf800) + (op11 >> 3 & 0x1f);
+            op00 = ((op00 >> 10) << 11) + (((op00 >> 19) & 0x1f) << 11) + (op00 >> 3 & 0x1f);
+            op10 = ((op10 >> 10) << 11) + (((op10 >> 19) & 0x1f) << 11) + (op10 >> 3 & 0x1f);
+            op01 = ((op01 >> 10) << 11) + (((op01 >> 19) & 0x1f) << 11) + (op01 >> 3 & 0x1f);
+            op11 = ((op11 >> 10) << 11) + (((op11 >> 19) & 0x1f) << 11) + (op11 >> 3 & 0x1f);
 
             if (sx)
             {
