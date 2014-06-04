@@ -134,7 +134,7 @@ struct _fb_rect
 static void _blit_rotate_FR2FR_SF2B(struct _fb_rect* RTGUI_RESTRICT src,
                                     struct rtgui_point *dc_point,
                                     struct _fb_rect* RTGUI_RESTRICT dst,
-                                    struct rtgui_matrix *invm)
+                                    const struct rtgui_matrix *invm)
 {
     int nx, ny;
     rt_uint16_t* RTGUI_RESTRICT srcp = (rt_uint16_t*)src->fb;
@@ -148,16 +148,19 @@ static void _blit_rotate_FR2FR_SF2B(struct _fb_rect* RTGUI_RESTRICT src,
     {
         /* Base x, y. */
         int bx, by;
+        int dx, dy;
 
-        bx = dc_point->x * invm->m[0] + ny * invm->m[2] + 1024 * invm->m[4];
-        by = dc_point->x * invm->m[1] + ny * invm->m[3] + 1024 * invm->m[5];
+        dx = invm->m[0];
+        dy = invm->m[1];
+        bx = dc_point->x * dx + ny * invm->m[2] + 1024 * invm->m[4];
+        by = dc_point->x * dy + ny * invm->m[3] + 1024 * invm->m[5];
 
         for (nx = dc_point->x; nx < neww; nx++, dstp++)
         {
             int rx, ry;
 
-            bx += invm->m[0];
-            by += invm->m[1];
+            bx += dx;
+            by += dy;
 
             rx = bx / 1024;
             ry = by / 1024;
@@ -190,17 +193,21 @@ static void _blit_rotate_FR2FR_SF2B_AA(struct _fb_rect* RTGUI_RESTRICT src,
     {
         /* Base x, y. */
         int bx, by;
+        int dx, dy;
 
-        bx = dc_point->x * invm->m[0] + ny * invm->m[2] + 1024 * invm->m[4];
-        by = dc_point->x * invm->m[1] + ny * invm->m[3] + 1024 * invm->m[5];
+        dx = invm->m[0];
+        dy = invm->m[1];
+
+        bx = dc_point->x * dx + ny * invm->m[2] + 1024 * invm->m[4];
+        by = dc_point->x * dy + ny * invm->m[3] + 1024 * invm->m[5];
 
         for (nx = dc_point->x; nx < neww; nx++, dstp++)
         {
             rt_uint32_t c00, c01, c10, c11;
             int rx, ry, sx, sy;
 
-            bx += invm->m[0];
-            by += invm->m[1];
+            bx += dx;
+            by += dy;
 
             rx = bx / 1024;
             ry = by / 1024;
@@ -264,17 +271,21 @@ static void _blit_rotate_FR2FR_SF4B(struct _fb_rect* RTGUI_RESTRICT src,
     {
         /* Base x, y. */
         int bx, by;
+        int dx, dy;
 
-        bx = dc_point->x * invm->m[0] + ny * invm->m[2] + 1024 * invm->m[4];
-        by = dc_point->x * invm->m[1] + ny * invm->m[3] + 1024 * invm->m[5];
+        dx = invm->m[0];
+        dy = invm->m[1];
+
+        bx = dc_point->x * dx + ny * invm->m[2] + 1024 * invm->m[4];
+        by = dc_point->x * dy + ny * invm->m[3] + 1024 * invm->m[5];
 
         for (nx = dc_point->x; nx < neww; nx++, dstp++)
         {
             union _rgba spix, dpix;
             int rx, ry, a;
 
-            bx += invm->m[0];
-            by += invm->m[1];
+            bx += dx;
+            by += dy;
 
             rx = bx / 1024;
             ry = by / 1024;
@@ -323,17 +334,21 @@ static void _blit_rotate_FR2FR_SF4B_AA(struct _fb_rect* RTGUI_RESTRICT src,
     {
         /* Base x, y. */
         int bx, by;
+        int dx, dy;
 
-        bx = dc_point->x * invm->m[0] + ny * invm->m[2] + 1024 * invm->m[4];
-        by = dc_point->x * invm->m[1] + ny * invm->m[3] + 1024 * invm->m[5];
+        dx = invm->m[0];
+        dy = invm->m[1];
+
+        bx = dc_point->x * dx + ny * invm->m[2] + 1024 * invm->m[4];
+        by = dc_point->x * dy + ny * invm->m[3] + 1024 * invm->m[5];
 
         for (nx = dc_point->x; nx < neww; nx++, dstp++)
         {
             union _rgba spix00, spix01, spix10, spix11, dpix;
             int rx, ry, a, sx, sy;
 
-            bx += invm->m[0];
-            by += invm->m[1];
+            bx += dx;
+            by += dy;
 
             rx = bx / 1024;
             ry = by / 1024;
@@ -414,9 +429,13 @@ static void _blit_rotate_FR2FR_ARGB2RGB565(struct _fb_rect* RTGUI_RESTRICT src,
     {
         /* Base x, y. */
         int bx, by;
+        int dx, dy;
 
-        bx = dc_point->x * invm->m[0] + ny * invm->m[2] + 1024 * invm->m[4];
-        by = dc_point->x * invm->m[1] + ny * invm->m[3] + 1024 * invm->m[5];
+        dx = invm->m[0];
+        dy = invm->m[1];
+
+        bx = dc_point->x * dx + ny * invm->m[2] + 1024 * invm->m[4];
+        by = dc_point->x * dy + ny * invm->m[3] + 1024 * invm->m[5];
 
         for (nx = dc_point->x; nx < neww; nx++, dstp++)
         {
@@ -424,8 +443,8 @@ static void _blit_rotate_FR2FR_ARGB2RGB565(struct _fb_rect* RTGUI_RESTRICT src,
             int alpha;
             rt_uint32_t op;
 
-            bx += invm->m[0];
-            by += invm->m[1];
+            bx += dx;
+            by += dy;
 
             rx = bx / 1024;
             ry = by / 1024;
@@ -481,9 +500,13 @@ static void _blit_rotate_FR2FR_ARGB2RGB565_AA(struct _fb_rect* RTGUI_RESTRICT sr
     {
         /* Base x, y. */
         int bx, by;
+        int dx, dy;
 
-        bx = dc_point->x * invm->m[0] + ny * invm->m[2] + 1024 * invm->m[4];
-        by = dc_point->x * invm->m[1] + ny * invm->m[3] + 1024 * invm->m[5];
+        dx = invm->m[0];
+        dy = invm->m[1];
+
+        bx = dc_point->x * dx + ny * invm->m[2] + 1024 * invm->m[4];
+        by = dc_point->x * dy + ny * invm->m[3] + 1024 * invm->m[5];
 
         for (nx = dc_point->x; nx < neww; nx++, dstp++)
         {
@@ -491,8 +514,8 @@ static void _blit_rotate_FR2FR_ARGB2RGB565_AA(struct _fb_rect* RTGUI_RESTRICT sr
             rt_uint8_t a00, a01, a10, a11;
             int rx, ry, sx, sy;
 
-            bx += invm->m[0];
-            by += invm->m[1];
+            bx += dx;
+            by += dy;
 
             rx = bx / 1024;
             ry = by / 1024;
