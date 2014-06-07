@@ -18,6 +18,8 @@
 #include <rtgui/rtgui_system.h>
 #include <rtgui/filerw.h>
 
+#include <ctype.h>
+
 #include "text_encoding.h"
 
 #define RTGUI_EDIT_CARET_TIMEOUT (RT_TICK_PER_SECOND/2)
@@ -1013,44 +1015,37 @@ rt_inline rt_uint16_t query_caps_code(rt_uint16_t key)
     return key;
 }
 
-rt_inline rt_bool_t is_small_keyboard(rt_uint16_t *key)
+rt_inline rt_uint16_t query_num_code(rt_uint16_t key)
 {
-    if (*key >= RTGUIK_KP0 && *key <= RTGUIK_KP9)
+    if (key >= RTGUIK_KP0 && key <= RTGUIK_KP9)
     {
-        *key = *key - (RTGUIK_KP0 - RTGUIK_0);
-        return RT_TRUE;
+        return key - (RTGUIK_KP0 - RTGUIK_0);
     }
-    else if (*key == RTGUIK_KP_PERIOD)
+    else if (key == RTGUIK_KP_PERIOD)
     {
-        *key = '.';
-        return RT_TRUE;
+        return '.';
     }
-    else if (*key == RTGUIK_KP_DIVIDE)
+    else if (key == RTGUIK_KP_DIVIDE)
     {
-        *key = '/';
-        return RT_TRUE;
+        return '/';
     }
-    else if (*key == RTGUIK_KP_MULTIPLY)
+    else if (key == RTGUIK_KP_MULTIPLY)
     {
-        *key = '*';
-        return RT_TRUE;
+        return '*';
     }
-    else if (*key == RTGUIK_KP_MINUS)
+    else if (key == RTGUIK_KP_MINUS)
     {
-        *key = '-';
-        return RT_TRUE;
+        return '-';
     }
-    else if (*key == RTGUIK_KP_PLUS)
+    else if (key == RTGUIK_KP_PLUS)
     {
-        *key = '+';
-        return RT_TRUE;
+        return '+';
     }
-    else if (*key == RTGUIK_KP_ENTER)
+    else if (key == RTGUIK_KP_ENTER)
     {
-        *key = RTGUIK_RETURN;
-        return RT_TRUE;
+        return RTGUIK_RETURN;
     }
-    return RT_FALSE;
+    return key;
 }
 
 void kbd_event_set_key(struct rtgui_event_kbd *ekbd, rt_uint16_t key)
@@ -1079,13 +1074,6 @@ static rt_bool_t rtgui_edit_onkey(struct rtgui_object *object, rtgui_event_t *ev
 
     if (RTGUI_KBD_IS_UP(ekbd))
     {
-        /* reset function key */
-        if (ekbd->key == RTGUIK_RCTRL || ekbd->key == RTGUIK_LCTRL)
-            edit->flag &= ~RTGUI_EDIT_CTRL;
-        else if (ekbd->key == RTGUIK_RALT || ekbd->key == RTGUIK_LALT)
-            edit->flag &= ~RTGUI_EDIT_ALT;
-        else if (ekbd->key == RTGUIK_NUMLOCK)
-            edit->flag ^= RTGUI_EDIT_NUMLOCK;
         return RT_TRUE;
     }
 
@@ -1099,24 +1087,7 @@ static rt_bool_t rtgui_edit_onkey(struct rtgui_object *object, rtgui_event_t *ev
         }
     }
 
-    if (ekbd->key == RTGUIK_RCTRL || ekbd->key == RTGUIK_LCTRL)
-    {
-        /* use CTRL key */
-        edit->flag |= RTGUI_EDIT_CTRL;
-        return RT_FALSE;
-    }
-    else if (ekbd->key == RTGUIK_RALT || ekbd->key == RTGUIK_LALT)
-    {
-        /* use ALT key */
-        edit->flag |= RTGUI_EDIT_ALT;
-        return RT_FALSE;
-    }
-    else if (ekbd->key == RTGUIK_NUMLOCK)
-    {
-        edit->flag |= RTGUI_EDIT_NUMLOCK;
-        return RT_FALSE;
-    }
-    else if (ekbd->key == RTGUIK_DELETE)
+    if (ekbd->key == RTGUIK_DELETE)
     {
         /* delete latter character */
         int ofs = edit->upleft.x + edit->visual.x;
@@ -1578,101 +1549,94 @@ static rt_bool_t rtgui_edit_onkey(struct rtgui_object *object, rtgui_event_t *ev
     }
     else
     {
-        /* FIXME: more check on isprint(unicode)*/
-        if (ekbd->unicode || (ekbd->key < 127))
-        {
-            int char_width;
-            rt_uint16_t input_char;
+        int char_width;
+        rt_uint16_t input_char;
 
-            if (ekbd->unicode)
+        if (ekbd->unicode)
+        {
+            char_width = 2;
+            input_char = ekbd->unicode;
+        }
+        else
+        {
+            char_width = 1;
+            input_char = ekbd->key;
+
+            /* Shift/Caps key does not modify the number pad keys. */
+            if (ekbd->mod & RTGUI_KMOD_NUM && (RTGUIK_KP0 <= input_char &&
+                                               input_char <= RTGUIK_KP_EQUALS))
             {
-                char_width = 2;
-                input_char = ekbd->unicode;
+                input_char = query_num_code(input_char);
             }
             else
             {
-                char_width = 1;
-                input_char = ekbd->key;
-
                 if (ekbd->mod & RTGUI_KMOD_CAPS)
                     input_char = query_caps_code(input_char);
                 if ((ekbd->mod & RTGUI_KMOD_LSHIFT) || (ekbd->mod & RTGUI_KMOD_RSHIFT))
                     input_char = query_shift_code(input_char);
             }
+        }
 
-            /* We don't accept '\0' as input for edit since it could corrupt
-             * various things. */
-            if (input_char == 0)
-                return RT_FALSE;
+        if (char_width == 1 && (input_char >= 127 || !isprint(input_char)))
+            return RT_FALSE;
 
-            /* it's may print character */
-            update_type = EDIT_UPDATE;
-            edit->update.start = edit->visual;
+        /* it's may print character */
+        update_type = EDIT_UPDATE;
+        edit->update.start = edit->visual;
 
-            if (line->len < line->zsize - char_width)
+        if (line->len < line->zsize - char_width)
+        {
+            int ofs = edit->upleft.x + edit->visual.x;
+            if (edit->visual.x >= edit->col_per_page - char_width)
             {
-                int ofs = edit->upleft.x + edit->visual.x;
-                if (edit->visual.x >= edit->col_per_page - char_width)
-                {
-                    edit->upleft.x += char_width;
-                    update_type = EDIT_ONDRAW;
-                }
+                edit->upleft.x += char_width;
+                update_type = EDIT_ONDRAW;
+            }
 
-                if (ofs < line->len)
-                {
-                    char *c;
-                    for (c = &line->text[line->len + char_width - 1];
-                            c != &line->text[ofs];
-                            c--)
-                        *c = *(c - char_width);
-                }
-                if (char_width == 1)
-                {
-                    line->text[ofs] = input_char;
-                }
-                else if (char_width == 2)
-                {
-                    /* little endian */
-                    line->text[ofs]   = input_char >> 8;
-                    line->text[ofs + 1] = input_char & 0xFF;
-                }
-                else
-                {
-                    return RT_FALSE;
-                }
-                if (edit->visual.x < edit->col_per_page - char_width)
-                    edit->visual.x += char_width;
-                line->text[line->len + char_width] = '\0';
-                line->len = rtgui_edit_line_strlen(line->text);
-                edit->update.end.x = line->len;
-                if (edit->update.end.x > edit->col_per_page)
-                    edit->update.end.x = edit->col_per_page;
-                edit->update.end.y = edit->visual.y;
+            if (ofs < line->len)
+            {
+                char *c;
+                for (c = &line->text[line->len + char_width - 1];
+                     c != &line->text[ofs];
+                     c--)
+                    *c = *(c - char_width);
+            }
+            if (char_width == 1)
+            {
+                line->text[ofs] = input_char;
+            }
+            else if (char_width == 2)
+            {
+                /* little endian */
+                line->text[ofs]   = input_char >> 8;
+                line->text[ofs + 1] = input_char & 0xFF;
             }
             else
             {
-                char *tmp;
-                int zsize;
-
-                /* adjust line buffer's zone size */
-                zsize = rtgui_edit_alloc_len(edit->bzsize, line->len + char_width);
-                tmp = (char *)rt_realloc(line->text, zsize);
-                if (!tmp)
-                    return RT_TRUE;
-                line->zsize = zsize;
-                line->text = tmp;
-                rtgui_edit_onkey(object, event); /* reentry */
+                return RT_FALSE;
             }
+            if (edit->visual.x < edit->col_per_page - char_width)
+                edit->visual.x += char_width;
+            line->text[line->len + char_width] = '\0';
+            line->len = rtgui_edit_line_strlen(line->text);
+            edit->update.end.x = line->len;
+            if (edit->update.end.x > edit->col_per_page)
+                edit->update.end.x = edit->col_per_page;
+            edit->update.end.y = edit->visual.y;
         }
         else
         {
-            /* Is small keyboard ? */
-            if (edit->flag & RTGUI_EDIT_NUMLOCK)
-            {
-                if (is_small_keyboard(&ekbd->key))
-                    rtgui_edit_onkey(object, event);
-                /* small keyboard another value reserved */
-            }
+            char *tmp;
+            int zsize;
+
+            /* adjust line buffer's zone size */
+            zsize = rtgui_edit_alloc_len(edit->bzsize, line->len + char_width);
+            tmp = (char *)rt_realloc(line->text, zsize);
+            if (!tmp)
+                return RT_TRUE;
+            line->zsize = zsize;
+            line->text = tmp;
+            rtgui_edit_onkey(object, event); /* reentry */
         }
     }
     line->len = rtgui_edit_line_strlen(line->text);
