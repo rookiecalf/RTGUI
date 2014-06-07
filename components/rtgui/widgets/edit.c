@@ -1660,9 +1660,16 @@ static rt_bool_t rtgui_edit_onkey(struct rtgui_object *object, rtgui_event_t *ev
             }
             else
             {
+                char *tmp;
+                int zsize;
+
                 /* adjust line buffer's zone size */
-                line->zsize = rtgui_edit_alloc_len(edit->bzsize, line->len + char_width);
-                line->text = (char *)rt_realloc(line->text, line->zsize);
+                zsize = rtgui_edit_alloc_len(edit->bzsize, line->len + char_width);
+                tmp = (char *)rt_realloc(line->text, zsize);
+                if (!tmp)
+                    return RT_TRUE;
+                line->zsize = zsize;
+                line->text = tmp;
                 rtgui_edit_onkey(object, event); /* reentry */
             }
         }
