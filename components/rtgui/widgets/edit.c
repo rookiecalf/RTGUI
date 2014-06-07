@@ -955,8 +955,10 @@ static void rtgui_edit_onmouse(struct rtgui_edit *edit, struct rtgui_event_mouse
 
 rt_inline rt_uint16_t query_shift_code(rt_uint16_t key)
 {
-    if (key >= RTGUIK_a && key <= RTGUIK_z)
+    if (RTGUIK_a <= key && key <= RTGUIK_z)
         return (key - 'a' + 'A');
+    else if ('A' <= key && key <= 'Z')
+        return (key - 'A' + 'a');
     else
     {
         switch (key)
