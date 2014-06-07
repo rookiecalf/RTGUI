@@ -1084,10 +1084,6 @@ static rt_bool_t rtgui_edit_onkey(struct rtgui_object *object, rtgui_event_t *ev
             edit->flag &= ~RTGUI_EDIT_CTRL;
         else if (ekbd->key == RTGUIK_RALT || ekbd->key == RTGUIK_LALT)
             edit->flag &= ~RTGUI_EDIT_ALT;
-        else if (ekbd->key == RTGUIK_RSHIFT || ekbd->key == RTGUIK_LSHIFT)
-            edit->flag &= ~RTGUI_EDIT_SHIFT;
-        else if (ekbd->key == RTGUIK_CAPSLOCK)
-            edit->flag ^= RTGUI_EDIT_CAPSLOCK;
         else if (ekbd->key == RTGUIK_NUMLOCK)
             edit->flag ^= RTGUI_EDIT_NUMLOCK;
         return RT_TRUE;
@@ -1113,17 +1109,6 @@ static rt_bool_t rtgui_edit_onkey(struct rtgui_object *object, rtgui_event_t *ev
     {
         /* use ALT key */
         edit->flag |= RTGUI_EDIT_ALT;
-        return RT_FALSE;
-    }
-    else if (ekbd->key == RTGUIK_RSHIFT || ekbd->key == RTGUIK_LSHIFT)
-    {
-        /* use SHIFT key */
-        edit->flag |= RTGUI_EDIT_SHIFT;
-        return RT_FALSE;
-    }
-    else if (ekbd->key == RTGUIK_CAPSLOCK)
-    {
-        edit->flag |= RTGUI_EDIT_CAPSLOCK;
         return RT_FALSE;
     }
     else if (ekbd->key == RTGUIK_NUMLOCK)
@@ -1607,12 +1592,18 @@ static rt_bool_t rtgui_edit_onkey(struct rtgui_object *object, rtgui_event_t *ev
             else
             {
                 char_width = 1;
-                if (edit->flag & RTGUI_EDIT_CAPSLOCK)
-                    ekbd->key = query_caps_code(ekbd->key);
-                if (edit->flag & RTGUI_EDIT_SHIFT)
-                    ekbd->key = query_shift_code(ekbd->key);
                 input_char = ekbd->key;
+
+                if (ekbd->mod & RTGUI_KMOD_CAPS)
+                    input_char = query_caps_code(input_char);
+                if ((ekbd->mod & RTGUI_KMOD_LSHIFT) || (ekbd->mod & RTGUI_KMOD_RSHIFT))
+                    input_char = query_shift_code(input_char);
             }
+
+            /* We don't accept '\0' as input for edit since it could corrupt
+             * various things. */
+            if (input_char == 0)
+                return RT_FALSE;
 
             /* it's may print character */
             update_type = EDIT_UPDATE;
