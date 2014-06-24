@@ -321,6 +321,7 @@ rt_err_t rtgui_topwin_remove(struct rtgui_win *wid)
         rtgui_topwin_redraw(rtgui_region_extents(&region));
     }
 
+    rtgui_region_fini(&region);
     _rtgui_topwin_free_tree(topwin);
 
     return RT_EOK;
@@ -829,6 +830,8 @@ void rtgui_topwin_resize(struct rtgui_win *wid, rtgui_rect_t *rect)
 
     /* update old window coverage area */
     rtgui_topwin_redraw(rtgui_region_extents(&region));
+
+    rtgui_region_fini(&region);
 }
 
 static struct rtgui_topwin *_rtgui_topwin_get_focus_from_list(struct rt_list_node *list)
@@ -993,6 +996,8 @@ static void rtgui_topwin_update_clip(void)
             top = top->parent;
         }
     }
+
+    rtgui_region_fini(&region_available);
 }
 
 static void _rtgui_topwin_redraw_tree(struct rt_list_node *list,

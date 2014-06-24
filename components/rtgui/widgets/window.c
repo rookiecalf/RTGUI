@@ -792,6 +792,7 @@ struct rtgui_dc *rtgui_win_get_drawing(rtgui_win_t * win)
 		rtgui_region_intersect(&(RTGUI_WIDGET(win)->clip),
 							   &(RTGUI_WIDGET(win)->clip),
 							   &clip_region);
+		rtgui_region_fini(&region);
 		rtgui_region_fini(&clip_region);
 
 		rtgui_win_update_clip(win);
