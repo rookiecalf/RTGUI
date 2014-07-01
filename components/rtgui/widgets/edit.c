@@ -513,6 +513,25 @@ rt_bool_t rtgui_edit_insert_line(struct rtgui_edit *edit, struct edit_line *p, c
 }
 RTM_EXPORT(rtgui_edit_insert_line);
 
+static void _edit_del_line(struct rtgui_edit *edit, struct edit_line *line)
+{
+    if (edit->head == line)
+        edit->head = line->next;
+    if (line->prev)
+        line->prev->next = line->next;
+    if (line->next)
+        line->next->prev = line->prev;
+
+    if (edit->max_rows > 0)
+        edit->max_rows--;
+    _line_add_ln_from(line->next, -1);
+    if (edit->on_delete_line)
+        edit->on_delete_line(edit, line);
+    if (line->text)
+        rtgui_free(line->text);
+    rtgui_free(line);
+}
+
 rt_bool_t rtgui_edit_delete_line(struct rtgui_edit *edit, struct edit_line *line)
 {
     int redraw = 0;
@@ -531,21 +550,7 @@ rt_bool_t rtgui_edit_delete_line(struct rtgui_edit *edit, struct edit_line *line
     if (edit->update.start.y < 0)
         edit->update.start.y = 0;
 
-    if (edit->head == line)
-        edit->head = line->next;
-    if (line->prev)
-        line->prev->next = line->next;
-    if (line->next)
-        line->next->prev = line->prev;
-
-    if (edit->max_rows > 0)
-        edit->max_rows--;
-    _line_add_ln_from(line->next, -1);
-    if (edit->on_delete_line)
-        edit->on_delete_line(edit, line);
-    if (line->text)
-        rtgui_free(line->text);
-    rtgui_free(line);
+    _edit_del_line(edit, line);
 
     _edit_hide_caret(edit);
     comming_line = rtgui_edit_get_line_by_index(edit,
@@ -604,20 +609,19 @@ RTM_EXPORT(rtgui_edit_delete_line);
 
 void rtgui_edit_clear_text(struct rtgui_edit *edit)
 {
-    struct edit_line *line;
-
     RT_ASSERT(edit != RT_NULL);
 
-    /* Get the tail. */
-    for (line = edit->head; line && line->next; line = line->next)
-        ;
-    /* In order to avoid useless redrawings, delete from tail to head. */
-    while (line)
-    {
-        struct edit_line *pl = line->prev;
-        rtgui_edit_delete_line(edit, line);
-        line = pl;
-    }
+    /* Call the low level API so we don't update in the middle, thus avoiding
+     * flickering. */
+    _edit_hide_caret(edit);
+    while (edit->head)
+        _edit_del_line(edit, edit->head);
+    edit->upleft.x = 0;
+    edit->upleft.y = 0;
+    edit->visual.x = 0;
+    edit->visual.y = 0;
+    rtgui_widget_update(RTGUI_WIDGET(edit));
+    _edit_show_caret(edit);
 }
 RTM_EXPORT(rtgui_edit_clear_text);
 
