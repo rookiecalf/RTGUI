@@ -103,11 +103,10 @@ rt_err_t rtgui_topwin_add(struct rtgui_event_win_create *event)
         return -RT_ERROR;
 
     topwin->wid    = event->wid;
-#ifdef RTGUI_USING_SMALL_SIZE
-    topwin->extent = RTGUI_WIDGET(event->wid)->extent;
-#else
-    topwin->extent = event->extent;
-#endif
+    if (event->wid->_title_wgt)
+        topwin->extent = RTGUI_WIDGET(event->wid->_title_wgt)->extent;
+    else
+        topwin->extent = RTGUI_WIDGET(event->wid)->extent;
     topwin->app    = event->parent.sender;
 
     if (event->parent_window == RT_NULL)
@@ -130,44 +129,15 @@ rt_err_t rtgui_topwin_add(struct rtgui_event_win_create *event)
     rt_list_init(&topwin->child_list);
 
     topwin->flag = WINTITLE_INIT;
-    if (event->parent.user & RTGUI_WIN_STYLE_NO_TITLE) topwin->flag |= WINTITLE_NO;
-    if (event->parent.user & RTGUI_WIN_STYLE_CLOSEBOX) topwin->flag |= WINTITLE_CLOSEBOX;
-    if (!(event->parent.user & RTGUI_WIN_STYLE_NO_BORDER)) topwin->flag |= WINTITLE_BORDER;
-    if (event->parent.user & RTGUI_WIN_STYLE_NO_FOCUS) topwin->flag |= WINTITLE_NOFOCUS;
-    if (event->parent.user & RTGUI_WIN_STYLE_ONTOP) topwin->flag |= WINTITLE_ONTOP;
-    if (event->parent.user & RTGUI_WIN_STYLE_ONBTM) topwin->flag |= WINTITLE_ONBTM;
+    if (event->parent.user & RTGUI_WIN_STYLE_NO_FOCUS)
+        topwin->flag |= WINTITLE_NOFOCUS;
+    if (event->parent.user & RTGUI_WIN_STYLE_ONTOP)
+        topwin->flag |= WINTITLE_ONTOP;
+    if (event->parent.user & RTGUI_WIN_STYLE_ONBTM)
+        topwin->flag |= WINTITLE_ONBTM;
 
-    if (!(topwin->flag & WINTITLE_NO) || (topwin->flag & WINTITLE_BORDER))
-    {
-        /* get win extent */
-        rtgui_rect_t rect = topwin->extent;
+    topwin->title = RT_NULL;
 
-        /* add border rect */
-        if (topwin->flag & WINTITLE_BORDER)
-        {
-            rtgui_rect_inflate(&rect, WINTITLE_BORDER_SIZE);
-        }
-
-        /* add title rect */
-        if (!(topwin->flag & WINTITLE_NO)) rect.y1 -= WINTITLE_HEIGHT;
-
-#ifdef RTGUI_USING_SMALL_SIZE
-        topwin->title = rtgui_wintitle_create(topwin->wid, event->wid->title);
-#else
-        topwin->title = rtgui_wintitle_create(topwin->wid, (const char *)event->title);
-#endif
-        rtgui_widget_set_rect(RTGUI_WIDGET(topwin->title), &rect);
-
-        /* update clip info */
-        rtgui_region_subtract_rect(&(RTGUI_WIDGET(topwin->title)->clip),
-                                   &(RTGUI_WIDGET(topwin->title)->clip),
-                                   &(topwin->extent));
-    }
-    else
-    {
-        topwin->title = RT_NULL;
-    }
-	
     rtgui_list_init(&topwin->monitor_list);
 
     return RT_EOK;
@@ -248,10 +218,7 @@ static void _rtgui_topwin_union_region_tree(struct rtgui_topwin *topwin,
     rt_list_foreach(node, &topwin->child_list, next)
     _rtgui_topwin_union_region_tree(get_topwin_from_list(node), region);
 
-    if (topwin->title != RT_NULL)
-        rtgui_region_union_rect(region, region, &RTGUI_WIDGET(topwin->title)->extent);
-    else
-        rtgui_region_union_rect(region, region, &topwin->extent);
+    rtgui_region_union_rect(region, region, &topwin->extent);
 }
 
 /* The return value of this function is the next node in tree.
@@ -281,10 +248,6 @@ static struct rt_list_node *_rtgui_topwin_free_tree(struct rtgui_topwin *topwin)
         topwin->monitor_list.next = topwin->monitor_list.next->next;
         rtgui_free(monitor);
     }
-
-    /* destroy win title */
-    rtgui_wintitle_destroy(topwin->title);
-    topwin->title = RT_NULL;
 
     rtgui_free(topwin);
     return next_node;
@@ -346,12 +309,6 @@ static void _rtgui_topwin_only_activate(struct rtgui_topwin *topwin)
 
     event.wid = topwin->wid;
     rtgui_send(topwin->app, &(event.parent), sizeof(struct rtgui_event_win));
-
-    /* redraw title */
-    if (topwin->title != RT_NULL)
-    {
-        rtgui_theme_draw_win(topwin);
-    }
 }
 
 /* activate next window in the same layer as flag. The flag has many other
@@ -382,12 +339,6 @@ static void _rtgui_topwin_deactivate(struct rtgui_topwin *topwin)
                &event.parent, sizeof(struct rtgui_event_win));
 
     topwin->flag &= ~WINTITLE_ACTIVATE;
-
-    /* redraw title */
-    if (topwin->title != RT_NULL)
-    {
-        rtgui_theme_draw_win(topwin);
-    }
 }
 
 /* Return 1 on the tree is truely moved. If the tree is already in position,
@@ -508,11 +459,6 @@ static void _rtgui_topwin_draw_tree(struct rtgui_topwin *topwin, struct rtgui_ev
         _rtgui_topwin_draw_tree(get_topwin_from_list(node), epaint);
     }
 
-    if (topwin->title != RT_NULL)
-    {
-        rtgui_theme_draw_win(topwin);
-    }
-
     epaint->wid = topwin->wid;
     rtgui_send(topwin->app, &(epaint->parent), sizeof(*epaint));
 }
@@ -598,10 +544,6 @@ rt_inline void _rtgui_topwin_preorder_map(struct rtgui_topwin *topwin, void (*fu
 rt_inline void _rtgui_topwin_mark_hidden(struct rtgui_topwin *topwin)
 {
     topwin->flag &= ~WINTITLE_SHOWN;
-    if (topwin->title != RT_NULL)
-    {
-        RTGUI_WIDGET_HIDE(topwin->title);
-    }
     RTGUI_WIDGET_HIDE(topwin->wid);
 }
 
@@ -611,10 +553,6 @@ rt_inline void _rtgui_topwin_mark_shown(struct rtgui_topwin *topwin)
         return;
 
     topwin->flag |= WINTITLE_SHOWN;
-    if (topwin->title != RT_NULL)
-    {
-        RTGUI_WIDGET_UNHIDE(topwin->title);
-    }
 
     if (RTGUI_WIDGET_IS_HIDE(topwin->wid))
     {
@@ -745,13 +683,6 @@ rt_err_t rtgui_topwin_move(struct rtgui_event_win_move *event)
     /* move window rect */
     rtgui_rect_moveto(&(topwin->extent), dx, dy);
 
-    /* move window title */
-    if (topwin->title != RT_NULL)
-    {
-        old_rect = RTGUI_WIDGET(topwin->title)->extent;
-        rtgui_widget_move_to_logic(RTGUI_WIDGET(topwin->title), dx, dy);
-    }
-
     /* move the monitor rect list */
     rtgui_list_foreach(node, &(topwin->monitor_list))
     {
@@ -767,9 +698,6 @@ rt_err_t rtgui_topwin_move(struct rtgui_event_win_move *event)
     /* update old window coverage area */
     rtgui_topwin_redraw(&old_rect);
 
-    /* update top window title */
-    if (topwin->title != RT_NULL)
-        rtgui_theme_draw_win(topwin);
     if (rtgui_rect_is_intersect(&old_rect, &(topwin->extent)) != RT_EOK)
     {
         /*
@@ -806,24 +734,6 @@ void rtgui_topwin_resize(struct rtgui_win *wid, rtgui_rect_t *rect)
     rtgui_region_union_rect(&region, &region, rect);
 
     topwin->extent = *rect;
-
-    if (topwin->title != RT_NULL)
-    {
-        /* get win extent */
-        rtgui_rect_t rect = topwin->extent;
-
-        /* add border rect */
-        if (topwin->flag & WINTITLE_BORDER)
-        {
-            rtgui_rect_inflate(&rect, WINTITLE_BORDER_SIZE);
-        }
-
-        /* add title rect */
-        if (!(topwin->flag & WINTITLE_NO))
-            rect.y1 -= WINTITLE_HEIGHT;
-
-        RTGUI_WIDGET(topwin->title)->extent = rect;
-    }
 
     /* update windows clip info */
     rtgui_topwin_update_clip();
@@ -882,12 +792,7 @@ static struct rtgui_topwin *_rtgui_topwin_get_wnd_from_tree(struct rt_list_node 
         if (exclude_modaled && (topwin->flag & WINTITLE_MODALED))
             break;
 
-        if ((topwin->title != RT_NULL) &&
-                rtgui_rect_contains_point(&(RTGUI_WIDGET(topwin->title)->extent), x, y) == RT_EOK)
-        {
-            return topwin;
-        }
-        else if (rtgui_rect_contains_point(&(topwin->extent), x, y) == RT_EOK)
+        if (rtgui_rect_contains_point(&(topwin->extent), x, y) == RT_EOK)
         {
             return topwin;
         }
@@ -907,30 +812,28 @@ struct rtgui_topwin *rtgui_topwin_get_wnd_no_modaled(int x, int y)
 }
 
 /* clip region from topwin, and the windows beneath it. */
-rt_inline void _rtgui_topwin_clip_to_region(
-        struct rtgui_topwin *topwin,
-        struct rtgui_region *region)
+rt_inline void _rtgui_topwin_clip_to_region(struct rtgui_topwin *topwin,
+                                            struct rtgui_region *region)
 {
+    struct rtgui_widget *winwt;
+
     RT_ASSERT(region != RT_NULL);
     RT_ASSERT(topwin != RT_NULL);
 
-    if (topwin->title != RT_NULL)
+    winwt = RTGUI_WIDGET(topwin->wid);
+
+    if (topwin->wid->_title_wgt)
     {
-        rtgui_region_reset(&(RTGUI_WIDGET(topwin->title)->clip),
-                           &(RTGUI_WIDGET(topwin->title)->extent));
-        rtgui_region_intersect(&(RTGUI_WIDGET(topwin->title)->clip),
-                               &(RTGUI_WIDGET(topwin->title)->clip),
-                               region);
-        rtgui_region_subtract_rect(&(RTGUI_WIDGET(topwin->title)->clip),
-                                   &(RTGUI_WIDGET(topwin->title)->clip),
-                                   &topwin->extent);
+        struct rtgui_widget *wintwt = RTGUI_WIDGET(topwin->wid->_title_wgt);
+
+        rtgui_region_reset(&wintwt->clip, &wintwt->extent);
+        rtgui_region_intersect(&wintwt->clip, &wintwt->clip, region);
+        rtgui_region_subtract_rect(&wintwt->clip, &wintwt->clip,
+                                   &winwt->extent);
     }
 
-    rtgui_region_reset(&RTGUI_WIDGET(topwin->wid)->clip,
-                       &RTGUI_WIDGET(topwin->wid)->extent);
-    rtgui_region_intersect(&RTGUI_WIDGET(topwin->wid)->clip,
-                           &RTGUI_WIDGET(topwin->wid)->clip,
-                           region);
+    rtgui_region_reset(&winwt->clip, &winwt->extent);
+    rtgui_region_intersect(&winwt->clip, &winwt->clip, region);
 }
 
 static void rtgui_topwin_update_clip(void)
@@ -966,10 +869,7 @@ static void rtgui_topwin_update_clip(void)
         _rtgui_topwin_clip_to_region(top, &region_available);
 
         /* update available region */
-        if (top->title != RT_NULL)
-            rtgui_region_subtract_rect(&region_available, &region_available, &RTGUI_WIDGET(top->title)->extent);
-        else
-            rtgui_region_subtract_rect(&region_available, &region_available, &top->extent);
+        rtgui_region_subtract_rect(&region_available, &region_available, &top->extent);
 
         /* send clip event to destination window */
         eclip.wid = top->wid;
@@ -1028,12 +928,6 @@ static void _rtgui_topwin_redraw_tree(struct rt_list_node *list,
         {
             epaint->wid = topwin->wid;
             rtgui_send(topwin->app, &(epaint->parent), sizeof(*epaint));
-
-            /* draw title */
-            if (topwin->title != RT_NULL)
-            {
-                rtgui_theme_draw_win(topwin);
-            }
         }
 
         _rtgui_topwin_redraw_tree(&topwin->child_list, rect, epaint);
@@ -1082,68 +976,6 @@ rt_err_t rtgui_topwin_modal_enter(struct rtgui_event_win_modal_enter *event)
     topwin->flag |= WINTITLE_MODALING;
 
     return RT_EOK;
-}
-
-void rtgui_topwin_title_onmouse(struct rtgui_topwin *win, struct rtgui_event_mouse *event)
-{
-    /* let window to process this mouse event */
-    if (rtgui_rect_contains_point(&win->extent, event->x, event->y) == RT_EOK)
-    {
-        /* send mouse event to thread */
-        rtgui_send(win->app, &(event->parent), sizeof(struct rtgui_event_mouse));
-        return;
-    }
-
-    if (win->flag & WINTITLE_CLOSEBOX)
-    {
-        rtgui_rect_t rect;
-
-        /* get close button rect (device value) */
-        rect.x1 = RTGUI_WIDGET(win->title)->extent.x2 - WINTITLE_BORDER_SIZE - WINTITLE_CB_WIDTH - 3;
-        rect.y1 = RTGUI_WIDGET(win->title)->extent.y1 + WINTITLE_BORDER_SIZE + 3;
-        rect.x2 = rect.x1 + WINTITLE_CB_WIDTH;
-        rect.y2 = rect.y1 + WINTITLE_CB_HEIGHT;
-
-        if (event->button & RTGUI_MOUSE_BUTTON_LEFT)
-        {
-            if (event->button & RTGUI_MOUSE_BUTTON_DOWN)
-            {
-                if (rtgui_rect_contains_point(&rect, event->x, event->y) == RT_EOK)
-                {
-                    win->flag |= WINTITLE_CB_PRESSED;
-                    rtgui_theme_draw_win(win);
-                }
-#ifdef RTGUI_USING_WINMOVE
-                else
-                {
-                    /* maybe move window */
-                    rtgui_winrect_set(win);
-                }
-#endif
-            }
-            else if (win->flag & WINTITLE_CB_PRESSED &&
-                     event->button & RTGUI_MOUSE_BUTTON_UP &&
-                     rtgui_rect_contains_point(&rect, event->x, event->y) == RT_EOK)
-            {
-                struct rtgui_event_win event;
-
-                win->flag &= ~WINTITLE_CB_PRESSED;
-                rtgui_theme_draw_win(win);
-
-                /* send close event to window */
-                RTGUI_EVENT_WIN_CLOSE_INIT(&event);
-                event.wid = win->wid;
-                rtgui_send(win->app, &(event.parent), sizeof(struct rtgui_event_win));
-            }
-        }
-    }
-    else if (event->button & RTGUI_MOUSE_BUTTON_DOWN)
-    {
-#ifdef RTGUI_USING_WINMOVE
-        /* maybe move window */
-        rtgui_winrect_set(win);
-#endif
-    }
 }
 
 void rtgui_topwin_append_monitor_rect(struct rtgui_win *wid, rtgui_rect_t *rect)

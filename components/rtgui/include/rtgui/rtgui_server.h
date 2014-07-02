@@ -22,13 +22,9 @@
 /* top window definitions in server */
 enum rtgui_topwin_flag
 {
-	WINTITLE_INIT   	=  0x00,
-    WINTITLE_NO         =  0x01,
-    WINTITLE_BORDER     =  0x02,
+    WINTITLE_INIT       =  0x00,
     WINTITLE_ACTIVATE   =  0x04,
-    WINTITLE_CLOSEBOX   =  0x08,
     WINTITLE_MOVE       =  0x0C,
-    WINTITLE_CB_PRESSED =  0x10,
     WINTITLE_NOFOCUS    =  0x20,
     /* window is hidden by default */
     WINTITLE_SHOWN      =  0x40,

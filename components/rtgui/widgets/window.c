@@ -20,6 +20,7 @@
 
 #include <rtgui/widgets/window.h>
 #include <rtgui/widgets/button.h>
+#include <rtgui/widgets/title.h>
 
 static void _rtgui_win_constructor(rtgui_win_t *win)
 {
@@ -41,6 +42,7 @@ static void _rtgui_win_constructor(rtgui_win_t *win)
     win->on_close      = RT_NULL;
     win->on_key        = RT_NULL;
     win->title         = RT_NULL;
+    win->_title_wgt    = RT_NULL;
     win->modal_code    = RTGUI_MODAL_OK;
 
     /* initialize last mouse event handled widget */
@@ -79,6 +81,8 @@ static void _rtgui_win_destructor(rtgui_win_t *win)
     }
 
     /* release field */
+    if (win->_title_wgt)
+        rtgui_widget_destroy(RTGUI_WIDGET(win->_title_wgt));
     if (win->title != RT_NULL)
         rt_free(win->title);
     /* release external clip info */
@@ -96,10 +100,6 @@ static rt_bool_t _rtgui_win_create_in_server(struct rtgui_win *win)
         ecreate.parent_window = win->parent_window;
         ecreate.wid           = win;
         ecreate.parent.user   = win->style;
-#ifndef RTGUI_USING_SMALL_SIZE
-        ecreate.extent        = RTGUI_WIDGET(win)->extent;
-        rt_strncpy((char *)ecreate.title, (char *)win->title, RTGUI_NAME_MAX);
-#endif
 
         if (rtgui_server_post_event_sync(RTGUI_EVENT(&ecreate),
                                          sizeof(struct rtgui_event_win_create)
@@ -144,6 +144,32 @@ rtgui_win_t *rtgui_win_create(struct rtgui_win *parent_window,
 
     rtgui_widget_set_rect(RTGUI_WIDGET(win), rect);
     win->style = style;
+
+    if (!((style & RTGUI_WIN_STYLE_NO_TITLE) && (style & RTGUI_WIN_STYLE_NO_BORDER)))
+    {
+        struct rtgui_rect trect = *rect;
+
+        win->_title_wgt = rtgui_wintitle_create(win);
+        if (!win->_title_wgt)
+            goto __on_err;
+
+        if (!(style & RTGUI_WIN_STYLE_NO_BORDER))
+        {
+            rtgui_rect_inflate(&trect, WINTITLE_BORDER_SIZE);
+        }
+        if (!(style & RTGUI_WIN_STYLE_NO_TITLE))
+        {
+            trect.y1 -= WINTITLE_HEIGHT;
+        }
+        rtgui_widget_set_rect(RTGUI_WIDGET(win->_title_wgt), &trect);
+        /* Update the clip of the wintitle manually. */
+        rtgui_region_subtract_rect(&(RTGUI_WIDGET(win->_title_wgt)->clip),
+                                   &(RTGUI_WIDGET(win->_title_wgt)->clip),
+                                   &(RTGUI_WIDGET(win)->extent));
+
+        /* The window title is always un-hidden for simplicity. */
+        rtgui_widget_show(RTGUI_WIDGET(win->_title_wgt));
+    }
 
     if (_rtgui_win_create_in_server(win) == RT_FALSE)
     {
@@ -257,6 +283,7 @@ rt_base_t rtgui_win_show(struct rtgui_win *win, rt_bool_t is_modal)
         return exit_code;
 
     win->flag &= ~RTGUI_WIN_FLAG_CLOSED;
+    win->flag &= ~RTGUI_WIN_FLAG_CB_PRESSED;
 
     /* if it does not register into server, create it in server */
     if (!(win->flag & RTGUI_WIN_FLAG_CONNECTED))
@@ -374,20 +401,34 @@ RTM_EXPORT(rtgui_win_is_activated);
 
 void rtgui_win_move(struct rtgui_win *win, int x, int y)
 {
+    struct rtgui_widget *wgt;
     struct rtgui_event_win_move emove;
+    int dx, dy;
     RTGUI_EVENT_WIN_MOVE_INIT(&emove);
 
     if (win == RT_NULL)
         return;
 
-    /* move window to logic position */
-    rtgui_widget_move_to_logic(RTGUI_WIDGET(win),
-                               x - RTGUI_WIDGET(win)->extent.x1,
-                               y - RTGUI_WIDGET(win)->extent.y1);
+    if (win->_title_wgt)
+    {
+        wgt = RTGUI_WIDGET(win->_title_wgt);
+        dx = x - wgt->extent.x1;
+        dy = y - wgt->extent.y1;
+        rtgui_widget_move_to_logic(wgt, dx, dy);
+
+        wgt = RTGUI_WIDGET(win);
+        rtgui_widget_move_to_logic(wgt, dx, dy);
+    }
+    else
+    {
+        wgt = RTGUI_WIDGET(win);
+        dx = x - wgt->extent.x1;
+        dy = y - wgt->extent.y1;
+        rtgui_widget_move_to_logic(wgt, dx, dy);
+    }
 
     if (win->flag & RTGUI_WIN_FLAG_CONNECTED)
     {
-        /* set win hide firstly */
         rtgui_widget_hide(RTGUI_WIDGET(win));
 
         emove.wid   = win;
@@ -400,7 +441,6 @@ void rtgui_win_move(struct rtgui_win *win, int x, int y)
         }
     }
 
-    /* set window visible */
     rtgui_widget_show(RTGUI_WIDGET(win));
     return;
 }
@@ -451,6 +491,41 @@ void rtgui_win_update_clip(struct rtgui_win *win)
     }
 }
 
+static rt_bool_t _win_handle_mouse_btn(struct rtgui_win *win, struct rtgui_event *eve)
+{
+    /* check whether has widget which handled mouse event before.
+     *
+     * Note #1: that the widget should have already received mouse down
+     * event and we should only feed the mouse up event to it here.
+     *
+     * Note #2: the widget is responsible to clean up
+     * last_mevent_widget on mouse up event(but not overwrite other
+     * widgets). If not, it will receive two mouse up events.
+     */
+    if (((struct rtgui_event_mouse *)eve)->button & RTGUI_MOUSE_BUTTON_UP
+        && win->last_mevent_widget != RT_NULL)
+    {
+        if (RTGUI_OBJECT(win->last_mevent_widget)->event_handler(
+                                                                 RTGUI_OBJECT(win->last_mevent_widget),
+                                                                 eve) == RT_TRUE)
+        {
+            /* clean last mouse event handled widget */
+            win->last_mevent_widget = RT_NULL;
+
+            return RT_TRUE;
+        }
+    }
+
+    /** if a widget will destroy the window in the event_handler(or in
+     * on_* callbacks), it should return RT_TRUE. Otherwise, it will
+     * crash the application.
+     *
+     * TODO: add it in the doc
+     */
+    return rtgui_container_dispatch_mouse_event(RTGUI_CONTAINER(win),
+                                               (struct rtgui_event_mouse *)eve);
+}
+
 rt_bool_t rtgui_win_event_handler(struct rtgui_object *object, struct rtgui_event *event)
 {
     struct rtgui_win *win;
@@ -492,6 +567,9 @@ rt_bool_t rtgui_win_event_handler(struct rtgui_object *object, struct rtgui_even
         }
 
         win->flag |= RTGUI_WIN_FLAG_ACTIVATE;
+        if (win->_title_wgt)
+            rtgui_widget_update(RTGUI_WIDGET(win->_title_wgt));
+
         if (win->on_activate != RT_NULL)
         {
             win->on_activate(RTGUI_OBJECT(object), event);
@@ -514,6 +592,9 @@ rt_bool_t rtgui_win_event_handler(struct rtgui_object *object, struct rtgui_even
         else
         {
             win->flag &= ~RTGUI_WIN_FLAG_ACTIVATE;
+            if (win->_title_wgt)
+                rtgui_widget_update(RTGUI_WIDGET(win->_title_wgt));
+
             if (win->on_deactivate != RT_NULL)
             {
                 win->on_deactivate(RTGUI_OBJECT(object), event);
@@ -527,6 +608,8 @@ rt_bool_t rtgui_win_event_handler(struct rtgui_object *object, struct rtgui_even
         break;
 
     case RTGUI_EVENT_PAINT:
+        if (win->_title_wgt)
+            rtgui_widget_update(RTGUI_WIDGET(win->_title_wgt));
         rtgui_win_ondraw(win);
         break;
 
@@ -547,43 +630,20 @@ rt_bool_t rtgui_win_event_handler(struct rtgui_object *object, struct rtgui_even
 		break;
 	}
 
-    case RTGUI_EVENT_MOUSE_BUTTON:
+    case RTGUI_EVENT_MOUSE_BUTTON: {
+        struct rtgui_event_mouse *emouse = (struct rtgui_event_mouse*)event;
+
+        if (rtgui_rect_contains_point(&RTGUI_WIDGET(win)->extent,
+                                      emouse->x, emouse->y) == RT_EOK)
+            return _win_handle_mouse_btn(win, event);
+
+        if (win->_title_wgt)
         {
-            rt_bool_t res;
-
-            /* check whether has widget which handled mouse event before.
-             *
-             * Note #1: that the widget should have already received mouse down
-             * event and we should only feed the mouse up event to it here.
-             *
-             * Note #2: the widget is responsible to clean up
-             * last_mevent_widget on mouse up event(but not overwrite other
-             * widgets). If not, it will receive two mouse up events.
-             */
-            if (((struct rtgui_event_mouse *)event)->button & RTGUI_MOUSE_BUTTON_UP
-                    && win->last_mevent_widget != RT_NULL)
-            {
-                if (RTGUI_OBJECT(win->last_mevent_widget)->event_handler(
-                        RTGUI_OBJECT(win->last_mevent_widget),
-                        event) == RT_TRUE)
-                {
-                    /* clean last mouse event handled widget */
-                    win->last_mevent_widget = RT_NULL;
-
-                    return RT_TRUE;
-                }
-            }
-
-            /** if a widget will destroy the window in the event_handler(or in
-             * on_* callbacks), it should return RT_TRUE. Otherwise, it will
-             * crash the application.
-             *
-             * TODO: add it in the doc
-             */
-            res = rtgui_container_dispatch_mouse_event(RTGUI_CONTAINER(win),
-                                        (struct rtgui_event_mouse *)event);
-            return res;
+            struct rtgui_object *tobj = RTGUI_OBJECT(win->_title_wgt);
+            return tobj->event_handler(tobj, event);
         }
+    }
+    break;
 
     case RTGUI_EVENT_MOUSE_MOTION:
 #if 0

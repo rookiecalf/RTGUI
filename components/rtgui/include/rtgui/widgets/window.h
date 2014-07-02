@@ -60,10 +60,9 @@ enum rtgui_win_flag
      * If this flag is set, we are in key-handling mode.
      */
     RTGUI_WIN_FLAG_HANDLE_KEY  = 0x20,
-};
 
-struct rtgui_win_title;
-struct rtgui_win_area;
+    RTGUI_WIN_FLAG_CB_PRESSED  = 0x40,
+};
 
 struct rtgui_win
 {
@@ -95,6 +94,7 @@ struct rtgui_win
 
     /* window title */
     char *title;
+    struct rtgui_wintitle *_title_wgt;
 
     /* call back */
     rt_bool_t (*on_activate)(struct rtgui_object *widget, struct rtgui_event *event);
