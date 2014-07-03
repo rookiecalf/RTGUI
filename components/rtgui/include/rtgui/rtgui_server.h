@@ -23,23 +23,17 @@
 enum rtgui_topwin_flag
 {
     WINTITLE_INIT       =  0x00,
-    WINTITLE_ACTIVATE   =  0x04,
-    WINTITLE_MOVE       =  0x0C,
-    WINTITLE_NOFOCUS    =  0x20,
+    WINTITLE_ACTIVATE   =  0x01,
+    WINTITLE_NOFOCUS    =  0x02,
     /* window is hidden by default */
-    WINTITLE_SHOWN      =  0x40,
+    WINTITLE_SHOWN      =  0x04,
     /* window is modaled by other window */
-    WINTITLE_MODALED    =  0x80,
+    WINTITLE_MODALED    =  0x08,
     /* window is modaling other window */
     WINTITLE_MODALING   = 0x100,
     WINTITLE_ONTOP      = 0x200,
     WINTITLE_ONBTM      = 0x400,
 };
-
-#define WINTITLE_HEIGHT         20
-#define WINTITLE_CB_WIDTH       16
-#define WINTITLE_CB_HEIGHT      16
-#define WINTITLE_BORDER_SIZE    2
 
 struct rtgui_topwin
 {

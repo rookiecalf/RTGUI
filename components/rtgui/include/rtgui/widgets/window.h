@@ -42,6 +42,11 @@ DECLARE_CLASS_TYPE(win);
 
 #define RTGUI_WIN_STYLE_DEFAULT     (RTGUI_WIN_STYLE_CLOSEBOX | RTGUI_WIN_STYLE_MINIBOX)
 
+#define WINTITLE_HEIGHT         20
+#define WINTITLE_CB_WIDTH       16
+#define WINTITLE_CB_HEIGHT      16
+#define WINTITLE_BORDER_SIZE    2
+
 enum rtgui_win_flag
 {
     RTGUI_WIN_FLAG_INIT        = 0x00,  /* init state              */
