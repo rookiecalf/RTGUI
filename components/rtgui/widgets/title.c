@@ -116,6 +116,10 @@ rt_bool_t rtgui_wintile_event_handler(struct rtgui_object *obj, rtgui_event_t *e
 
                     win->flag &= ~RTGUI_WIN_FLAG_CB_PRESSED;
                     rtgui_theme_draw_win(wint);
+#ifdef RTGUI_USING_WINMOVE
+                    /* Reset the window movement state machine. */
+                    rtgui_winrect_moved_done(RT_NULL, RT_NULL);
+#endif
                 }
             }
         }

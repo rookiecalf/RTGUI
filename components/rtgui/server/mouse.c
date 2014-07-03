@@ -439,10 +439,6 @@ rt_bool_t rtgui_winrect_moved_done(rtgui_rect_t *winrect, struct rtgui_win **win
 {
     rt_bool_t moved = RT_FALSE;
 
-    /* no win rect */
-    if (winrect == RT_NULL)
-        return RT_FALSE;
-
     /* restore winrect */
     if (_rtgui_cursor->win_rect_has_saved)
     {
@@ -456,8 +452,10 @@ rt_bool_t rtgui_winrect_moved_done(rtgui_rect_t *winrect, struct rtgui_win **win
     _rtgui_cursor->win_rect_has_saved = RT_FALSE;
 
     /* return win rect */
-    *winrect = _rtgui_cursor->win_rect;
-    *win = _rtgui_cursor->win;
+    if (winrect)
+        *winrect = _rtgui_cursor->win_rect;
+    if (win)
+        *win = _rtgui_cursor->win;
 
     return moved;
 }
