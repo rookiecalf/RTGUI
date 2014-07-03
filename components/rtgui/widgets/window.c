@@ -567,8 +567,8 @@ rt_bool_t rtgui_win_event_handler(struct rtgui_object *object, struct rtgui_even
         }
 
         win->flag |= RTGUI_WIN_FLAG_ACTIVATE;
-        if (win->_title_wgt)
-            rtgui_widget_update(RTGUI_WIDGET(win->_title_wgt));
+        /* A paint event will follow the active event and the title will be
+         * paint there. */
 
         if (win->on_activate != RT_NULL)
         {
@@ -592,6 +592,8 @@ rt_bool_t rtgui_win_event_handler(struct rtgui_object *object, struct rtgui_even
         else
         {
             win->flag &= ~RTGUI_WIN_FLAG_ACTIVATE;
+            /* No paint event follow the deactive event. So we have to update
+             * the title manually to reflect the change. */
             if (win->_title_wgt)
                 rtgui_widget_update(RTGUI_WIDGET(win->_title_wgt));
 
