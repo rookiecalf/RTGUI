@@ -577,31 +577,15 @@ rt_bool_t rtgui_win_event_handler(struct rtgui_object *object, struct rtgui_even
         break;
 
     case RTGUI_EVENT_WIN_DEACTIVATE:
-        if (win->flag & RTGUI_WIN_FLAG_MODAL)
-        {
-            /* FIXME: make modal concept clear and easy. See the comment of
-             * rtgui_topwin_modal_enter. */
-            /* There are various reason that a modal window got deactivated:
-             *     1, it has child windows and the user activate one of them.
-             *     2, the application has more than one root window and the
-             *     user switched to one of the others.
-             *
-             * In any of the cases, we have nothing to do here.
-             */
-        }
-        else
-        {
-            win->flag &= ~RTGUI_WIN_FLAG_ACTIVATE;
-            /* No paint event follow the deactive event. So we have to update
-             * the title manually to reflect the change. */
-            if (win->_title_wgt)
-                rtgui_widget_update(RTGUI_WIDGET(win->_title_wgt));
+        win->flag &= ~RTGUI_WIN_FLAG_ACTIVATE;
+        /* No paint event follow the deactive event. So we have to update
+         * the title manually to reflect the change. */
+        if (win->_title_wgt)
+            rtgui_widget_update(RTGUI_WIDGET(win->_title_wgt));
 
-            if (win->on_deactivate != RT_NULL)
-            {
-                win->on_deactivate(RTGUI_OBJECT(object), event);
-            }
-        }
+        if (win->on_deactivate != RT_NULL)
+            win->on_deactivate(RTGUI_OBJECT(object), event);
+
         break;
 
     case RTGUI_EVENT_CLIP_INFO:
