@@ -355,19 +355,6 @@ void rtgui_theme_draw_textbox(rtgui_textbox_t *box)
         {
             rtgui_dc_draw_text(dc, (char*)box->text, &rect);
         }
-
-        /* draw caret */
-        if (box->flag & RTGUI_TEXTBOX_CARET_SHOW)
-        {
-            rect.x1 += box->position * box->font_width;
-            rect.x2 = rect.x1 + box->font_width;
-
-            rect.y2 -= 2;
-            rect.y1 = rect.y2 - 3;
-
-            RTGUI_WIDGET_BACKGROUND(box) = black;
-            rtgui_dc_fill_rect(dc, &rect);
-        }
     }
 
     /* end drawing */

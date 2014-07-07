@@ -32,9 +32,9 @@ DECLARE_CLASS_TYPE(textbox);
 #define RTGUI_IS_TEXTBOX(obj)    (RTGUI_OBJECT_CHECK_TYPE((obj), RTGUI_TEXTBOX_TYPE))
 
 #define RTGUI_TEXTBOX_DEFAULT_WIDTH     80
-#define RTGUI_TEXTBOX_DEFAULT_HEIGHT        20
+#define RTGUI_TEXTBOX_DEFAULT_HEIGHT    20
 
-#define RTGUI_TEXTBOX_BORDER_WIDTH     1
+#define RTGUI_TEXTBOX_BORDER_WIDTH      1
 
 enum rtgui_textbox_flag
 {
@@ -42,8 +42,6 @@ enum rtgui_textbox_flag
     RTGUI_TEXTBOX_MULTI      = 0x01, /* multiline */
     RTGUI_TEXTBOX_MASK       = 0x02, /* ciphertext */
     RTGUI_TEXTBOX_DIGIT      = 0x04, /* digit */
-    RTGUI_TEXTBOX_CARET_SHOW = 0x10,
-    RTGUI_TEXTBOX_CARET_STAT = 0x20, /* unused */
 };
 
 #define RTGUI_TEXTBOX_LINE_MAX      128  /* text line cache */
@@ -65,12 +63,15 @@ struct rtgui_textbox
 	rt_uint16_t first_pos;
 	char mask_char;
     /** a NULL terminated string that the textbox is holding */
-	unsigned char *text;
+	char *text;
 	rt_size_t font_width;
 
-	rtgui_timer_t *caret_timer;
-	rtgui_color_t *caret;
-	rtgui_rect_t  caret_rect;
+    /* A buffer dc that contain the caret data. We rely on the dc to deal with
+     * the clip thing. */
+	struct rtgui_dc *caret;
+	rtgui_timer_t   *caret_timer;
+    /* Caret print count. Even means hidden, odd mean shown. */
+    int              caret_prtcnt;
 
 	/* textbox private data */
 	rt_bool_t (*on_enter)(struct rtgui_textbox *box, rtgui_event_t *event);
