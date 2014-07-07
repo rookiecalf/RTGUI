@@ -642,7 +642,7 @@ static rt_bool_t rtgui_textbox_onunfocus(struct rtgui_object *widget, rtgui_even
 	return RT_TRUE;
 }
 
-rtgui_textbox_t *rtgui_textbox_create(const char *text, rt_uint32_t flag)
+rtgui_textbox_t *rtgui_textbox_create(const char *text, enum rtgui_textbox_flag flag)
 {
 	rtgui_textbox_t *box;
 

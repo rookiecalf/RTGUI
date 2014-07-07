@@ -36,12 +36,15 @@ DECLARE_CLASS_TYPE(textbox);
 
 #define RTGUI_TEXTBOX_BORDER_WIDTH     1
 
-#define RTGUI_TEXTBOX_SINGLE        0x00
-#define RTGUI_TEXTBOX_MULTI         0x01 /* multiline */
-#define RTGUI_TEXTBOX_MASK          0x02 /* ciphertext */
-#define RTGUI_TEXTBOX_DIGIT         0x04 /* digit */
-#define RTGUI_TEXTBOX_CARET_SHOW    0x10
-#define RTGUI_TEXTBOX_CARET_STAT    0x20 /* unused */
+enum rtgui_textbox_flag
+{
+    RTGUI_TEXTBOX_SINGLE     = 0x00,
+    RTGUI_TEXTBOX_MULTI      = 0x01, /* multiline */
+    RTGUI_TEXTBOX_MASK       = 0x02, /* ciphertext */
+    RTGUI_TEXTBOX_DIGIT      = 0x04, /* digit */
+    RTGUI_TEXTBOX_CARET_SHOW = 0x10,
+    RTGUI_TEXTBOX_CARET_STAT = 0x20, /* unused */
+};
 
 #define RTGUI_TEXTBOX_LINE_MAX      128  /* text line cache */
 
@@ -51,7 +54,7 @@ struct rtgui_textbox
 	struct rtgui_widget parent;
 
 	/* text box flag */
-	rt_uint32_t flag;
+	enum rtgui_textbox_flag flag;
 
 	/* current line and position */
 	rt_uint16_t line, line_begin, position;
@@ -74,7 +77,7 @@ struct rtgui_textbox
 };
 typedef struct rtgui_textbox rtgui_textbox_t;
 
-rtgui_textbox_t *rtgui_textbox_create(const char *text, rt_uint32_t flag);
+rtgui_textbox_t *rtgui_textbox_create(const char *text, enum rtgui_textbox_flag flag);
 void rtgui_textbox_destroy(struct rtgui_textbox *box);
 
 rt_bool_t rtgui_textbox_event_handler(struct rtgui_object *object, struct rtgui_event *event);
