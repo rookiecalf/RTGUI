@@ -13,9 +13,9 @@
  * 2012-08-09     amsl         beta 0.1
  */
 #include <rtgui/dc.h>
+#include <rtgui/rtgui_system.h>
 #include <rtgui/widgets/edit.h>
 #include <rtgui/widgets/scrollbar.h>
-#include <rtgui/rtgui_system.h>
 #include <rtgui/filerw.h>
 
 #include <ctype.h>
@@ -24,10 +24,7 @@
 
 #define RTGUI_EDIT_CARET_TIMEOUT (RT_TICK_PER_SECOND/2)
 
-static void rtgui_edit_get_caret_rect(struct rtgui_edit *edit, rtgui_rect_t *rect, rtgui_point_t visual);
 static void rtgui_edit_init_caret(struct rtgui_edit *edit, rtgui_point_t visual);
-static void rtgui_edit_draw_caret(struct rtgui_edit *edit);
-static void rtgui_edit_timeout(struct rtgui_timer *timer, void *parameter);
 static void rtgui_edit_update(struct rtgui_edit *edit);
 static rt_bool_t rtgui_edit_onfocus(struct rtgui_object *object, rtgui_event_t *event);
 static rt_bool_t rtgui_edit_onunfocus(struct rtgui_object *object, rtgui_event_t *event);
@@ -50,9 +47,7 @@ void _rtgui_edit_constructor(struct rtgui_edit *edit)
     /* set default text align */
     RTGUI_WIDGET_TEXTALIGN(edit) = RTGUI_ALIGN_CENTER_VERTICAL;
     rtgui_widget_set_border(RTGUI_WIDGET(edit), RTGUI_BORDER_SUNKEN);
-    /* set proper of control */
-    edit->caret_timer = RT_NULL;
-    edit->caret = RT_NULL;
+    rtgui_caret_init(&edit->caret, RTGUI_WIDGET(edit));
 
     edit->tabsize = 4;
     edit->margin  = 1;
@@ -89,13 +84,7 @@ void _rtgui_edit_deconstructor(struct rtgui_edit *edit)
             rtgui_edit_delete_line(edit, edit->head);
         edit->max_rows = 0;
     }
-    if (edit->caret_timer != RT_NULL)
-        rtgui_timer_destory(edit->caret_timer);
-    edit->caret_timer = RT_NULL;
-
-    if (edit->caret != RT_NULL)
-        rtgui_free(edit->caret);
-    edit->caret = RT_NULL;
+    rtgui_caret_cleanup(&edit->caret);
 }
 
 DEFINE_CLASS_TYPE(edit, "edit",
@@ -353,14 +342,7 @@ static int _edit_char_width(struct rtgui_edit *edit,
  */
 static void _edit_hide_caret(struct rtgui_edit *edit)
 {
-    if (edit->caret_timer != RT_NULL)
-        rtgui_timer_stop(edit->caret_timer);
-
-    if (edit->flag & RTGUI_EDIT_CARET)
-    {
-        edit->flag &= ~RTGUI_EDIT_CARET;
-        rtgui_edit_draw_caret(edit);
-    }
+    rtgui_caret_clear(&edit->caret);
 }
 
 /* _edit_show_caret should be called after _edit_hide_caret.
@@ -384,11 +366,8 @@ static void _edit_show_caret(struct rtgui_edit *edit)
     RT_ASSERT(!(edit->flag & RTGUI_EDIT_CARET));
 
     rtgui_edit_init_caret(edit, edit->visual);
-    edit->flag |= RTGUI_EDIT_CARET;
-    rtgui_edit_draw_caret(edit);
-
-    if (edit->caret_timer != RT_NULL)
-        rtgui_timer_start(edit->caret_timer);
+    rtgui_caret_show(&edit->caret);
+    rtgui_caret_start_timer(&edit->caret, RTGUI_EDIT_CARET_TIMEOUT);
 }
 
 /* Increase the line number from specific line. */
@@ -743,92 +722,19 @@ static void rtgui_edit_get_caret_rect(struct rtgui_edit *edit, rtgui_rect_t *rec
 
 static void rtgui_edit_init_caret(struct rtgui_edit *edit, rtgui_point_t visual)
 {
-    struct rtgui_graphic_driver *hw_driver = rtgui_graphic_driver_get_default();
-    int x, y;
-    rtgui_color_t color;
     rtgui_rect_t rect;
-    int ofs = 0;
+    struct edit_line *line;
 
     RT_ASSERT(edit != RT_NULL);
     if (!RTGUI_WIDGET_IS_FOCUSED(edit))
         return;
 
-    rtgui_edit_get_caret_rect(edit, &edit->caret_rect, visual);
-    rect = edit->caret_rect;
-    rtgui_widget_rect_to_device(RTGUI_WIDGET(edit), &rect);
-
-    if (edit->caret == RT_NULL)
-        edit->caret = (rtgui_color_t *)rtgui_malloc(rtgui_rect_width(rect) *
-                                                    rtgui_rect_height(rect) *
-                                                    sizeof(rtgui_color_t));
-    rtgui_screen_lock(RT_WAITING_FOREVER);
-    for (x = rect.x1; x < rect.x2; x++)
-    {
-        for (y = rect.y1; y < rect.y2; y++)
-        {
-            hw_driver->ops->get_pixel(&color, x, y);
-            *(edit->caret + ofs++) = color;
-        }
-    }
-    rtgui_screen_unlock();
-}
-
-/* draw caret */
-static void rtgui_edit_draw_caret(struct rtgui_edit *edit)
-{
-    int x, y;
-    rtgui_color_t orig_bg, bg_color;
-    int ofs = 0;
-    struct rtgui_dc *dc;
-
-    RT_ASSERT(edit != RT_NULL);
-    if (edit->caret == RT_NULL)
-        return;
-
-    dc = rtgui_dc_begin_drawing(RTGUI_WIDGET(edit));
-    if (dc == RT_NULL)
-        return;
-
-    orig_bg = RTGUI_WIDGET_BACKGROUND(edit);
-    if (edit->flag & RTGUI_EDIT_CARET)
-        bg_color = ~edit->caret[0];
-    else
-        bg_color = edit->caret[0];
-    RTGUI_WIDGET_BACKGROUND(edit) = bg_color;
-    rtgui_dc_fill_rect(dc, &edit->caret_rect);
-
-    for (x = edit->caret_rect.x1; x < edit->caret_rect.x2; x++)
-    {
-        for (y = edit->caret_rect.y1; y < edit->caret_rect.y2; y++)
-        {
-            rtgui_color_t color = *(edit->caret + ofs);
-
-            ofs++;
-            if (edit->flag & RTGUI_EDIT_CARET)
-                color = ~color;
-            if (color != bg_color)
-                rtgui_dc_draw_color_point(dc, x, y, color);
-        }
-    }
-    RTGUI_WIDGET_BACKGROUND(edit) = orig_bg;
-
-    rtgui_dc_end_drawing(dc);
-}
-
-static void rtgui_edit_timeout(struct rtgui_timer *timer, void *parameter)
-{
-    struct rtgui_edit *edit;
-
-    edit = RTGUI_EDIT(parameter);
-    /* set caret flag */
-    if (edit->flag & RTGUI_EDIT_CARET)
-        edit->flag &= ~RTGUI_EDIT_CARET;
-    else
-        edit->flag |= RTGUI_EDIT_CARET;
-
-    rtgui_edit_draw_caret(edit);
-
-    return;
+    rtgui_edit_get_caret_rect(edit, &rect, visual);
+    line = rtgui_edit_get_line_by_index(edit, visual.y);
+    RT_ASSERT(line);
+    rtgui_caret_fill(&edit->caret,
+                     &rect,
+                     line->text + edit->upleft.x + visual.x);
 }
 
 struct edit_line *rtgui_edit_get_line_by_index(struct rtgui_edit *edit, rt_uint32_t index)
@@ -1667,13 +1573,7 @@ static rt_bool_t rtgui_edit_onfocus(struct rtgui_object *object, rtgui_event_t *
 {
     struct rtgui_edit *edit = RTGUI_EDIT(object);
 
-    edit->caret_timer = rtgui_timer_create(RTGUI_EDIT_CARET_TIMEOUT, RT_TIMER_FLAG_PERIODIC,
-                                           rtgui_edit_timeout, (void *)edit);
-    /* set caret to show */
-    edit->flag |= RTGUI_EDIT_CARET;
-    /* start caret timer */
-    if (edit->caret_timer != RT_NULL)
-        rtgui_timer_start(edit->caret_timer);
+    rtgui_caret_start_timer(&edit->caret, RTGUI_EDIT_CARET_TIMEOUT);
 
     return RT_TRUE;
 }
@@ -1683,11 +1583,7 @@ static rt_bool_t rtgui_edit_onunfocus(struct rtgui_object *object, rtgui_event_t
     struct rtgui_edit *edit = RTGUI_EDIT(object);
 
     _edit_hide_caret(edit);
-    if (edit->caret_timer != RT_NULL)
-    {
-        rtgui_timer_destory(edit->caret_timer);
-        edit->caret_timer = RT_NULL;
-    }
+    rtgui_caret_stop_timer(&edit->caret);
 
     return RT_TRUE;
 }
