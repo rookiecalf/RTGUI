@@ -667,21 +667,21 @@ _exit:
 
 rt_bool_t rtgui_textbox_onfocus(struct rtgui_object *widget, rtgui_event_t *event)
 {
-	rtgui_textbox_t *box = RTGUI_TEXTBOX(widget);
+    rtgui_textbox_t *box = RTGUI_TEXTBOX(widget);
 
-	/* if there is already a timer, don't create another one. */
-	if (box->caret_timer == RT_NULL)
-	{
-		box->caret_timer = rtgui_timer_create(50,
+    /* if there is already a timer, don't create another one. */
+    if (box->caret_timer == RT_NULL)
+    {
+        box->caret_timer = rtgui_timer_create(RT_TICK_PER_SECOND,
                                               RT_TIMER_FLAG_PERIODIC,
                                               rtgui_textbox_timeout,
                                               box);
-		if (box->caret_timer != RT_NULL)
-			rtgui_timer_start(box->caret_timer);
-	}
+        if (box->caret_timer != RT_NULL)
+            rtgui_timer_start(box->caret_timer);
+    }
     rtgui_textbox_init_caret(box, TB_ABSPOS(box));
 
-	return RT_TRUE;
+    return RT_TRUE;
 }
 
 static rt_bool_t rtgui_textbox_onunfocus(struct rtgui_object *widget, rtgui_event_t *event)
