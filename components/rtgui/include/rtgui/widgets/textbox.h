@@ -17,6 +17,7 @@
 #include <rtgui/rtgui_system.h>
 #include <rtgui/widgets/widget.h>
 #include <rtgui/widgets/container.h>
+#include <rtgui/widgets/caret.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -66,12 +67,7 @@ struct rtgui_textbox
 	char *text;
 	rt_size_t font_width;
 
-    /* A buffer dc that contain the caret data. We rely on the dc to deal with
-     * the clip thing. */
-	struct rtgui_dc *caret;
-	rtgui_timer_t   *caret_timer;
-    /* Caret print count. Even means hidden, odd mean shown. */
-    int              caret_prtcnt;
+    struct rtgui_caret caret;
 
 	/* textbox private data */
 	rt_bool_t (*on_enter)(struct rtgui_textbox *box, rtgui_event_t *event);
