@@ -276,9 +276,6 @@ void rtgui_theme_draw_button(rtgui_button_t *btn)
 		}
 		else
 		{
-	        /* remove border */
-	        rtgui_rect_inflate(&rect, -2);
-
 	        /* draw text */
 	        rtgui_dc_draw_text(dc, rtgui_label_get_text(RTGUI_LABEL(btn)), &rect);
 		}
