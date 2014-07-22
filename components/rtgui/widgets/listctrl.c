@@ -396,7 +396,8 @@ void rtgui_listctrl_set_items(rtgui_listctrl_t *ctrl, void *items, rt_uint16_t c
 
     ctrl->items = items;
     ctrl->items_count = count;
-    ctrl->current_item = 0;
+    if (ctrl->current_item >= count)
+        ctrl->current_item = count - 1;
 
     rtgui_widget_get_rect(RTGUI_WIDGET(ctrl), &rect);
     ctrl->page_items = rtgui_rect_height(rect) / (2 + ctrl->item_height);
