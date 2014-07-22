@@ -731,10 +731,14 @@ static void rtgui_edit_init_caret(struct rtgui_edit *edit, rtgui_point_t visual)
 
     rtgui_edit_get_caret_rect(edit, &rect, visual);
     line = rtgui_edit_get_line_by_index(edit, edit->upleft.y + visual.y);
-    RT_ASSERT(line);
-    rtgui_caret_fill(&edit->caret,
-                     &rect,
-                     line->text + edit->upleft.x + visual.x);
+    if (line)
+        rtgui_caret_fill(&edit->caret,
+                         &rect,
+                         line->text + edit->upleft.x + visual.x);
+    else
+        rtgui_caret_fill(&edit->caret,
+                         &rect,
+                         "");
 }
 
 struct edit_line *rtgui_edit_get_line_by_index(struct rtgui_edit *edit, rt_uint32_t index)
