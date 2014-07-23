@@ -496,6 +496,9 @@ void rtgui_win_update_clip(struct rtgui_win *win)
     if (win == RT_NULL)
         return;
 
+    if (win->flag & RTGUI_WIN_FLAG_CLOSED)
+        return;
+
     if (win->_title_wgt)
     {
         /* Reset the inner clip of title. */
