@@ -91,6 +91,7 @@ static void _rtgui_win_destructor(rtgui_win_t *win)
         rt_free(win->title);
         win->title = RT_NULL;
     }
+    rtgui_region_fini(&win->outer_clip);
     /* release external clip info */
     win->drawing = 0;
 }
