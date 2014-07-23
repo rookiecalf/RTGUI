@@ -670,7 +670,7 @@ rt_err_t rtgui_topwin_move(struct rtgui_event_win_move *event)
     /* find in show list */
     topwin = rtgui_topwin_search_in_list(event->wid, &_rtgui_topwin_list);
     if (topwin == RT_NULL ||
-            !(topwin->flag & WINTITLE_SHOWN))
+        !(topwin->flag & WINTITLE_SHOWN))
     {
         return -RT_ERROR;
     }
@@ -815,25 +815,11 @@ struct rtgui_topwin *rtgui_topwin_get_wnd_no_modaled(int x, int y)
 rt_inline void _rtgui_topwin_clip_to_region(struct rtgui_topwin *topwin,
                                             struct rtgui_region *region)
 {
-    struct rtgui_widget *winwt;
-
     RT_ASSERT(region != RT_NULL);
     RT_ASSERT(topwin != RT_NULL);
 
-    winwt = RTGUI_WIDGET(topwin->wid);
-
-    if (topwin->wid->_title_wgt)
-    {
-        struct rtgui_widget *wintwt = RTGUI_WIDGET(topwin->wid->_title_wgt);
-
-        rtgui_region_reset(&wintwt->clip, &wintwt->extent);
-        rtgui_region_intersect(&wintwt->clip, &wintwt->clip, region);
-        rtgui_region_subtract_rect(&wintwt->clip, &wintwt->clip,
-                                   &winwt->extent);
-    }
-
-    rtgui_region_reset(&winwt->clip, &winwt->extent);
-    rtgui_region_intersect(&winwt->clip, &winwt->clip, region);
+    rtgui_region_reset(&topwin->wid->outer_clip, &topwin->wid->outer_extent);
+    rtgui_region_intersect(&topwin->wid->outer_clip, &topwin->wid->outer_clip, region);
 }
 
 static void rtgui_topwin_update_clip(void)

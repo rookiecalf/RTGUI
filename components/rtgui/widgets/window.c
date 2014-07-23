@@ -82,9 +82,15 @@ static void _rtgui_win_destructor(rtgui_win_t *win)
 
     /* release field */
     if (win->_title_wgt)
+    {
         rtgui_widget_destroy(RTGUI_WIDGET(win->_title_wgt));
+        win->_title_wgt = RT_NULL;
+    }
     if (win->title != RT_NULL)
+    {
         rt_free(win->title);
+        win->title = RT_NULL;
+    }
     /* release external clip info */
     win->drawing = 0;
 }
@@ -169,6 +175,13 @@ rtgui_win_t *rtgui_win_create(struct rtgui_win *parent_window,
 
         /* The window title is always un-hidden for simplicity. */
         rtgui_widget_show(RTGUI_WIDGET(win->_title_wgt));
+        rtgui_region_init_with_extents(&win->outer_clip, &trect);
+        win->outer_extent = trect;
+    }
+    else
+    {
+        rtgui_region_init_with_extents(&win->outer_clip, rect);
+        win->outer_extent = *rect;
     }
 
     if (_rtgui_win_create_in_server(win) == RT_FALSE)
@@ -426,6 +439,7 @@ void rtgui_win_move(struct rtgui_win *win, int x, int y)
         dy = y - wgt->extent.y1;
         rtgui_widget_move_to_logic(wgt, dx, dy);
     }
+    rtgui_rect_moveto(&win->outer_extent, dx, dy);
 
     if (win->flag & RTGUI_WIN_FLAG_CONNECTED)
     {
@@ -480,6 +494,25 @@ void rtgui_win_update_clip(struct rtgui_win *win)
 
     if (win == RT_NULL)
         return;
+
+    if (win->_title_wgt)
+    {
+        /* Reset the inner clip of title. */
+        RTGUI_WIDGET(win->_title_wgt)->extent = win->outer_extent;
+        rtgui_region_copy(&RTGUI_WIDGET(win->_title_wgt)->clip, &win->outer_clip);
+        rtgui_region_subtract_rect(&RTGUI_WIDGET(win->_title_wgt)->clip,
+                                   &RTGUI_WIDGET(win->_title_wgt)->clip,
+                                   &RTGUI_WIDGET(win)->extent);
+        /* Reset the inner clip of window. */
+        rtgui_region_intersect_rect(&RTGUI_WIDGET(win)->clip,
+                                    &win->outer_clip,
+                                    &RTGUI_WIDGET(win)->extent);
+    }
+    else
+    {
+        RTGUI_WIDGET(win)->extent = win->outer_extent;
+        rtgui_region_copy(&RTGUI_WIDGET(win)->clip, &win->outer_clip);
+    }
 
     /* update the clip info of each child */
     cnt = RTGUI_CONTAINER(win);
