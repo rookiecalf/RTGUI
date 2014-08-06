@@ -604,8 +604,12 @@ rt_bool_t rtgui_win_event_handler(struct rtgui_object *object, struct rtgui_even
         }
 
         win->flag |= RTGUI_WIN_FLAG_ACTIVATE;
-        /* A paint event will follow the active event and the title will be
-         * paint there. */
+        /* There are many cases where the paint event will follow this activate
+         * event and just repaint the title is not a big deal. So just repaint
+         * the title if there is one. If you want to update the content of the
+         * window, do it in the on_activate callback.*/
+        if (win->_title_wgt)
+            rtgui_widget_update(RTGUI_WIDGET(win->_title_wgt));
 
         if (win->on_activate != RT_NULL)
         {
