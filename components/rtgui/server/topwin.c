@@ -160,8 +160,10 @@ static struct rtgui_topwin *_rtgui_topwin_get_topmost_child_shown(struct rtgui_t
     RT_ASSERT(topwin != RT_NULL);
 
     while (!(rt_list_isempty(&topwin->child_list)) &&
-            get_topwin_from_list(topwin->child_list.next)->flag &WINTITLE_SHOWN)
+            get_topwin_from_list(topwin->child_list.next)->flag & WINTITLE_SHOWN)
+    {
         topwin = get_topwin_from_list(topwin->child_list.next);
+    }
     return topwin;
 }
 
