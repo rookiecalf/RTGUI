@@ -705,9 +705,13 @@ rtgui_dc_blend_point(struct rtgui_dc * dst, int x, int y, enum RTGUI_BLENDMODE b
 {
 	RT_ASSERT(dst != RT_NULL);
 
+    /* Negative coordinates are always invisible. */
+    if (x < 0 || y < 0)
+        return;
+
 	if (!rtgui_dc_get_visible(dst)) return;
 	/* we do not support pixel DC */
-	if (_dc_get_pixel(dst, 0, 0) == RT_NULL) return ; 
+	if (_dc_get_pixel(dst, 0, 0) == RT_NULL) return;
 
 	/* Perform clipping */
 	if (dst->type == RTGUI_DC_CLIENT)
