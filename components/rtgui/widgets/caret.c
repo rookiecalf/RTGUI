@@ -24,9 +24,6 @@
 #include <rtgui/rtgui_system.h>
 #include <rtgui/widgets/caret.h>
 
-#include <stdint.h>
-
-
 #define _BCP(x)     ((struct rtgui_dc_buffer*)x)
 
 static void _caret_ondraw(struct rtgui_caret *);
@@ -146,7 +143,7 @@ static void _caret_ondraw(struct rtgui_caret *car)
 
         bpp = rtgui_color_get_bpp(bdc->pixel_format);
         /* Avoid overflow on malloc. */
-        RT_ASSERT(bdc->width * bpp < SIZE_MAX / bdc->height);
+        RT_ASSERT(bdc->width * bpp < RT_UINT32_MAX / bdc->height);
         s = bdc->width * bdc->height * bpp;
         buf = rtgui_malloc(s);
         if (!buf)

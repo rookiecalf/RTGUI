@@ -20,7 +20,6 @@
 #include <rtgui/rtgui_system.h>
 
 #include <ctype.h>
-#include <stdint.h>
 
 #include "text_encoding.h"
 
