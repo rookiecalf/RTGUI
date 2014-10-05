@@ -2205,6 +2205,7 @@ void rtgui_rect_moveto_align(const rtgui_rect_t *rect, rtgui_rect_t *to, int ali
         to->y2 += dh >> 1;
     }
 }
+RTM_EXPORT(rtgui_rect_moveto_align);
 
 void rtgui_rect_inflate(rtgui_rect_t *rect, int d)
 {
