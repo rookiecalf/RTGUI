@@ -2,9 +2,8 @@
 #define __ANIMATION_H__
 
 #include "rtgui.h"
-
+ 
 struct rtgui_dc;
-struct rtgui_dc_buffer;
 struct rtgui_widget;
 struct rtgui_animation;
 
@@ -14,12 +13,12 @@ struct rtgui_animation;
 typedef int (*rtgui_anim_motion)(unsigned int tick, unsigned int max_tick);
 /* @progress is from 0 to RTGUI_ANIM_TICK_RANGE. */
 typedef void (*rtgui_anim_engine)(struct rtgui_dc *background,
-                                  struct rtgui_dc_buffer *background_buffer,
-                                  struct rtgui_dc_buffer *items,
+                                  struct rtgui_dc *background_buffer,
+                                  struct rtgui_dc *items,
                                   int item_cnt,
                                   int progress,
                                   void *ctx);
-typedef void (*rtgui_anim_onfinish)(struct rtgui_animation *anim);
+typedef void (*rtgui_anim_onfinish)(struct rtgui_animation *anim, void* user_data);
 
 /* Some common motion functions. */
 /* y = a*x
@@ -56,8 +55,8 @@ struct rtgui_anim_engine_move_ctx
     struct rtgui_point start, end;
 };
 void rtgui_anim_engine_move(struct rtgui_dc *background,
-                            struct rtgui_dc_buffer *background_buffer,
-                            struct rtgui_dc_buffer *items,
+                            struct rtgui_dc *background_buffer,
+                            struct rtgui_dc *items,
                             int item_cnt,
                             int progress,
                             void *ctx);
@@ -68,8 +67,8 @@ struct rtgui_anim_engine_fade_ctx
     int is_fade_out;
 };
 void rtgui_anim_engine_fade(struct rtgui_dc *background,
-                            struct rtgui_dc_buffer *background_buffer,
-                            struct rtgui_dc_buffer *items,
+                            struct rtgui_dc *background_buffer,
+                            struct rtgui_dc *items,
                             int item_cnt,
                             int progress,
                             void *ctx);
@@ -81,8 +80,8 @@ struct rtgui_anim_engine_roto_ctx
     int use_aa;
 };
 void rtgui_anim_engine_roto(struct rtgui_dc *background,
-                            struct rtgui_dc_buffer *background_buffer,
-                            struct rtgui_dc_buffer *items,
+                            struct rtgui_dc *background_buffer,
+                            struct rtgui_dc *items,
                             int item_cnt,
                             int progress,
                             void *param);
@@ -100,15 +99,17 @@ struct rtgui_animation* rtgui_anim_create(struct rtgui_widget *parent,
 void rtgui_anim_destroy(struct rtgui_animation *anim);
 
 void rtgui_anim_set_bg_buffer(struct rtgui_animation *anim,
-                              struct rtgui_dc_buffer *dc);
+                              struct rtgui_dc *dc);
+struct rtgui_dc* rtgui_anim_get_bg_buffer(struct rtgui_animation *anim);
 /** Set the animation buffer to an animation.
  *
  * The dc buffer could be an array and @cnt should be set to the length of the
  * array.
  */
 void rtgui_anim_set_fg_buffer(struct rtgui_animation *anim,
-                              struct rtgui_dc_buffer *dc,
+                              struct rtgui_dc *dc,
                               int cnt);
+struct rtgui_dc* rtgui_anim_get_fg_buffer(struct rtgui_animation *anim, int index);
 
 void rtgui_anim_set_motion(struct rtgui_animation *anim,
                            rtgui_anim_motion motion);
@@ -120,11 +121,11 @@ void* rtgui_anim_get_engine_ctx(struct rtgui_animation *anim);
 
 /** Set the callback function upon the animation has finished.
  *
- * The default behaviour is just destroy the animation. If you want other
+ * The default behavior is just destroy the animation. If you want other
  * things, set your own callback with this function.
  */
 void rtgui_anim_set_onfinish(struct rtgui_animation *anim,
-                             rtgui_anim_onfinish on_finish);
+                             rtgui_anim_onfinish on_finish, void* user_data);
 
 void rtgui_anim_set_duration(struct rtgui_animation *anim,
                              unsigned int tick);
@@ -135,7 +136,7 @@ void rtgui_anim_set_cur_tick(struct rtgui_animation *anim, unsigned int tick);
 /** Start an animation.
  *
  * A stopped animation can be started again. It will start from the beginning
- * if normally stopped or resume from the last state if mannually stopped.
+ * if normally stopped or resume from the last state if manually stopped.
  */
 void rtgui_anim_start(struct rtgui_animation *anim);
 void rtgui_anim_stop(struct rtgui_animation *anim);
