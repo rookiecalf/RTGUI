@@ -1873,8 +1873,7 @@ void rtgui_region_translate(rtgui_region_t *region, int x, int y)
     region->extents.y2 = y2 = region->extents.y2 + y;
     if (((x1 - RTGUI_SHRT_MIN) | (y1 - RTGUI_SHRT_MIN) | (RTGUI_SHRT_MAX - x2) | (RTGUI_SHRT_MAX - y2)) >= 0)
     {
-        nbox = region->data->numRects;
-        if (region->data && nbox)
+        if (region->data && (nbox = region->data->numRects))
         {
             for (pbox = PIXREGION_BOXPTR(region); nbox--; pbox++)
             {
@@ -1903,8 +1902,7 @@ void rtgui_region_translate(rtgui_region_t *region, int x, int y)
     else if (y2 > RTGUI_SHRT_MAX)
         region->extents.y2 = RTGUI_SHRT_MAX;
 
-    nbox = region->data->numRects;
-    if (region->data && nbox)
+    if (region->data && (nbox = region->data->numRects))
     {
         rtgui_rect_t *pboxout;
 
@@ -2205,6 +2203,7 @@ void rtgui_rect_moveto_align(const rtgui_rect_t *rect, rtgui_rect_t *to, int ali
         to->y2 += dh >> 1;
     }
 }
+RTM_EXPORT(rtgui_rect_moveto_align);
 
 void rtgui_rect_inflate(rtgui_rect_t *rect, int d)
 {

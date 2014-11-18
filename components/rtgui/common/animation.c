@@ -14,8 +14,8 @@ struct rtgui_animation
     struct rtgui_timer  *timer;
     enum _anim_state state;
 
-    struct rtgui_dc_buffer *bg_buf;
-    struct rtgui_dc_buffer *fg_buf;
+    struct rtgui_dc *bg_buf;
+    struct rtgui_dc *fg_buf;
     int dc_cnt;
 
     unsigned int tick, tick_interval, max_tick;
@@ -25,6 +25,7 @@ struct rtgui_animation
     void *eng_ctx;
 
     rtgui_anim_onfinish on_finish;
+	void *user_data;
 };
 
 int rtgui_anim_motion_linear(unsigned int tick, unsigned int max_tick)
@@ -80,8 +81,16 @@ static void _anim_timeout(struct rtgui_timer *timer, void *parameter)
         rtgui_anim_stop(anim);
         anim->tick = 0;
         if (anim->on_finish)
-            anim->on_finish(anim);
+        {
+            anim->on_finish(anim, anim->user_data);
+        }
     }
+}
+
+static void _animation_default_finish(struct rtgui_animation* self, void* user_data)
+{
+	/* destroy animation in default */
+	rtgui_anim_destroy(self);
 }
 
 struct rtgui_animation* rtgui_anim_create(struct rtgui_widget *parent,
@@ -113,7 +122,7 @@ struct rtgui_animation* rtgui_anim_create(struct rtgui_widget *parent,
     anim->motion = rtgui_anim_motion_linear;
     anim->engine = RT_NULL;
     anim->eng_ctx = RT_NULL;
-    anim->on_finish = rtgui_anim_destroy;
+    anim->on_finish = _animation_default_finish;
     anim->state = _ANIM_STOPPED;
 
     return anim;
@@ -128,7 +137,7 @@ void rtgui_anim_destroy(struct rtgui_animation *anim)
 }
 
 void rtgui_anim_set_fg_buffer(struct rtgui_animation *anim,
-                              struct rtgui_dc_buffer *dc,
+                              struct rtgui_dc *dc,
                               int cnt)
 {
     RT_ASSERT(anim);
@@ -137,12 +146,24 @@ void rtgui_anim_set_fg_buffer(struct rtgui_animation *anim,
     anim->dc_cnt = cnt;
 }
 
+struct rtgui_dc* rtgui_anim_get_fg_buffer(struct rtgui_animation *anim, int index)
+{
+	return &(anim->fg_buf[index]);
+}
+
 void rtgui_anim_set_bg_buffer(struct rtgui_animation *anim,
-                              struct rtgui_dc_buffer *dc)
+                              struct rtgui_dc *dc)
 {
     RT_ASSERT(anim);
 
     anim->bg_buf = dc;
+}
+
+struct rtgui_dc* rtgui_anim_get_bg_buffer(struct rtgui_animation *anim)
+{
+    RT_ASSERT(anim);
+
+	return anim->bg_buf;
 }
 
 void rtgui_anim_set_engine(struct rtgui_animation *anim,
@@ -187,11 +208,12 @@ void rtgui_anim_set_cur_tick(struct rtgui_animation *anim, unsigned int tick)
 }
 
 void rtgui_anim_set_onfinish(struct rtgui_animation *anim,
-                             rtgui_anim_onfinish on_finish)
+                             rtgui_anim_onfinish on_finish, void* user_data)
 {
     RT_ASSERT(anim);
 
     anim->on_finish = on_finish;
+	anim->user_data = user_data;
 }
 
 void rtgui_anim_set_motion(struct rtgui_animation *anim,

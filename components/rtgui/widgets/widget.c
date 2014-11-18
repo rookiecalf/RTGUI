@@ -225,7 +225,8 @@ void rtgui_widget_move_to_logic(rtgui_widget_t *widget, int dx, int dy)
     struct rtgui_list_node *node;
     rtgui_widget_t *child;
 
-    if (widget == RT_NULL) return;
+    if (widget == RT_NULL)
+        return;
 
     rtgui_rect_moveto(&(widget->extent), dx, dy);
 
@@ -668,14 +669,14 @@ rtgui_color_t rtgui_widget_get_parent_foreground(rtgui_widget_t *widget)
 
     /* get parent widget */
     parent = widget->parent;
+    if (parent == RT_NULL)
+        return RTGUI_WIDGET_FOREGROUND(widget);
+
     while (parent->parent != RT_NULL && (RTGUI_WIDGET_FLAG(parent) & RTGUI_WIDGET_FLAG_TRANSPARENT))
         parent = parent->parent;
 
     /* get parent's color */
-    if (parent != RT_NULL)
-        return RTGUI_WIDGET_FOREGROUND(parent);
-
-    return RTGUI_WIDGET_FOREGROUND(widget);
+    return RTGUI_WIDGET_FOREGROUND(parent);
 }
 RTM_EXPORT(rtgui_widget_get_parent_foreground);
 
@@ -685,14 +686,14 @@ rtgui_color_t rtgui_widget_get_parent_background(rtgui_widget_t *widget)
 
     /* get parent widget */
     parent = widget->parent;
+    if (parent == RT_NULL)
+        return RTGUI_WIDGET_BACKGROUND(widget);
+
     while (parent->parent != RT_NULL && (RTGUI_WIDGET_FLAG(parent) & RTGUI_WIDGET_FLAG_TRANSPARENT))
         parent = parent->parent;
 
     /* get parent's color */
-    if (parent != RT_NULL)
-        return RTGUI_WIDGET_BACKGROUND(parent);
-
-    return RTGUI_WIDGET_BACKGROUND(widget);
+    return RTGUI_WIDGET_BACKGROUND(parent);
 }
 RTM_EXPORT(rtgui_widget_get_parent_background);
 

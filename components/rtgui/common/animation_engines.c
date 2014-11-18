@@ -5,8 +5,8 @@
 #include <rtgui/dc_trans.h>
 
 void rtgui_anim_engine_move(struct rtgui_dc *background,
-                            struct rtgui_dc_buffer *background_buffer,
-                            struct rtgui_dc_buffer *items,
+                            struct rtgui_dc *background_buffer,
+                            struct rtgui_dc *items,
                             int item_cnt,
                             int progress,
                             void *param)
@@ -22,7 +22,10 @@ void rtgui_anim_engine_move(struct rtgui_dc *background,
         rtgui_dc_blit((struct rtgui_dc*)background_buffer,
                       NULL, background, NULL);
 
-    rtgui_dc_get_rect(background, &dc_rect);
+	if (!items)
+		return;
+
+    rtgui_dc_get_rect(items, &dc_rect);
 
     cx = progress * (ctx->end.x - ctx->start.x) / RTGUI_ANIM_TICK_RANGE;
     cy = progress * (ctx->end.y - ctx->start.y) / RTGUI_ANIM_TICK_RANGE;
@@ -41,15 +44,15 @@ void rtgui_anim_engine_move(struct rtgui_dc *background,
 }
 
 void rtgui_anim_engine_fade(struct rtgui_dc *background,
-                            struct rtgui_dc_buffer *background_buffer,
-                            struct rtgui_dc_buffer *items,
+                            struct rtgui_dc *background_buffer,
+                            struct rtgui_dc *items,
                             int item_cnt,
                             int progress,
                             void *param)
 {
     int cur_lvl;
     struct rtgui_blit_info info;
-    struct rtgui_dc_buffer *buf;
+    struct rtgui_dc_buffer *buf, *buf_items;
     struct rtgui_anim_engine_fade_ctx *ctx = param;
 
     if (!background_buffer || !items)
@@ -77,20 +80,22 @@ void rtgui_anim_engine_fade(struct rtgui_dc *background,
     }
     ctx->plvl = cur_lvl;
 
-    buf = (struct rtgui_dc_buffer*)rtgui_dc_buffer_create_from_dc(
-              (struct rtgui_dc*)background_buffer);
-    if (!buf)
-        return;
+    buf = (struct rtgui_dc_buffer*)rtgui_dc_buffer_create_from_dc(background_buffer);
+    if (!buf) return;
 
     info.a = cur_lvl;
+	rt_kprintf("alpha: %d\n", cur_lvl);
+	if (cur_lvl < 100 && cur_lvl > 80)
+		rt_kprintf("here!\n");
 
-    info.src       = items->pixel;
-    info.src_fmt   = items->pixel_format;
-    info.src_h     = items->height;
-    info.src_w     = items->width;
-    info.src_pitch = items->pitch;
+	buf_items	   = (struct rtgui_dc_buffer*) items;
+    info.src       = buf_items->pixel;
+    info.src_fmt   = buf_items->pixel_format;
+    info.src_h     = buf_items->height;
+    info.src_w     = buf_items->width;
+    info.src_pitch = buf_items->pitch;
     info.src_skip  = info.src_pitch - info.src_w *
-                     rtgui_color_get_bpp(items->pixel_format);
+                     rtgui_color_get_bpp(buf_items->pixel_format);
 
     info.dst       = buf->pixel;
     info.dst_fmt   = buf->pixel_format;
@@ -106,8 +111,8 @@ void rtgui_anim_engine_fade(struct rtgui_dc *background,
 }
 
 void rtgui_anim_engine_roto(struct rtgui_dc *background,
-                            struct rtgui_dc_buffer *background_buffer,
-                            struct rtgui_dc_buffer *items,
+                            struct rtgui_dc *background_buffer,
+                            struct rtgui_dc *items,
                             int item_cnt,
                             int progress,
                             void *param)
@@ -142,3 +147,4 @@ void rtgui_anim_engine_roto(struct rtgui_dc *background,
 
     rtgui_dc_trans_destroy(trans);
 }
+
